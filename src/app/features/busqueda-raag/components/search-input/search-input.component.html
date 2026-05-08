@@ -1,0 +1,39 @@
+<div class="search-input-wrapper">
+  <div class="search-row">
+    <div class="search-field" [class.search-field--disabled]="disabled()">
+      <span class="search-icon">🔍</span>
+      <input
+        class="search-bar"
+        type="text"
+        placeholder="Pregunta en lenguaje natural: ¿Cuáles son las competencias del municipio en salud?"
+        [value]="queryValue()"
+        [disabled]="disabled()"
+        (input)="onInput($event)"
+        (keyup.enter)="onSearch()"
+      />
+      @if (queryValue() && !disabled()) {
+        <button class="clear-btn" (click)="onClear()" title="Limpiar">✕</button>
+      }
+    </div>
+    <button
+      class="search-btn"
+      [disabled]="disabled() || !queryValue().trim()"
+      (click)="onSearch()"
+    >
+      @if (disabled()) {
+        <span class="spinner"></span>
+      } @else {
+        Buscar
+      }
+    </button>
+  </div>
+
+  @if (suggestions().length && !disabled()) {
+    <div class="suggestions-row">
+      <span class="suggestions-label">Consultas frecuentes:</span>
+      @for (s of suggestions(); track s) {
+        <button class="suggestion-pill" (click)="onSuggestionClick(s)">{{ s }}</button>
+      }
+    </div>
+  }
+</div>

@@ -1,0 +1,43 @@
+<div class="rag-card">
+  <div class="rag-card-body">
+
+    <!-- Badges row -->
+    <div class="badges-row">
+      <app-badge [variant]="result().typeBadgeVariant">{{ result().typeLabel }}</app-badge>
+      @if (result().vigente) {
+        <app-badge variant="green">Vigente</app-badge>
+      }
+      @for (b of result().badges; track b.label) {
+        <app-badge [variant]="b.variant">{{ b.label }}</app-badge>
+      }
+    </div>
+
+    <!-- Title -->
+    <h4 class="rag-title">
+      {{ result().title }}
+      <span class="rag-articles">· {{ result().articles }}</span>
+    </h4>
+
+    <!-- Excerpt -->
+    <p class="rag-excerpt">{{ result().excerpt }}</p>
+
+    <!-- Meta row -->
+    <div class="rag-meta">
+
+      @if (result().applicablePlans?.length) {
+        <app-badge variant="gray">
+          📋 {{ result().applicablePlans!.join(' · ') }}
+        </app-badge>
+      }
+
+      <span class="relevance-label">Relevancia:</span>
+      <div class="relevance-track">
+        <div class="relevance-fill" [style.width.%]="result().relevance" [style.background]="relevanceColor"></div>
+      </div>
+      <span class="relevance-pct" [style.color]="relevanceColor">{{ result().relevance }}%</span>
+
+
+    </div>
+
+  </div>
+</div>

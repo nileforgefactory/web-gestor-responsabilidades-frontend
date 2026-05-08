@@ -1,0 +1,117 @@
+<div class="app-layout">
+
+  <!-- ── Sidebar ── -->
+  <app-sidebar
+    [sections]="sidebarSections()"
+    [user]="sidebarUser"
+    (itemClick)="onSidebarItemClick($event)"
+  />
+
+  <!-- ── Main content ── -->
+  <main class="main-content">
+
+    <!-- Page header -->
+    <div class="page-header">
+      <div class="breadcrumb">Análisis / Búsqueda RAG</div>
+      <div class="page-header-row">
+        <div>
+          <h2>Consulta de Leyes y Normativas</h2>
+          <p>Búsqueda semántica sobre la base de conocimiento · colección: <strong>{{ collectionId }}</strong></p>
+        </div>
+        @if (isDone()) {
+          <button class="reset-btn" (click)="reset()">← Nueva búsqueda</button>
+        }
+      </div>
+    </div>
+
+    <!-- Search input (always visible) -->
+    <div class="search-section">
+      <app-search-input
+        [initialValue]="currentQuery()"
+        [disabled]="isQuerying()"
+        [suggestions]="isIdle() ? suggestions : []"
+        (search)="onSearch($event)"
+      />
+    </div>
+
+    <!-- IDLE state: empty / welcome -->
+    @if (isIdle()) {
+      <div class="empty-state">
+        <div class="empty-icon">🔍</div>
+        <h3>Realiza tu primera búsqueda</h3>
+        <p>
+          El agente RAG consultará la base de conocimiento indexada y generará una síntesis
+          con los documentos más relevantes para tu consulta.
+        </p>
+      </div>
+    }
+
+    <!-- QUERYING state: spinner -->
+    @if (isQuerying()) {
+      <div class="loading-state">
+        <div class="loading-spinner"></div>
+        <p class="loading-text">Consultando base de conocimiento…</p>
+      </div>
+    }
+
+    <!-- Error message -->
+    @if (errorMsg()) {
+      <div class="error-banner">
+        <span>⚠ {{ errorMsg() }}</span>
+        <button class="btn-link" (click)="errorMsg.set(null)">Cerrar</button>
+      </div>
+    }
+
+    <!-- DONE state: results + synthesis -->
+    @if (isDone()) {
+
+      <!-- Status bar -->
+      <div class="results-status-bar">
+        <div class="agent-chip agent-chip--done">
+          <span class="agent-dot agent-dot--green"></span>
+          {{ results().length }} resultado{{ results().length !== 1 ? 's' : '' }} · {{ totalHits() }} candidatos recuperados
+        </div>
+
+        <!-- Filter chips -->
+        <div class="filter-chips">
+          @for (f of filterOptions; track f.type) {
+            <button
+              class="filter-chip"
+              [class.filter-chip--active]="activeFilter() === f.type"
+              (click)="activeFilter.set(f.type)"
+            >
+              {{ f.icon }} {{ f.label }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- AI Synthesis card -->
+      <app-ai-synthesis-card
+        [synthesis]="synthesis()"
+        [loading]="synthesis() === null"
+        [queryText]="currentQuery()"
+        [showActions]="false"
+      />
+
+      <!-- Results list -->
+      @if (filteredResults().length) {
+        <div class="results-list">
+          @for (result of filteredResults(); track result.id) {
+            <app-rag-result-card [result]="result" />
+          }
+        </div>
+      } @else {
+        <div class="no-results">
+          <span>Sin resultados para este filtro.</span>
+          <button class="btn-link" (click)="activeFilter.set('all')">Ver todos</button>
+        </div>
+      }
+
+      <div style="height: 2.5rem"></div>
+
+    }
+
+  </main>
+
+</div>

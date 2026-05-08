@@ -1,0 +1,31 @@
+<div class="pipeline">
+  @for (step of steps(); track step.id; let last = $last) {
+    <div class="pipe-step" [class]="'pipe-step--' + step.status">
+      <span class="pipe-icon">
+        @switch (step.status) {
+          @case ('done')    { ✅ }
+          @case ('running') { <span class="spin">⚙️</span> }
+          @case ('error')   { ❌ }
+          @default          { {{ step.icon }} }
+        }
+      </span>
+      <div class="pipe-body">
+        <span class="pipe-label">{{ step.label }}</span>
+        @if (step.detail) {
+          <span class="pipe-detail">{{ step.detail }}</span>
+        }
+      </div>
+      <span class="pipe-status-tag">
+        @switch (step.status) {
+          @case ('done')    { LISTO }
+          @case ('running') { PROCESANDO… }
+          @case ('error')   { ERROR }
+          @default          { EN ESPERA }
+        }
+      </span>
+    </div>
+    @if (!last) {
+      <div class="pipe-arrow">↓</div>
+    }
+  }
+</div>

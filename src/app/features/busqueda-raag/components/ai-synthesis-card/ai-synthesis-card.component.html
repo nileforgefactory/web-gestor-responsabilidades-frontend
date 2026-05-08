@@ -1,0 +1,36 @@
+<div class="synthesis-card">
+  <div class="card-header">
+    <div class="card-icon">🤖</div>
+    <div class="card-header-text">
+      <div class="card-title">Síntesis del Agente IA</div>
+      @if (synthesis()) {
+        <div class="card-sub">
+          Generada automáticamente basada en {{ synthesis()!.sourceCount }} documentos más relevantes
+        </div>
+      } @else {
+        <div class="card-sub">Generando síntesis…</div>
+      }
+    </div>
+  </div>
+
+  <div class="card-body">
+    @if (loading()) {
+      <div class="skeleton-lines">
+        <div class="skeleton-line" style="width: 95%"></div>
+        <div class="skeleton-line" style="width: 88%"></div>
+        <div class="skeleton-line" style="width: 92%"></div>
+        <div class="skeleton-line" style="width: 76%"></div>
+        <div class="skeleton-line" style="width: 84%"></div>
+      </div>
+    } @else if (synthesis()) {
+      <p class="synthesis-text">{{ synthesis()!.text }}</p>
+      @if (showActions()) {
+        <div class="synthesis-actions">
+          <button class="btn-primary" (click)="addToPlan.emit()">+ Agregar a mi plan</button>
+          <button class="btn-secondary" (click)="exportAnalysis.emit()">📥 Exportar análisis</button>
+          <button class="btn-secondary" (click)="viewMatrix.emit()">🗃️ Ver en matriz</button>
+        </div>
+      }
+    }
+  </div>
+</div>
