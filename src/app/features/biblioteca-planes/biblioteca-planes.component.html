@@ -1,0 +1,80 @@
+<div class="app-layout">
+
+  <!-- ── Sidebar ── -->
+  <app-sidebar
+    [sections]="sidebarSections()"
+    (itemClick)="onFilterClick($event)"
+  />
+
+  <!-- ── Main content ── -->
+  <main class="main-content">
+
+    <!-- Page header -->
+    <div class="page-header">
+      <div class="breadcrumb">Admin / Biblioteca de Planes</div>
+      <div class="page-header-row">
+        <div>
+          <h2>Biblioteca de Planes de Desarrollo</h2>
+          <p>Planes indexados y analizados por el agente IA — clic en un plan para ver el detalle completo</p>
+        </div>
+        <div class="header-stat">
+          <span class="header-stat-val">{{ filteredPlans().length }}</span>
+          <span class="header-stat-label">planes</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search bar -->
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input
+        class="search-bar"
+        type="text"
+        placeholder="Buscar por municipio, sector, ley o entidad…"
+        [value]="search()"
+        (input)="onSearch($event)"
+      />
+      @if (search()) {
+        <button class="search-clear" (click)="search.set('')">✕</button>
+      }
+    </div>
+
+    <!-- Summary chips -->
+    <div class="summary-row">
+      <div class="summary-chip">
+        <span class="summary-val">{{ filteredPlans().length }}</span> planes encontrados
+      </div>
+      <div class="summary-chip">
+        Avance promedio:
+        <span class="summary-val" style="color: var(--green)">{{ avgAvance() }}%</span>
+      </div>
+      @if (nivelFilter() !== 'all' || statusFilter() !== 'all' || search()) {
+        <button class="clear-filters-btn" (click)="nivelFilter.set('all'); statusFilter.set('all'); search.set('')">
+          Limpiar filtros
+        </button>
+      }
+    </div>
+
+    <!-- Cards grid -->
+    @if (filteredPlans().length) {
+      <div class="plans-grid">
+        @for (plan of filteredPlans(); track plan.id) {
+          <app-plan-card
+            [plan]="plan"
+            (viewDetail)="openDetail($event)"
+          />
+        }
+      </div>
+    } @else {
+      <div class="empty-state">
+        <div class="empty-icon">📂</div>
+        <div class="empty-title">Sin resultados</div>
+        <div class="empty-sub">Ajusta los filtros o la búsqueda para encontrar planes.</div>
+        <button class="empty-action" (click)="nivelFilter.set('all'); statusFilter.set('all'); search.set('')">
+          Ver todos los planes
+        </button>
+      </div>
+    }
+
+  </main>
+</div>
