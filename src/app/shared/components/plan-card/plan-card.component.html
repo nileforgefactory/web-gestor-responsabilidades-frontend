@@ -1,0 +1,78 @@
+<article class="plan-card" (click)="viewDetail.emit(plan())">
+
+  <!-- Colored accent bar based on nivel -->
+  <div class="card-accent" [style.background]="plan().nivelColor"></div>
+
+  <div class="card-body">
+    <!-- Badges -->
+    <div class="card-badges">
+      <app-badge [variant]="plan().nivelVariant">{{ plan().nivelLabel }}</app-badge>
+      <app-badge [variant]="plan().statusVariant">{{ plan().statusLabel }}</app-badge>
+    </div>
+
+    <!-- Title -->
+    <div class="card-title">{{ plan().title }}</div>
+
+    <!-- Meta -->
+    <div class="card-meta">
+      <span>{{ plan().entityIcon }} {{ plan().entity }}</span>
+      <span>📅 {{ plan().periodo }}</span>
+    </div>
+
+    <!-- Sector chips -->
+    <div class="card-sectors">
+      @for (sector of plan().sectors.slice(0, 3); track sector) {
+        <span class="sector-chip">{{ sector }}</span>
+      }
+      @if (plan().sectors.length > 3) {
+        <span class="sector-chip sector-chip--more">+{{ plan().sectors.length - 3 }}</span>
+      }
+    </div>
+
+    <!-- Stats row -->
+    <div class="card-stats">
+      <div class="stat">
+        <span class="stat-val">{{ plan().responsabilidades }}</span>
+        <span class="stat-label">Resp.</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat">
+        <span class="stat-val">{{ plan().leyes }}</span>
+        <span class="stat-label">Leyes</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat">
+        <span class="stat-val">{{ plan().actores }}</span>
+        <span class="stat-label">Actores</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat stat--alert">
+        <span class="stat-val">{{ plan().brechas }}</span>
+        <span class="stat-label">Brechas</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer: avance + CTA -->
+  <div class="card-footer">
+    <div class="avance-wrap">
+      <div class="avance-track">
+        <div
+          class="avance-fill"
+          [style.width.%]="plan().avance"
+          [style.background]="plan().avanceColor"
+        ></div>
+      </div>
+      <span class="avance-label" [style.color]="plan().avanceColor">
+        {{ plan().avance }}% avance
+      </span>
+    </div>
+    <button
+      class="detail-btn"
+      (click)="viewDetail.emit(plan()); $event.stopPropagation()"
+    >
+      Ver detalle →
+    </button>
+  </div>
+
+</article>

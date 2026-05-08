@@ -1,0 +1,103 @@
+@if (plan(); as p) {
+
+  <!-- Backdrop + centering container -->
+  <div class="overlay" (click)="close.emit()">
+
+    <!-- Modal dialog — click inside stops propagation -->
+    <aside class="detail-panel" (click)="$event.stopPropagation()">
+
+      <!-- Hero section -->
+      <div class="hero" [style.--plan-color]="p.nivelColor">
+        <div class="hero-topbar">
+          <span class="hero-breadcrumb">Biblioteca → Detalle del plan</span>
+          <button class="close-btn" (click)="close.emit()" aria-label="Cerrar">✕</button>
+        </div>
+
+        <div class="hero-badges">
+          <span class="hero-badge">{{ p.nivelLabel }}</span>
+          <span class="hero-badge hero-badge--status">{{ p.statusLabel }}</span>
+        </div>
+
+        <h2 class="hero-title">{{ p.title }}</h2>
+
+        <div class="hero-meta">
+          <span>{{ p.entityIcon }} {{ p.entity }}</span>
+          <span>📅 {{ p.periodo }}</span>
+        </div>
+
+        @if (p.description) {
+          <div class="hero-desc">
+            <span class="hero-desc-label">🤖 Síntesis</span>
+            {{ p.description }}
+          </div>
+        }
+
+        <!-- Stats bar -->
+        <div class="hero-stats">
+          <div class="hstat">
+            <div class="hstat-val">{{ p.responsabilidades }}</div>
+            <div class="hstat-label">Responsabilidades</div>
+          </div>
+          <div class="hstat-divider"></div>
+          <div class="hstat">
+            <div class="hstat-val">{{ p.leyes }}</div>
+            <div class="hstat-label">Leyes</div>
+          </div>
+          <div class="hstat-divider"></div>
+          <div class="hstat">
+            <div class="hstat-val">{{ p.actores }}</div>
+            <div class="hstat-label">Actores</div>
+          </div>
+          <div class="hstat-divider"></div>
+          <div class="hstat">
+            <div class="hstat-val hstat-val--red">{{ p.brechas }}</div>
+            <div class="hstat-label">Brechas</div>
+          </div>
+          <div class="hstat-divider"></div>
+          <div class="hstat">
+            <div class="hstat-val" [style.color]="p.avanceColor">{{ p.avance }}%</div>
+            <div class="hstat-label">Avance</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sectors row -->
+      <div class="sectors-row">
+        @for (sector of p.sectors; track sector) {
+          <span class="sector-tag">{{ sector }}</span>
+        }
+      </div>
+
+      <!-- Scrollable body -->
+      <div class="modal-body">
+
+        @if (hasTabs()) {
+          <div class="tabs-wrapper">
+            <div class="tabs-heading">
+              <span class="tabs-icon" style="background:var(--gold-soft)">📊</span>
+              <div>
+                <div class="tabs-title">Análisis detallado</div>
+                <div class="tabs-sub">Resultados del Agente IA</div>
+              </div>
+            </div>
+            <app-result-tabs [tabs]="p.resultTabs!" [showActions]="false" />
+          </div>
+        } @else {
+          <div class="no-tabs">
+            <div class="no-tabs-icon">📊</div>
+            <div class="no-tabs-msg">Análisis detallado no disponible</div>
+            <div class="no-tabs-sub">Este plan aún no ha sido procesado por el agente IA.</div>
+          </div>
+        }
+
+      </div>
+
+      <!-- Footer actions -->
+      <div class="panel-footer">
+        <button class="footer-btn">📥 Exportar PDF</button>
+        <button class="footer-btn footer-btn--ghost" (click)="close.emit()">← Cerrar</button>
+      </div>
+
+    </aside>
+  </div>
+}

@@ -1,0 +1,11 @@
+<div class="agent-log" #container [style.height]="height()">
+  @for (line of logs(); track $index) {
+    <div class="log-line">
+      <span class="log-time">{{ line.time }}</span>
+      <span class="log-msg" [class]="'log-' + line.type">{{ line.message }}</span>
+    </div>
+  }
+  @if (!logs().length) {
+    <div class="log-empty">Esperando inicio del proceso…</div>
+  }
+</div>

@@ -1,0 +1,194 @@
+:host { display: block; }
+
+/* ── Tab bar ── */
+.tabs-bar {
+  display: flex;
+  gap: 2px;
+  border-bottom: 2px solid var(--border);
+  padding: 0 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs-bar::-webkit-scrollbar { display: none; }
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text2);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn--active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.tab-count {
+  background: var(--accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+.tab-count--red { background: var(--red); }
+
+/* ── Panel ── */
+.tab-panel { padding: 16px 0; }
+
+/* ── Items grid ── */
+.items-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+@media (max-width: 640px) { .items-grid { grid-template-columns: 1fr; } }
+
+.result-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  transition: border-color .15s;
+}
+.result-item:hover { border-color: var(--accent); }
+
+.result-icon  { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+.result-title { font-size: 13px; font-weight: 600; color: var(--text); }
+.result-sub   { font-size: 12px; color: var(--text2); margin-top: 3px; line-height: 1.5; }
+.result-badges { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px; }
+
+/* ── Matrix ── */
+.matriz-wrap { padding: 4px 0; }
+
+.matriz-legend {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 11px;
+  color: var(--text2);
+  margin-bottom: 14px;
+}
+.matriz-legend span { display: flex; align-items: center; gap: 5px; }
+
+.table-scroll {
+  overflow-x: auto;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+.matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 640px;
+}
+
+.matrix-table thead { background: var(--surface2); }
+
+.matrix-table th {
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  white-space: nowrap;
+}
+
+.matrix-table td {
+  padding: 11px 14px;
+  border-top: 1px solid var(--border);
+  color: var(--text);
+  vertical-align: middle;
+}
+
+.matrix-table tbody tr:hover td { background: var(--surface2); }
+
+.row-critica    td { background: #FEF2F2; }
+.row-duplicidad td { background: #FFFBEB; }
+
+.col-actor  { text-align: center !important; }
+.td-actor   { text-align: center; }
+
+/* ── Responsibility dots ── */
+.resp-dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.lvl-P { background: var(--accent); color: #fff; }
+.lvl-C { background: var(--gold-soft); color: var(--gold); border: 1px solid var(--gold); }
+.lvl-S { background: var(--green-soft); color: var(--green); border: 1px solid var(--green); }
+.lvl-N { background: var(--surface2); color: var(--text3); }
+
+/* ── Ley badge (inside table) ── */
+.ley-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 600;
+  background: var(--accent-soft);
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+/* ── Brecha badges ── */
+.brecha-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.brecha-ok   { background: var(--green-soft); color: var(--green); }
+.brecha-red  { background: #FEF2F2; color: var(--red); }
+.brecha-gold { background: var(--gold-soft); color: var(--gold); }
+
+/* ── Footer ── */
+.tabs-footer {
+  display: flex;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  transition: background .15s;
+}
+.action-btn:hover { background: var(--surface2); }
+.action-btn--primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.action-btn--primary:hover { background: #2563EB; border-color: #2563EB; }

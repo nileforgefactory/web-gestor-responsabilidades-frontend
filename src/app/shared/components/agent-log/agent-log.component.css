@@ -1,0 +1,29 @@
+:host { display: block; }
+
+.agent-log {
+  background: #0D1117;
+  border-radius: 10px;
+  padding: 14px 16px;
+  font-family: 'Cascadia Code', 'Fira Code', 'Courier New', monospace;
+  font-size: 12px;
+  color: #C9D1D9;
+  overflow-y: auto;
+  line-height: 1.75;
+  scrollbar-width: thin;
+  scrollbar-color: #30363D transparent;
+}
+
+.agent-log::-webkit-scrollbar { width: 4px; }
+.agent-log::-webkit-scrollbar-track { background: transparent; }
+.agent-log::-webkit-scrollbar-thumb { background: #30363D; border-radius: 2px; }
+
+.log-line { display: flex; gap: 10px; }
+.log-time  { color: #484F58; flex-shrink: 0; font-size: 11px; }
+
+.log-ok    { color: #3FB950; }
+.log-info  { color: #58A6FF; }
+.log-warn  { color: #D29922; }
+.log-proc  { color: #BC8CFF; }
+.log-error { color: #FF7B72; }
+
+.log-empty { color: #484F58; font-style: italic; }

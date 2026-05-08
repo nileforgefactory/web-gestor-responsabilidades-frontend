@@ -1,0 +1,26 @@
+<nav class="navbar">
+  <div class="navbar-brand">
+    <span class="brand-icon">{{ appIcon() }}</span>
+    <span class="brand-name">{{ appName() }}</span>
+  </div>
+
+  @if (items().length) {
+    <div class="navbar-sep"></div>
+
+    @for (item of items(); track item.route) {
+      <a
+        class="nav-item"
+        [class.nav-item--highlighted]="item.highlighted"
+        [routerLink]="item.route"
+        routerLinkActive="nav-item--active"
+        [routerLinkActiveOptions]="{ exact: false }"
+      >
+        @if (item.icon) {<span class="nav-item-icon">{{ item.icon }}</span>}
+        {{ item.label }}
+      </a>
+    }
+  }
+</nav>
+
+<!-- Spacer so page content clears the fixed bar -->
+<div class="navbar-spacer"></div>

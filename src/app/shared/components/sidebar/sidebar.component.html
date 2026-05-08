@@ -1,0 +1,47 @@
+<aside class="sidebar">
+
+  @for (section of sections(); track section.label) {
+    <div class="sidebar-section">
+      <div class="section-label">{{ section.label }}</div>
+
+      @for (item of section.items; track item.label) {
+        <div
+          class="sidebar-item"
+          [class.sidebar-item--active]="item.status === 'active'"
+          [class.sidebar-item--done]="item.status === 'done'"
+          [class.sidebar-item--pending]="item.status === 'pending'"
+          (click)="onItemClick(item)"
+        >
+          <span class="item-icon">{{ item.icon }}</span>
+
+          @if (item.sublabel) {
+            <div class="item-content">
+              <div class="item-label">{{ item.label }}</div>
+              <div class="item-sublabel" [style.color]="item.sublabelColor">{{ item.sublabel }}</div>
+            </div>
+          } @else {
+            <span class="item-label">{{ item.label }}</span>
+          }
+
+          @if (item.badge !== undefined) {
+            <span class="item-badge">{{ item.badge }}</span>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <!-- User section -->
+  @if (user()) {
+    <div class="sidebar-user">
+      <div class="user-avatar" [style.background]="user()!.avatarColor ?? 'var(--primary)'">
+        {{ user()!.initials }}
+      </div>
+      <div class="user-name">{{ user()!.name }}</div>
+      <div class="user-role">
+        <app-badge [variant]="user()!.roleVariant ?? 'green'">{{ user()!.role }}</app-badge>
+      </div>
+    </div>
+  }
+
+</aside>
