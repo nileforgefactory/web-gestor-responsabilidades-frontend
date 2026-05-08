@@ -1,0 +1,48 @@
+<div class="result-tabs-wrapper">
+  <!-- Tab bar -->
+  <div class="tabs-bar">
+    @for (tab of tabs(); track tab.id) {
+      <button
+        class="tab-btn"
+        [class.tab-btn--active]="isActive(tab.id)"
+        (click)="setTab(tab.id)"
+      >
+        <span>{{ tab.icon }} {{ tab.label }}</span>
+        <span
+          class="tab-count"
+          [class.tab-count--red]="tab.countVariant === 'red'"
+        >{{ tab.count }}</span>
+      </button>
+    }
+  </div>
+
+  <!-- Panel -->
+  <div class="tab-panel">
+    @if (activeTab(); as tab) {
+      <div class="items-grid">
+        @for (item of tab.items; track item.title) {
+          <div class="result-item">
+            <div class="result-icon">{{ item.icon }}</div>
+            <div class="result-body">
+              <div class="result-title">{{ item.title }}</div>
+              <div class="result-sub">{{ item.body }}</div>
+              @if (item.badges?.length) {
+                <div class="result-badges">
+                  @for (badge of item.badges!; track badge.label) {
+                    <app-badge [variant]="badge.variant">{{ badge.label }}</app-badge>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Actions -->
+  <div class="tabs-footer">
+    <button class="action-btn">📥 Exportar PDF</button>
+    <button class="action-btn action-btn--primary">📋 Agregar a mi plan</button>
+  </div>
+</div>

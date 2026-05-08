@@ -1,0 +1,126 @@
+<div class="app-layout">
+
+  <!-- ── Sidebar ── -->
+  <app-sidebar
+    [sections]="sidebarSections()"
+    [user]="sidebarUser"
+    (itemClick)="onSidebarItemClick($event)"
+  />
+
+  <!-- ── Main content ── -->
+  <main class="main-content">
+
+    <!-- Page header -->
+    <div class="page-header">
+      <div class="breadcrumb">
+        @if (isIdle() || isFileLoaded()) { Cargar Plan de Desarrollo }
+        @if (isProcessing()) { Cargar Plan / Procesando… }
+        @if (isDone()) { Cargar Plan / Resultado }
+      </div>
+      <div class="page-header-row">
+        <div>
+          <h2>Análisis de Plan con Agente IA</h2>
+          <p>Carga tu plan de desarrollo y el orquestador identificará responsabilidades, actores, leyes y brechas.</p>
+        </div>
+        @if (isDone()) {
+          <button class="reset-btn" (click)="reset()">← Cargar otro documento</button>
+        }
+      </div>
+    </div>
+
+    <!-- Two-column layout (always visible) -->
+    <div class="layout">
+
+      <!-- ── LEFT: upload + orchestrator config ── -->
+      <div class="col-left">
+
+        <!-- Upload card -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon" style="background: var(--green-soft)">📂</div>
+            <div>
+              <div class="card-title">Cargar documento</div>
+              <div class="card-sub">PDF, Word o texto plano</div>
+            </div>
+          </div>
+          <div class="card-body">
+            <app-upload-zone
+              [disabled]="isProcessing() || isDone()"
+              (filesSelected)="onFileSelected($event)"
+            />
+          </div>
+        </div>
+
+        <!-- Orchestrator config — always visible -->
+        <app-orchestrator-card
+          [hasFile]="selectedFile() !== null"
+          [params]="orchestratorParams()"
+          [disabled]="isProcessing() || isDone()"
+          (execute)="onExecute($event)"
+        />
+
+      </div>
+
+      <!-- ── RIGHT: agent pipeline log + results ── -->
+      <div class="col-right">
+
+        <!-- Agent log card — always visible -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon card-icon--dark">⬤</div>
+            <div>
+              <div class="card-title">Orquestador — Pipeline de agentes</div>
+              <div class="card-sub">
+                @if (isDone()) { {{ orchestratorParams()?.entidad }} · {{ orchestratorParams()?.nivel }} }
+                @else { En espera de ejecución… }
+              </div>
+            </div>
+            @if (isProcessing()) {
+              <div class="agent-chip agent-chip--running" style="margin-left:auto">
+                <span class="agent-dot"></span> Procesando
+              </div>
+            }
+            @if (isDone()) {
+              <div class="agent-chip agent-chip--done" style="margin-left:auto">
+                ✓ Completado
+              </div>
+            }
+          </div>
+          <div class="card-body">
+            <app-agent-log [logs]="logs()" height="320px" />
+
+            @if (isProcessing() || isDone()) {
+              <div class="progress-row">
+                <div class="progress-track">
+                  <div class="progress-fill" [style.width.%]="progress()"></div>
+                </div>
+                <span class="progress-label" [class.progress-label--done]="isDone()">
+                  {{ progress() }}% completado
+                </span>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Results tabs — only when done -->
+        @if (isDone()) {
+          <div class="card animate-in">
+            <div class="card-header">
+              <div class="card-icon" style="background: var(--gold-soft)">📊</div>
+              <div>
+                <div class="card-title">Resultados del análisis</div>
+                <div class="card-sub">{{ orchestratorParams()?.entidad ?? 'Plan cargado' }}</div>
+              </div>
+            </div>
+            <div class="card-body card-body--tabs">
+              <app-result-tabs [tabs]="extractedTabs()" (addToPlan)="onAddToPlan()" />
+            </div>
+          </div>
+        }
+
+      </div>
+
+    </div>
+  </main>
+
+</div>

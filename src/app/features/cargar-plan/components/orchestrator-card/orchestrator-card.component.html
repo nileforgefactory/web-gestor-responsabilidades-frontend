@@ -1,0 +1,142 @@
+<div class="ocard">
+  <div class="ocard-header">
+    <div class="ocard-icon">🧠</div>
+    <div class="ocard-title-group">
+      <div class="ocard-title">Orquestador IA — Auto-detección</div>
+      <div class="ocard-sub">Parámetros detectados del documento</div>
+    </div>
+    @if (params()) {
+      <app-badge variant="green" style="margin-left:auto;flex-shrink:0">✦ Auto</app-badge>
+    }
+  </div>
+
+  <!-- ── Estado: sin archivo ── -->
+  @if (!hasFile()) {
+    <div class="ocard-empty">
+      <div class="empty-icon">📂</div>
+      <div class="empty-title">Sube un documento para comenzar</div>
+      <div class="empty-sub">El orquestador detectará automáticamente el nivel territorial, entidad, periodo y sectores.</div>
+    </div>
+  }
+
+  <!-- ── Estado: detectando ── -->
+  @else if (!params()) {
+    <div class="ocard-loading">
+      <div class="loading-spinner"></div>
+      <span>Analizando documento…</span>
+    </div>
+  }
+
+  <!-- ── Estado: params listos ── -->
+  @else {
+    <div class="ocard-body">
+
+      <!-- Nivel territorial -->
+      <div class="field">
+        <div class="field-label-row">
+          <span class="field-label">Nivel territorial</span>
+          <span class="auto-badge">🤖 Auto-detectado</span>
+        </div>
+        <select class="field-select field-select--detected" [disabled]="disabled()">
+          <option>🏙️ Municipal</option>
+          <option>🗺️ Departamental</option>
+          <option>🏛️ Nacional</option>
+        </select>
+      </div>
+
+      <!-- Entidad -->
+      <div class="field">
+        <div class="field-label-row">
+          <span class="field-label">Entidad identificada</span>
+          <span class="auto-badge">🤖 Auto-detectado</span>
+        </div>
+        <input
+          class="field-input field-input--detected"
+          [value]="params()!.entidad"
+          [disabled]="disabled()"
+          readonly
+        />
+      </div>
+
+      <!-- Periodo -->
+      <div class="field">
+        <div class="field-label-row">
+          <span class="field-label">Periodo del plan</span>
+          <span class="auto-badge">🤖 Auto-detectado</span>
+        </div>
+        <input
+          class="field-input field-input--detected"
+          [value]="params()!.periodo"
+          [disabled]="disabled()"
+          readonly
+        />
+      </div>
+
+      <!-- Sectores -->
+      <div class="field">
+        <div class="field-label-row">
+          <span class="field-label">Sectores detectados</span>
+          <span class="auto-badge">🤖 Auto-detectado</span>
+        </div>
+        <div class="sector-chips">
+          @for (sector of allSectors; track sector) {
+            <span
+              class="sector-chip"
+              [class.sector-chip--on]="isSectorOn(sector, params()!)"
+              [class.sector-chip--off]="!isSectorOn(sector, params()!)"
+              (click)="!disabled() && toggleSector(sector, params()!)"
+            >
+              {{ isSectorOn(sector, params()!) ? '✅' : '○' }} {{ sector }}
+            </span>
+          }
+        </div>
+      </div>
+
+      <!-- Actores encontrados -->
+      <div class="field">
+        <div class="field-label-row">
+          <span class="field-label">Actores encontrados</span>
+          <span class="auto-badge">🤖 {{ params()!.actores.length }} actores</span>
+        </div>
+        <div class="actors-list">
+          {{ params()!.actores.slice(0, 8).join(' · ') }}
+          @if (params()!.actores.length > 8) {
+            <span class="actors-more">+{{ params()!.actores.length - 8 }} más…</span>
+          }
+        </div>
+      </div>
+
+      <!-- Profundidad -->
+      <div class="field">
+        <div class="field-label">Profundidad del análisis</div>
+        <div class="depth-options">
+          @for (d of depths; track d.key) {
+            <button
+              class="depth-opt"
+              [class.depth-opt--selected]="selectedDepth() === d.key"
+              [disabled]="disabled()"
+              (click)="selectedDepth.set(d.key)"
+            >
+              <span class="depth-label">{{ d.label }}</span>
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Notice -->
+      <div class="notice">
+        💡 El orquestador verificó estos parámetros. Puedes editarlos antes de ejecutar.
+      </div>
+
+      <!-- CTA -->
+      <button class="execute-btn" [disabled]="disabled()" (click)="onExecute()">
+        @if (disabled()) {
+          <span class="btn-spinner"></span> Procesando…
+        } @else {
+          🚀 Ejecutar orquestador
+        }
+      </button>
+
+    </div>
+  }
+</div>
