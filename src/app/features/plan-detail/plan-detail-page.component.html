@@ -1,0 +1,211 @@
+<div class="app-layout">
+
+  <!-- ── Sidebar ── -->
+  <app-sidebar
+    [sections]="sidebarSections()"
+    (itemClick)="onSidebarClick($event)"
+  />
+
+  <!-- ── Main content ── -->
+  <main class="main-content">
+
+    @if (plan(); as p) {
+
+      <!-- Back row -->
+      <div class="back-row">
+        <button class="back-btn" (click)="back()">← Volver</button>
+        <span class="breadcrumb">Biblioteca de Planes → {{ p.shortName }}</span>
+      </div>
+
+      <!-- ── Hero ── -->
+      <div class="detail-hero" [style.--plan-color]="p.nivelColor">
+        <div class="hero-decoration"></div>
+
+        <div class="hero-badges">
+          <span class="hero-badge">{{ p.nivelLabel }}</span>
+          <span class="hero-badge hero-badge--entity">{{ p.entity }}</span>
+          <span class="hero-badge hero-badge--status">{{ p.statusLabel }}</span>
+        </div>
+
+        <h1 class="hero-title">{{ p.title }}</h1>
+
+        <div class="hero-meta">
+          <span>{{ p.entityIcon }} {{ p.entity }}</span>
+          <span>📅 {{ p.periodo }}</span>
+          <span>🤖 Analizado · {{ formatDate(p.addedAt) }}</span>
+        </div>
+
+        @if (p.description) {
+          <div class="hero-desc">
+            <span class="hero-desc-label">🤖 Síntesis del orquestador</span>
+            {{ p.description }}
+          </div>
+        }
+
+        <!-- Stats bar -->
+        <div class="hero-stats">
+          <div class="dhs">
+            <div class="dhs-val">{{ p.responsabilidades }}</div>
+            <div class="dhs-label">Responsabilidades</div>
+          </div>
+          <div class="dhs-sep"></div>
+          <div class="dhs">
+            <div class="dhs-val">{{ p.leyes }}</div>
+            <div class="dhs-label">Leyes</div>
+          </div>
+          <div class="dhs-sep"></div>
+          <div class="dhs">
+            <div class="dhs-val">{{ p.actores }}</div>
+            <div class="dhs-label">Actores</div>
+          </div>
+          <div class="dhs-sep"></div>
+          <div class="dhs">
+            <div class="dhs-val dhs-val--red">{{ p.brechas }}</div>
+            <div class="dhs-label">Brechas</div>
+          </div>
+          <div class="dhs-sep"></div>
+          <div class="dhs">
+            <div class="dhs-val dhs-val--green">{{ p.avance }}%</div>
+            <div class="dhs-label">Avance</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Coverage + Actors row ── -->
+      <div class="details-row">
+
+        <!-- Coverage card -->
+        <div class="card col-coverage">
+          <div class="card-header">
+            <div class="card-icon" style="background: var(--accent-soft)">📈</div>
+            <div>
+              <div class="card-title">Cobertura por sector</div>
+              <div class="card-sub">Responsabilidades asignadas vs. esperadas</div>
+            </div>
+          </div>
+          <div class="card-body">
+
+            @if (p.sectorCoverage?.length) {
+              <div class="coverage-list">
+                @for (cov of p.sectorCoverage!; track cov.sector) {
+                  <div class="coverage-item">
+                    <div class="coverage-header">
+                      <span class="coverage-label">{{ cov.icon }} {{ cov.sector }}</span>
+                      <span class="coverage-pct" [style.color]="coverageColor(cov.pct)">{{ cov.pct }}%</span>
+                    </div>
+                    <div class="coverage-track">
+                      <div
+                        class="coverage-fill"
+                        [style.width.%]="cov.pct"
+                        [style.background]="coverageColor(cov.pct)"
+                      ></div>
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="coverage-empty">
+                <div class="sectors-chips">
+                  @for (sector of p.sectors; track sector) {
+                    <span class="sector-tag">{{ sector }}</span>
+                  }
+                </div>
+                <div class="avance-row">
+                  <span>Avance global</span>
+                  <span [style.color]="p.avanceColor">{{ p.avance }}%</span>
+                </div>
+                <div class="avance-track-full">
+                  <div class="avance-fill-full" [style.width.%]="p.avance" [style.background]="p.avanceColor"></div>
+                </div>
+              </div>
+            }
+
+          </div>
+        </div>
+
+        <!-- Actors card -->
+        <div class="card col-actors">
+          <div class="card-header">
+            <div class="card-icon" style="background: var(--green-soft)">🏛️</div>
+            <div>
+              <div class="card-title">Actores identificados</div>
+              <div class="card-sub">{{ p.actores }} entidades institucionales</div>
+            </div>
+          </div>
+          <div class="card-body">
+
+            @if (p.actorDetails?.length) {
+              <div class="actors-grid">
+                @for (actor of p.actorDetails!; track actor.name) {
+                  <div class="actor-item" [class.actor-item--hl]="actor.highlighted">
+                    <span class="actor-icon">{{ actor.icon }}</span>
+                    <div class="actor-info">
+                      <div class="actor-name">{{ actor.name }}</div>
+                      <app-badge [variant]="actor.badgeVariant">{{ actor.badgeLabel }}</app-badge>
+                    </div>
+                  </div>
+                }
+                @if (p.actores > (p.actorDetails?.length ?? 0)) {
+                  <div class="actor-more">
+                    + {{ p.actores - (p.actorDetails?.length ?? 0) }} actores más en el informe completo
+                    ({{ p.sectors.slice(0, 3).join(', ') }}…)
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="actors-empty">
+                <div class="actors-empty-val">{{ p.actores }}</div>
+                <div class="actors-empty-lbl">actores identificados</div>
+                <p class="actors-empty-sub">Ver informe completo para el detalle por actor.</p>
+              </div>
+            }
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── Analysis tabs ── -->
+      @if (p.resultTabs?.length) {
+        <div class="card" id="analysis-section">
+          <div class="card-header">
+            <div class="card-icon" style="background: var(--gold-soft)">📊</div>
+            <div>
+              <div class="card-title">Análisis detallado</div>
+              <div class="card-sub">Resultados del Agente IA · {{ p.shortName }}</div>
+            </div>
+            <div class="card-actions">
+              <button class="btn-sm">📥 Exportar PDF</button>
+              <button class="btn-sm btn-primary" (click)="reanalyze()">🔄 Reanalizar</button>
+            </div>
+          </div>
+          <div class="card-body card-body--tabs">
+            <app-result-tabs
+              [tabs]="p.resultTabs!"
+              [showActions]="false"
+              [activateTab]="activeTab()"
+              (tabChange)="onTabChange($event)"
+            />
+          </div>
+        </div>
+      } @else {
+        <div class="card no-analysis">
+          <div class="no-analysis-icon">📊</div>
+          <div class="no-analysis-title">Análisis detallado no disponible</div>
+          <div class="no-analysis-sub">Este plan aún no ha sido procesado por el agente IA.</div>
+          <button class="btn-sm btn-primary" (click)="reanalyze()">🔄 Procesar ahora</button>
+        </div>
+      }
+
+    } @else {
+      <!-- Not found -->
+      <div class="not-found">
+        <div class="not-found-icon">📂</div>
+        <h2 class="not-found-title">Plan no encontrado</h2>
+        <p class="not-found-sub">El plan solicitado no existe en la biblioteca.</p>
+        <button class="btn-sm btn-primary" (click)="back()">← Volver a la biblioteca</button>
+      </div>
+    }
+
+  </main>
+</div>
