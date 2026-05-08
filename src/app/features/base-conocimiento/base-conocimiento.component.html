@@ -1,0 +1,258 @@
+<div class="app-layout">
+
+  <app-sidebar
+    [sections]="sidebarSections()"
+    [user]="sidebarUser"
+    (itemClick)="onSidebarItemClick($event)"
+  />
+
+  <main class="main-content">
+
+    <!-- ── Page header ── -->
+    <div class="page-header">
+      <div class="breadcrumb">RAG / Base de Conocimiento</div>
+      <div class="page-header-row">
+        <div>
+          <h2>Base de conocimiento</h2>
+          <p>Indexa leyes, decretos y documentos para alimentar el motor de búsqueda semántica.</p>
+        </div>
+        <div class="stat-pills">
+          <div class="stat-pill">
+            <span class="stat-value">{{ totalDocs() }}</span>
+            <span class="stat-label">docs</span>
+          </div>
+          <div class="stat-pill stat-pill--accent">
+            <span class="stat-value">{{ totalChunks() }}</span>
+            <span class="stat-label">fragmentos</span>
+          </div>
+          <div class="stat-pill stat-pill--green">
+            <span class="stat-value">{{ indexedCount() }}</span>
+            <span class="stat-label">activos</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Two-column layout ── -->
+    <div class="layout">
+
+      <!-- ═══ LEFT: Upload panel ═══════════════════════════════════ -->
+      <div class="col-left">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon" style="background: var(--accent-soft)">⚡</div>
+            <div>
+              <div class="card-title">Indexar documento</div>
+              <div class="card-sub">Vectoriza y añade a la base RAG</div>
+            </div>
+          </div>
+          <div class="card-body">
+
+            <!-- Tabs -->
+            <div class="tabs">
+              <button class="tab" [class.tab--active]="activeTab() === 'file'" (click)="setTab('file')">
+                📁 Subir archivo
+              </button>
+              <button class="tab" [class.tab--active]="activeTab() === 'text'" (click)="setTab('text')">
+                📝 Ingresar texto
+              </button>
+            </div>
+
+            <!-- ── FILE TAB ── -->
+            @if (activeTab() === 'file') {
+              <div
+                class="drop-zone"
+                [class.drop-zone--dragging]="isDragging()"
+                [class.drop-zone--uploading]="isUploading()"
+                [class.drop-zone--success]="uploadSuccess() !== null"
+                (dragover)="onDragOver($event)"
+                (dragleave)="onDragLeave()"
+                (drop)="onDrop($event)"
+              >
+                @if (!isUploading()) {
+                  <div class="dz-inner">
+                    <div class="dz-icon">
+                      @if (uploadSuccess()) { ✅ }
+                      @else if (isDragging()) { 📥 }
+                      @else { 📂 }
+                    </div>
+                    <div class="dz-title">
+                      @if (isDragging())      { Suelta para indexar }
+                      @else if (uploadSuccess()) { Documento indexado }
+                      @else { Arrastra un archivo aquí }
+                    </div>
+                    <div class="dz-sub">PDF, TXT, Markdown</div>
+
+                    @if (uploadSuccess()) {
+                      <div class="success-msg">{{ uploadSuccess() }}</div>
+                      <button class="btn btn--ghost" (click)="resetUpload()">Subir otro</button>
+                    } @else {
+                      <label class="btn btn--primary">
+                        Seleccionar archivo
+                        <input type="file" accept=".pdf,.txt,.md" (change)="onFileChange($event)" hidden />
+                      </label>
+                    }
+                  </div>
+                } @else {
+                  <div class="dz-inner">
+                    <div class="dz-spinner">⟳</div>
+                    <div class="dz-title">Indexando…</div>
+                    <div class="upload-progress-bar">
+                      <div class="upload-progress-fill" [style.width.%]="uploadProgress()"></div>
+                    </div>
+                    <div class="dz-sub">{{ uploadProgress() | number:'1.0-0' }}% completado</div>
+                  </div>
+                }
+              </div>
+
+              @if (uploadError()) {
+                <div class="banner banner--error">⚠ {{ uploadError() }}</div>
+              }
+            }
+
+            <!-- ── TEXT TAB ── -->
+            @if (activeTab() === 'text') {
+              <div class="text-form">
+                <div class="form-group">
+                  <label class="form-label">Título</label>
+                  <input
+                    class="form-input"
+                    type="text"
+                    placeholder="Ej: Ley 115 de 1994 — Educación"
+                    [(ngModel)]="textTitle"
+                  />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Tipo de norma</label>
+                  <select class="form-select" [(ngModel)]="textDocType">
+                    <option value="ley">Ley</option>
+                    <option value="decreto">Decreto</option>
+                    <option value="resolucion">Resolución</option>
+                    <option value="circular">Circular</option>
+                    <option value="otro">Otro</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Contenido del documento</label>
+                  <textarea
+                    class="form-textarea"
+                    rows="9"
+                    placeholder="Pega o escribe el texto completo de la norma…"
+                    [(ngModel)]="textContent"
+                  ></textarea>
+                </div>
+
+                @if (textError())   { <div class="banner banner--error">⚠ {{ textError() }}</div>   }
+                @if (textSuccess()) { <div class="banner banner--success">✅ {{ textSuccess() }}</div> }
+
+                <button
+                  class="btn btn--primary btn--full"
+                  [disabled]="isSubmittingText() || !textContent.trim()"
+                  (click)="onSubmitText()"
+                >
+                  @if (isSubmittingText()) { ⟳ Indexando… }
+                  @else { ⚡ Vectorizar e indexar }
+                </button>
+              </div>
+            }
+
+          </div>
+        </div>
+
+        <!-- ── Service health card ── -->
+        <div class="card card--compact">
+          <div class="card-header">
+            <div class="card-icon" style="background: var(--green-soft)">🔗</div>
+            <div>
+              <div class="card-title">Servicios RAG</div>
+              <div class="card-sub">Estado de conexión</div>
+            </div>
+            <div class="status-dot status-dot--{{ apiStatus() }}" style="margin-left:auto"></div>
+          </div>
+          <div class="card-body">
+            <div class="service-rows">
+              <div class="service-row">
+                <span class="svc-name">API FastAPI</span>
+                <code class="svc-url">:8000</code>
+                <span class="svc-status svc-status--{{ apiStatus() }}">{{ apiStatusLabel(apiStatus()) }}</span>
+              </div>
+              <div class="service-row">
+                <span class="svc-name">Qdrant</span>
+                <code class="svc-url">Vector DB</code>
+                <span class="svc-status svc-status--{{ qdrantStatus() }}">{{ apiStatusLabel(qdrantStatus()) }}</span>
+              </div>
+              <div class="service-row">
+                <span class="svc-name">Ollama</span>
+                <code class="svc-url">LLM local</code>
+                <span class="svc-status svc-status--{{ ollamaStatus() }}">{{ apiStatusLabel(ollamaStatus()) }}</span>
+              </div>
+            </div>
+            <button class="btn-check" (click)="checkApiHealth()">🔍 Verificar conexión</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ RIGHT: Document inventory ══════════════════════════════ -->
+      <div class="col-right">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon" style="background: var(--primary); color: #fff">🗄️</div>
+            <div>
+              <div class="card-title">Documentos indexados</div>
+              <div class="card-sub">{{ totalChunks() }} fragmentos vectoriales · colección <code class="inline-code">normas_legales</code></div>
+            </div>
+            <div class="count-badge" style="margin-left:auto">{{ totalDocs() }}</div>
+          </div>
+
+          @if (documents().length === 0) {
+            <div class="empty-state">
+              <div class="empty-icon">📭</div>
+              <div class="empty-title">Base de conocimiento vacía</div>
+              <div class="empty-sub">Sube tu primer documento para comenzar.</div>
+            </div>
+          } @else {
+            <div class="doc-list">
+              @for (doc of documents(); track doc.id) {
+                <div class="doc-row" [class.doc-row--processing]="doc.status === 'procesando'">
+                  <span class="type-chip type-chip--{{ doc.tipo }}">{{ doc.tipo }}</span>
+                  <div class="doc-info">
+                    <div class="doc-name">{{ doc.nombre }}</div>
+                    <div class="doc-meta">
+                      <span class="mono">{{ doc.chunks }} chunks</span>
+                      <span class="sep">·</span>
+                      <span class="mono">{{ doc.fecha | date:'dd MMM yyyy' }}</span>
+                      @if (doc.size) {
+                        <span class="sep">·</span>
+                        <span class="mono">{{ doc.size }}</span>
+                      }
+                    </div>
+                  </div>
+                  <div class="doc-status doc-status--{{ doc.status }}">
+                    @if (doc.status === 'indexado')   { ✅ indexado   }
+                    @if (doc.status === 'procesando') { 🔄 procesando }
+                    @if (doc.status === 'error')      { ⚠ error      }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Usage tip -->
+        <div class="tip-card">
+          <div class="tip-icon">💡</div>
+          <div class="tip-body">
+            <div class="tip-title">¿Cómo usar la base de conocimiento?</div>
+            <div class="tip-text">
+              Los documentos indexados aquí son la fuente que consulta el agente en
+              <strong>Búsqueda RAG</strong> y el orquestador de análisis de planes.
+              Sube leyes, decretos o normativas para enriquecer las respuestas.
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+</div>
