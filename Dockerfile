@@ -14,10 +14,11 @@ FROM nginx:alpine
 
 COPY --from=builder /app/dist/gestorResponsabilidades/browser /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY entrypoint.sh /entrypoint.sh
+COPY entrypoint.sh ./entrypoint.sh
 
-RUN chmod +x /entrypoint.sh
+# Strip CRLF so the shebang works on Linux (Windows checkouts often break ./entrypoint.sh).
+RUN sed -i 's/\r$//' ./entrypoint.sh && chmod +x ./entrypoint.sh
 
 EXPOSE 80
 
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["./entrypoint.sh"]
