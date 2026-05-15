@@ -7,7 +7,6 @@ import { UploadZoneComponent } from '../../shared/components/upload-zone/upload-
 import { ResultTab, ResultTabsComponent } from '../../shared/components/result-tabs/result-tabs.component';
 import { OrchestratorCardComponent, OrchestratorParams } from './components/orchestrator-card/orchestrator-card.component';
 import { PlanService } from '../../core/services/plan.service';
-import { RagApiService } from '../../core/services/rag-api.service';
 import { PlanApiService, ApiPlanCreate } from '../../core/services/plan-api.service';
 import { environment } from '../../../environments/environment';
 import type { BadgeVariant } from '../../shared/components/badge/badge.component';
@@ -23,7 +22,6 @@ type PageState = 'idle' | 'file-loaded' | 'processing' | 'done';
 })
 export class CargarPlanComponent {
   private planService = inject(PlanService);
-  private ragApi      = inject(RagApiService);
   private planApi     = inject(PlanApiService);
   private router      = inject(Router);
 
@@ -91,38 +89,20 @@ export class CargarPlanComponent {
     if (item.id) this.router.navigate(['/plan', item.id]);
   }
 
-  // ── File selected → ingest into backend ──────────────────────────────
-  async onFileSelected(files: File[]): Promise<void> {
+  // ── File selected → solo registra archivo, el análisis lo indexa ────
+  onFileSelected(files: File[]): void {
     if (!files.length) return;
     const file = files[0];
     this.selectedFile.set(file);
-    this.orchestratorParams.set(null); // null = detecting
     this.state.set('file-loaded');
-
-    try {
-      const ingest = await firstValueFrom(
-        this.ragApi.ingestFile(file, { collection_id: environment.planCollection }),
-      );
-      this.ingestDocId.set(ingest.document_id);
-
-      this.orchestratorParams.set({
-        nivel:    'Municipal',
-        entidad:  file.name.replace(/\.[^.]+$/, ''),
-        periodo:  '',
-        sectores: [],
-        actores:  [],
-        depth:    'estandar',
-      });
-    } catch {
-      this.orchestratorParams.set({
-        nivel:    'Municipal',
-        entidad:  file.name.replace(/\.[^.]+$/, ''),
-        periodo:  '',
-        sectores: [],
-        actores:  [],
-        depth:    'estandar',
-      });
-    }
+    this.orchestratorParams.set({
+      nivel:    'Municipal',
+      entidad:  file.name.replace(/\.[^.]+$/, ''),
+      periodo:  '',
+      sectores: [],
+      actores:  [],
+      depth:    'estandar',
+    });
   }
 
   // ── Orchestrator "execute" event → run real pipeline ─────────────────
@@ -180,103 +160,144 @@ export class CargarPlanComponent {
     this.createdPlanId.set(null);
   }
 
-  // ── Pipeline: real RAG queries ────────────────────────────────────────
+  // ── Pipeline: SSE streaming via analyze-document ─────────────────────
   private async runPipeline(params: OrchestratorParams): Promise<void> {
-    const file   = this.selectedFile()!;
-    const collId = environment.planCollection;
+    const file = this.selectedFile()!;
 
     this.addLog('proc', `⚙ Orquestador iniciado — ${file.name}`);
-    await this.delay(300);
+    this.progress.set(5);
 
-    const docId = this.ingestDocId();
-    if (docId) {
-      this.addLog('ok', `✓ Documento indexado en base de conocimiento`);
-      this.addLog('info', `→ Doc ID: ${docId.slice(0, 24)}…`);
-    } else {
-      this.addLog('warn', `⚠ Documento no pudo ser indexado — analizando sin contexto local`);
+    const nivelMap: Record<string, string> = {
+      Municipal: 'municipal', Departamental: 'departamental',
+      Nacional: 'nacional',   Sectorial: 'sectorial',
+    };
+
+    const form = new FormData();
+    form.append('file', file);
+    form.append('collection_id', environment.planCollection);
+    form.append('normativa_collection_ids', environment.ragCollection);
+    form.append('nivel', nivelMap[params.nivel] ?? 'municipal');
+    form.append('profundidad', params.depth);
+    form.append('entidad', params.entidad);
+    form.append('stream', 'true');
+    form.append('guardar_mysql', 'false');
+
+    let response: Response;
+    try {
+      response = await fetch(
+        `${environment.ragApiUrl}/api/v1/analysis/analyze-document`,
+        { method: 'POST', body: form },
+      );
+    } catch {
+      this.addLog('warn', '⚠ No se pudo conectar con el servidor. Verifica que el backend esté activo.');
+      this.state.set('done');
+      return;
     }
-    this.progress.set(10);
 
-    const queries: { label: string; question: string; tabId: string; tabIcon: string; tabLabel: string }[] = [
-      {
-        label:    'responsabilidades',
-        question: `¿Cuáles son las principales responsabilidades y competencias establecidas en este plan de desarrollo? Lista cada una con su base legal si la menciona.`,
-        tabId: 'resp', tabIcon: '👥', tabLabel: 'Responsabilidades',
-      },
-      {
-        label:    'leyes',
-        question: `¿Qué leyes, decretos, resoluciones y normas se mencionan en este plan? Lista cada norma con su descripción y artículos relevantes.`,
-        tabId: 'leyes', tabIcon: '⚖️', tabLabel: 'Marco legal',
-      },
-      {
-        label:    'actores',
-        question: `¿Qué entidades, instituciones o actores se identifican como responsables en este plan de desarrollo? Incluye municipios, gobernaciones, ministerios, entidades descentralizadas.`,
-        tabId: 'actores', tabIcon: '🏛️', tabLabel: 'Actores',
-      },
-      {
-        label:    'brechas',
-        question: `¿Qué brechas, déficits, responsabilidades sin cobertura o competencias duplicadas se pueden identificar en este plan? ¿Hay obligaciones legales sin asignación clara?`,
-        tabId: 'brechas', tabIcon: '🚨', tabLabel: 'Brechas',
-      },
-    ];
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({ detail: response.statusText }));
+      this.addLog('warn', `⚠ Error del servidor: ${err.detail ?? response.statusText}`);
+      this.state.set('done');
+      return;
+    }
+
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? '';
+        for (const line of lines) {
+          if (!line.startsWith('data:')) continue;
+          const raw = line.slice(5).trim();
+          if (!raw) continue;
+          try {
+            this.handleSseEvent(JSON.parse(raw), params);
+          } catch { /* ignorar líneas malformadas */ }
+        }
+      }
+    } catch {
+      this.addLog('warn', '⚠ Conexión SSE interrumpida');
+      this.state.set('done');
+    }
+  }
+
+  private handleSseEvent(event: Record<string, any>, _params: OrchestratorParams): void {
+    switch (event['type']) {
+      case 'log':
+        this.addLog('info', event['msg'] ?? '');
+        break;
+      case 'indexing_done':
+        this.addLog('ok', `✓ ${event['chunks']} chunks indexados en Qdrant`);
+        this.progress.set(20);
+        break;
+      case 'agent_start':
+        this.addLog('proc', `⚙ Agente ${event['agent']} iniciado…`);
+        break;
+      case 'agent_done':
+        this.addLog('ok', `✓ ${event['agent']}: ${event['count']} elementos extraídos`);
+        this.progress.update(p => Math.min(p + 15, 85));
+        break;
+      case 'agent_error':
+        this.addLog('warn', `⚠ ${event['agent']}: ${event['error']}`);
+        break;
+      case 'coordinator_decision': {
+        const pct = Math.round((event['confianza'] ?? 1) * 100);
+        this.addLog('info', `🤖 Coordinador → ${event['accion']} (confianza: ${pct}%)`);
+        if (event['razon']) this.addLog('info', `   ${event['razon']}`);
+        break;
+      }
+      case 'saving':
+        this.addLog('proc', event['msg'] ?? 'Guardando…');
+        break;
+      case 'heartbeat':
+        break;
+      case 'done':
+        this.ingestDocId.set(event['result']?.['document_id'] ?? null);
+        this.buildTabsFromResult(event['result']);
+        this.progress.set(100);
+        this.addLog('ok', '✓ Análisis completado con éxito');
+        this.state.set('done');
+        break;
+      case 'error':
+        this.addLog('warn', `⚠ Error: ${event['error']}`);
+        this.state.set('done');
+        break;
+    }
+  }
+
+  private buildTabsFromResult(result: Record<string, any> | null | undefined): void {
+    if (!result) return;
+
+    const makeItems = (rows: any[], icon: string, titleKey = 'titulo') =>
+      (rows ?? []).slice(0, 10).map((r: any) => ({
+        icon,
+        title:  r[titleKey] ?? r['nombre'] ?? 'Sin título',
+        body:   r['descripcion'] ?? r['relevancia'] ?? '',
+        badges: r['sector'] ? [{ label: r['sector'], variant: 'blue' as BadgeVariant }] : [],
+      }));
 
     const tabs: ResultTab[] = [];
-    const progressStep = 18;
 
-    for (let i = 0; i < queries.length; i++) {
-      const q = queries[i];
-      await this.delay(200);
-      this.addLog('proc', `⚙ Analizando ${q.label}…`);
-
-      try {
-        const res = await firstValueFrom(
-          this.ragApi.ask({ collection_ids: [collId], user_message: q.question, top_k: 5 }),
-        );
-
-        const lines = res.answer
-          .split('\n')
-          .map(l => l.trim())
-          .filter(l => l.length > 10)
-          .slice(0, 6);
-
-        tabs.push({
-          id:    q.tabId,
-          icon:  q.tabIcon,
-          label: q.tabLabel,
-          count: res.citations.length || lines.length,
-          items: [
-            { icon: '🤖', title: 'Síntesis del agente IA', body: res.answer.slice(0, 500), badges: [] },
-            ...res.citations.slice(0, 3).map(c => ({
-              icon:   '📄',
-              title:  c.title ?? c.source_filename ?? c.document_id,
-              body:   '',
-              badges: [{ label: `Score: ${Math.round(c.score * 100)}%`, variant: 'blue' as BadgeVariant }],
-            })),
-          ],
-        });
-
-        this.addLog('ok', `✓ ${q.label}: ${res.citations.length} referencias encontradas`);
-      } catch {
-        this.addLog('warn', `⚠ No se pudo analizar ${q.label}`);
-      }
-
-      this.progress.set(10 + (i + 1) * progressStep);
-    }
+    if (result['responsabilidades']?.length)
+      tabs.push({ id: 'resp',    icon: '👥', label: 'Responsabilidades', count: result['responsabilidades'].length, items: makeItems(result['responsabilidades'], '📋') });
+    if (result['leyes']?.length)
+      tabs.push({ id: 'leyes',   icon: '⚖️', label: 'Marco legal',       count: result['leyes'].length,           items: makeItems(result['leyes'], '📜', 'codigo') });
+    if (result['actores']?.length)
+      tabs.push({ id: 'actores', icon: '🏛️', label: 'Actores',           count: result['actores'].length,         items: makeItems(result['actores'], '🏢', 'nombre') });
+    if (result['brechas']?.length)
+      tabs.push({ id: 'brechas', icon: '🚨', label: 'Brechas',           count: result['brechas'].length,         items: makeItems(result['brechas'], '⚠️') });
 
     this.extractedTabs.set(tabs);
-    this.progress.set(100);
-    this.addLog('ok', `✓ Pipeline completado · ${tabs.length} secciones analizadas`);
-
-    await this.delay(500);
-    this.state.set('done');
   }
 
   private addLog(type: LogLine['type'], message: string): void {
     const time = new Date().toLocaleTimeString('es-CO', { hour12: false });
     this.logs.update(l => [...l, { time: `[${time}]`, type, message }]);
-  }
-
-  private delay(ms: number): Promise<void> {
-    return new Promise(r => setTimeout(r, ms));
   }
 }
