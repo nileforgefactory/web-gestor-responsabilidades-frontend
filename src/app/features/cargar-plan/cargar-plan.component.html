@@ -76,8 +76,11 @@
               </div>
             </div>
             @if (isProcessing()) {
-              <div class="agent-chip agent-chip--running" style="margin-left:auto">
-                <span class="agent-dot"></span> Procesando
+              <div style="margin-left:auto; display:flex; align-items:center; gap:10px">
+                <div class="agent-chip agent-chip--running">
+                  <span class="agent-dot"></span> Procesando
+                </div>
+                <button class="stop-btn" (click)="stopAnalysis()">⏹ Detener</button>
               </div>
             }
             @if (isDone()) {

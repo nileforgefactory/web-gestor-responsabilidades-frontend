@@ -1,5 +1,17 @@
 :host { display: block; }
 
+.stop-btn {
+  padding: 4px 12px;
+  font-size: 12px;
+  border: 1px solid #f87171;
+  border-radius: 6px;
+  background: #fef2f2;
+  color: #dc2626;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.stop-btn:hover { background: #fee2e2; }
+
 /* ─── App layout shell ─── */
 .app-layout {
   display: flex;

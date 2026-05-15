@@ -35,6 +35,9 @@ export class CargarPlanComponent {
   ingestDocId        = signal<string | null>(null);
   createdPlanId      = signal<string | null>(null);
 
+  private _sessionId: string | null = null;
+  private _abortController: AbortController | null = null;
+
   isIdle       = computed(() => this.state() === 'idle');
   isFileLoaded = computed(() => this.state() === 'file-loaded');
   isProcessing = computed(() => this.state() === 'processing');
@@ -149,6 +152,20 @@ export class CargarPlanComponent {
     }
   }
 
+  async stopAnalysis(): Promise<void> {
+    // Cancela la tarea en el backend
+    if (this._sessionId) {
+      fetch(`${environment.ragApiUrl}/api/v1/analysis/session/${this._sessionId}/cancel`, { method: 'POST' })
+        .catch(() => {});
+    }
+    // Corta la conexión SSE en el frontend
+    this._abortController?.abort();
+    this._sessionId = null;
+    this._abortController = null;
+    this.addLog('warn', '⚠ Análisis detenido por el usuario');
+    this.state.set('done');
+  }
+
   reset(): void {
     this.state.set('idle');
     this.selectedFile.set(null);
@@ -158,6 +175,8 @@ export class CargarPlanComponent {
     this.extractedTabs.set([]);
     this.ingestDocId.set(null);
     this.createdPlanId.set(null);
+    this._sessionId = null;
+    this._abortController = null;
   }
 
   // ── Pipeline: SSE streaming via analyze-document ─────────────────────
@@ -182,13 +201,16 @@ export class CargarPlanComponent {
     form.append('stream', 'true');
     form.append('guardar_mysql', 'false');
 
+    this._abortController = new AbortController();
+
     let response: Response;
     try {
       response = await fetch(
         `${environment.ragApiUrl}/api/v1/analysis/analyze-document`,
-        { method: 'POST', body: form },
+        { method: 'POST', body: form, signal: this._abortController.signal },
       );
-    } catch {
+    } catch (err: any) {
+      if (err?.name === 'AbortError') return; // detenido por el usuario
       this.addLog('warn', '⚠ No se pudo conectar con el servidor. Verifica que el backend esté activo.');
       this.state.set('done');
       return;
@@ -221,14 +243,25 @@ export class CargarPlanComponent {
           } catch { /* ignorar líneas malformadas */ }
         }
       }
-    } catch {
-      this.addLog('warn', '⚠ Conexión SSE interrumpida');
-      this.state.set('done');
+    } catch (err: any) {
+      if (err?.name !== 'AbortError') {
+        this.addLog('warn', '⚠ Conexión SSE interrumpida');
+        this.state.set('done');
+      }
+    } finally {
+      this._abortController = null;
     }
   }
 
   private handleSseEvent(event: Record<string, any>, _params: OrchestratorParams): void {
     switch (event['type']) {
+      case 'session_started':
+        this._sessionId = event['session_id'] ?? null;
+        break;
+      case 'cancelled':
+        this.addLog('warn', '⚠ Análisis detenido');
+        this.state.set('done');
+        break;
       case 'log':
         this.addLog('info', event['msg'] ?? '');
         break;
