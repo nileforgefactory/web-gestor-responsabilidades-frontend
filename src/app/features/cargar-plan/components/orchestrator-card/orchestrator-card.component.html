@@ -2,12 +2,9 @@
   <div class="ocard-header">
     <div class="ocard-icon">🧠</div>
     <div class="ocard-title-group">
-      <div class="ocard-title">Orquestador IA — Auto-detección</div>
-      <div class="ocard-sub">Parámetros detectados del documento</div>
+      <div class="ocard-title">Orquestador IA</div>
+      <div class="ocard-sub">Configura los parámetros del análisis</div>
     </div>
-    @if (params()) {
-      <app-badge variant="green" style="margin-left:auto;flex-shrink:0">✦ Auto</app-badge>
-    }
   </div>
 
   <!-- ── Estado: sin archivo ── -->
@@ -15,29 +12,18 @@
     <div class="ocard-empty">
       <div class="empty-icon">📂</div>
       <div class="empty-title">Sube un documento para comenzar</div>
-      <div class="empty-sub">El orquestador detectará automáticamente el nivel territorial, entidad, periodo y sectores.</div>
-    </div>
-  }
-
-  <!-- ── Estado: detectando ── -->
-  @else if (!params()) {
-    <div class="ocard-loading">
-      <div class="loading-spinner"></div>
-      <span>Analizando documento…</span>
+      <div class="empty-sub">Configura el nivel territorial, entidad y sectores antes de ejecutar.</div>
     </div>
   }
 
   <!-- ── Estado: params listos ── -->
-  @else {
+  @else if (params()) {
     <div class="ocard-body">
 
       <!-- Nivel territorial -->
       <div class="field">
-        <div class="field-label-row">
-          <span class="field-label">Nivel territorial</span>
-          <span class="auto-badge">🤖 Auto-detectado</span>
-        </div>
-        <select class="field-select field-select--detected" [disabled]="disabled()">
+        <span class="field-label">Nivel territorial</span>
+        <select class="field-select" [disabled]="disabled()">
           <option>🏙️ Municipal</option>
           <option>🗺️ Departamental</option>
           <option>🏛️ Nacional</option>
@@ -46,38 +32,28 @@
 
       <!-- Entidad -->
       <div class="field">
-        <div class="field-label-row">
-          <span class="field-label">Entidad identificada</span>
-          <span class="auto-badge">🤖 Auto-detectado</span>
-        </div>
+        <span class="field-label">Entidad</span>
         <input
-          class="field-input field-input--detected"
+          class="field-input"
           [value]="params()!.entidad"
           [disabled]="disabled()"
-          readonly
         />
       </div>
 
       <!-- Periodo -->
       <div class="field">
-        <div class="field-label-row">
-          <span class="field-label">Periodo del plan</span>
-          <span class="auto-badge">🤖 Auto-detectado</span>
-        </div>
+        <span class="field-label">Periodo del plan</span>
         <input
-          class="field-input field-input--detected"
+          class="field-input"
           [value]="params()!.periodo"
           [disabled]="disabled()"
-          readonly
+          placeholder="Ej: 2024-2027"
         />
       </div>
 
       <!-- Sectores -->
       <div class="field">
-        <div class="field-label-row">
-          <span class="field-label">Sectores detectados</span>
-          <span class="auto-badge">🤖 Auto-detectado</span>
-        </div>
+        <span class="field-label">Sectores</span>
         <div class="sector-chips">
           @for (sector of allSectors; track sector) {
             <span
@@ -92,23 +68,9 @@
         </div>
       </div>
 
-      <!-- Actores encontrados -->
-      <div class="field">
-        <div class="field-label-row">
-          <span class="field-label">Actores encontrados</span>
-          <span class="auto-badge">🤖 {{ params()!.actores.length }} actores</span>
-        </div>
-        <div class="actors-list">
-          {{ params()!.actores.slice(0, 8).join(' · ') }}
-          @if (params()!.actores.length > 8) {
-            <span class="actors-more">+{{ params()!.actores.length - 8 }} más…</span>
-          }
-        </div>
-      </div>
-
       <!-- Profundidad -->
       <div class="field">
-        <div class="field-label">Profundidad del análisis</div>
+        <span class="field-label">Profundidad del análisis</span>
         <div class="depth-options">
           @for (d of depths; track d.key) {
             <button
@@ -123,9 +85,24 @@
         </div>
       </div>
 
-      <!-- Notice -->
-      <div class="notice">
-        💡 El orquestador verificó estos parámetros. Puedes editarlos antes de ejecutar.
+      <!-- Iteraciones máximas -->
+      <div class="field">
+        <span class="field-label">Iteraciones máximas del coordinador</span>
+        <div class="depth-options">
+          @for (n of maxIterOptions; track n) {
+            <button
+              class="depth-opt"
+              [class.depth-opt--selected]="selectedMaxIter() === n"
+              [disabled]="disabled() || selectedDepth() === 'basico'"
+              (click)="selectedMaxIter.set(n)"
+            >
+              <span class="depth-label">{{ n === 0 ? 'Sin coordinador' : n }}</span>
+            </button>
+          }
+        </div>
+        @if (selectedDepth() === 'basico') {
+          <span class="field-hint">No disponible en modo básico</span>
+        }
       </div>
 
       <!-- CTA -->

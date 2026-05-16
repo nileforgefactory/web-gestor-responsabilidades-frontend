@@ -1,5 +1,4 @@
 import { Component, input, output, signal } from '@angular/core';
-import { BadgeComponent } from '../../../../shared/components/badge/badge.component';
 
 export type AnalysisDepth = 'basico' | 'estandar' | 'profundo';
 
@@ -10,6 +9,7 @@ export interface OrchestratorParams {
   sectores: string[];
   actores: string[];
   depth: AnalysisDepth;
+  maxIteraciones: number;
 }
 
 const DEFAULT_SECTORS = ['Salud', 'Educación', 'Ambiente', 'Agua', 'Vías', 'Vivienda'];
@@ -17,14 +17,14 @@ const DEFAULT_SECTORS = ['Salud', 'Educación', 'Ambiente', 'Agua', 'Vías', 'Vi
 @Component({
   selector: 'app-orchestrator-card',
   standalone: true,
-  imports: [BadgeComponent],
+  imports: [],
   templateUrl: './orchestrator-card.component.html',
   styleUrl: './orchestrator-card.component.css',
 })
 export class OrchestratorCardComponent {
   /** null = sin archivo; undefined = detectando; object = listo */
-  params   = input<OrchestratorParams | null | undefined>(undefined);
-  hasFile  = input<boolean>(false);
+  params     = input<OrchestratorParams | null | undefined>(undefined);
+  hasFile    = input<boolean>(false);
   disabled = input<boolean>(false);
 
   execute = output<OrchestratorParams>();
@@ -35,7 +35,10 @@ export class OrchestratorCardComponent {
     { key: 'profundo',  label: 'Profundo',  desc: 'Análisis completo + brechas' },
   ];
 
-  selectedDepth = signal<AnalysisDepth>('estandar');
+  selectedDepth      = signal<AnalysisDepth>('estandar');
+  selectedMaxIter    = signal<number>(3);
+
+  readonly maxIterOptions = [0, 1, 2, 3, 5];
 
   toggleSector(sector: string, params: OrchestratorParams): void {
     const idx = params.sectores.indexOf(sector);
@@ -50,7 +53,7 @@ export class OrchestratorCardComponent {
   onExecute(): void {
     const p = this.params();
     if (!p) return;
-    this.execute.emit({ ...p, depth: this.selectedDepth() });
+    this.execute.emit({ ...p, depth: this.selectedDepth(), maxIteraciones: this.selectedMaxIter() });
   }
 
   readonly allSectors = DEFAULT_SECTORS;

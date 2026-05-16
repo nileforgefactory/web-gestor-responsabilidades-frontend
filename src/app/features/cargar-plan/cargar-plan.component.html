@@ -55,7 +55,7 @@
         <app-orchestrator-card
           [hasFile]="selectedFile() !== null"
           [params]="orchestratorParams()"
-          [disabled]="isProcessing() || isDone()"
+          [disabled]="isProcessing()"
           (execute)="onExecute($event)"
         />
 

@@ -1,4 +1,4 @@
-import { Component, input, signal } from '@angular/core';
+import { Component, input, output, signal } from '@angular/core';
 import { BadgeComponent, BadgeVariant } from '../../../../shared/components/badge/badge.component';
 
 export interface ResultBadge {
@@ -31,9 +31,11 @@ export interface ResultTab {
   styleUrl: './result-tabs.component.css',
 })
 export class ResultTabsComponent {
-  tabs = input<ResultTab[]>([]);
+  tabs      = input<ResultTab[]>([]);
+  addToPlan = output<void>();
 
   activeTabId = signal<string>('');
+  saving      = signal<boolean>(false);
 
   activeTab(): ResultTab | undefined {
     const id = this.activeTabId();

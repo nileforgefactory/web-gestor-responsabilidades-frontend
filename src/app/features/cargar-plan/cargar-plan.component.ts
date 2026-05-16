@@ -1,13 +1,11 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
 import { AgentLogComponent, LogLine } from '../../shared/components/agent-log/agent-log.component';
 import { SidebarComponent, SidebarItem, SidebarSection, SidebarUser } from '../../shared/components/sidebar/sidebar.component';
 import { UploadZoneComponent } from '../../shared/components/upload-zone/upload-zone.component';
 import { ResultTab, ResultTabsComponent } from '../../shared/components/result-tabs/result-tabs.component';
 import { OrchestratorCardComponent, OrchestratorParams } from './components/orchestrator-card/orchestrator-card.component';
 import { PlanService } from '../../core/services/plan.service';
-import { PlanApiService, ApiPlanCreate } from '../../core/services/plan-api.service';
 import { environment } from '../../../environments/environment';
 import type { BadgeVariant } from '../../shared/components/badge/badge.component';
 
@@ -22,7 +20,7 @@ type PageState = 'idle' | 'file-loaded' | 'processing' | 'done';
 })
 export class CargarPlanComponent {
   private planService = inject(PlanService);
-  private planApi     = inject(PlanApiService);
+
   private router      = inject(Router);
 
   state              = signal<PageState>('idle');
@@ -34,6 +32,7 @@ export class CargarPlanComponent {
   extractedTabs      = signal<ResultTab[]>([]);
   ingestDocId        = signal<string | null>(null);
   createdPlanId      = signal<string | null>(null);
+  analysisResult     = signal<Record<string, any> | null>(null);
 
   private _sessionId: string | null = null;
   private _abortController: AbortController | null = null;
@@ -104,7 +103,8 @@ export class CargarPlanComponent {
       periodo:  '',
       sectores: [],
       actores:  [],
-      depth:    'estandar',
+      depth:          'estandar',
+      maxIteraciones: 3,
     });
   }
 
@@ -120,36 +120,42 @@ export class CargarPlanComponent {
   // ── Save analysis as a new plan in the backend ───────────────────────
   async onAddToPlan(): Promise<void> {
     const params = this.orchestratorParams();
-    if (!params) return;
-
-    const tabs  = this.extractedTabs();
-    const docId = this.ingestDocId();
+    const result = this.analysisResult();
+    console.log('[onAddToPlan] result keys:', result ? Object.keys(result) : 'NULL');
+    console.log('[onAddToPlan] responsabilidades:', result?.['responsabilidades']?.length, 'leyes:', result?.['leyes']?.length, 'actores:', result?.['actores']?.length);
+    if (!params || !result) return;
 
     const nivelMap: Record<string, string> = {
       Municipal: 'municipal', Departamental: 'departamental',
       Nacional: 'nacional',   Sectorial: 'sectorial',
     };
 
-    const payload: ApiPlanCreate = {
-      titulo:        `Plan ${params.entidad}${params.periodo ? ' ' + params.periodo : ''}`,
-      nombre_corto:  params.entidad.length > 24 ? params.entidad.slice(0, 22) + '…' : params.entidad,
-      entidad:       params.entidad,
-      nivel:         nivelMap[params.nivel] ?? 'municipal',
-      periodo:       params.periodo || undefined,
-      estado:        'en-proceso',
-      qdrant_doc_id: docId ?? undefined,
-      sectores:      params.sectores.map(s => ({ sector: s })),
-      actores:       params.actores.map(a => ({ nombre: a })),
+    const titulo = `Plan ${params.entidad}${params.periodo ? ' ' + params.periodo : ''}`;
+
+    const payload = {
+      titulo,
+      nombre_corto:   params.entidad.length > 24 ? params.entidad.slice(0, 22) + '…' : params.entidad,
+      nivel:          nivelMap[params.nivel] ?? 'municipal',
+      entidad:        params.entidad,
+      periodo:        params.periodo || undefined,
+      archivo_nombre: this.selectedFile()?.name,
+      qdrant_doc_id:  this.ingestDocId() ?? undefined,
+      result,
     };
 
     try {
-      const created = await firstValueFrom(this.planApi.createPlan(payload));
-      this.createdPlanId.set(created.id);
-      await this.planService.loadPlanDetail(created.id);
-      this.router.navigate(['/biblioteca']);
-    } catch {
-      this.router.navigate(['/biblioteca']);
-    }
+      const res = await fetch(`${environment.ragApiUrl}/api/v1/analysis/save-result`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        this.createdPlanId.set(data.plan_id);
+      }
+    } catch { /* navegar igual */ }
+
+    this.router.navigate(['/biblioteca']);
   }
 
   async stopAnalysis(): Promise<void> {
@@ -163,7 +169,7 @@ export class CargarPlanComponent {
     this._sessionId = null;
     this._abortController = null;
     this.addLog('warn', '⚠ Análisis detenido por el usuario');
-    this.state.set('done');
+    this.state.set('file-loaded');
   }
 
   reset(): void {
@@ -198,6 +204,7 @@ export class CargarPlanComponent {
     form.append('nivel', nivelMap[params.nivel] ?? 'municipal');
     form.append('profundidad', params.depth);
     form.append('entidad', params.entidad);
+    form.append('max_iteraciones', String(params.maxIteraciones ?? 3));
     form.append('stream', 'true');
     form.append('guardar_mysql', 'false');
 
@@ -292,6 +299,7 @@ export class CargarPlanComponent {
         break;
       case 'done':
         this.ingestDocId.set(event['result']?.['document_id'] ?? null);
+        this.analysisResult.set(event['result'] ?? null);
         this.buildTabsFromResult(event['result']);
         this.progress.set(100);
         this.addLog('ok', '✓ Análisis completado con éxito');
@@ -324,7 +332,20 @@ export class CargarPlanComponent {
     if (result['actores']?.length)
       tabs.push({ id: 'actores', icon: '🏛️', label: 'Actores',           count: result['actores'].length,         items: makeItems(result['actores'], '🏢', 'nombre') });
     if (result['brechas']?.length)
-      tabs.push({ id: 'brechas', icon: '🚨', label: 'Brechas',           count: result['brechas'].length,         items: makeItems(result['brechas'], '⚠️') });
+      tabs.push({ id: 'brechas', icon: '🚨', label: 'Brechas', count: result['brechas'].length, items: makeItems(result['brechas'], '⚠️') });
+    if (result['matriz']?.length)
+      tabs.push({
+        id: 'matriz', icon: '📐', label: 'Matriz', count: result['matriz'].length, items: [],
+        matrizRows: (result['matriz'] as any[]).map(r => ({
+          competencia:   r['competencia'] ?? '',
+          leyBase:       r['ley_base'] ?? '',
+          nacion:        r['nacion']        ?? 'N',
+          departamento:  r['departamento']  ?? 'N',
+          municipio:     r['municipio']     ?? 'N',
+          especializado: r['especializado'] ?? 'N',
+          brecha:        r['brecha']        ?? 'ok',
+        })),
+      });
 
     this.extractedTabs.set(tabs);
   }

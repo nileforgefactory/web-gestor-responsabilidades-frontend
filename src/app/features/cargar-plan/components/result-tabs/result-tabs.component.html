@@ -43,6 +43,12 @@
   <!-- Actions -->
   <div class="tabs-footer">
     <button class="action-btn">📥 Exportar PDF</button>
-    <button class="action-btn action-btn--primary">📋 Agregar a mi plan</button>
+    <button
+      class="action-btn action-btn--primary"
+      [disabled]="saving()"
+      (click)="saving.set(true); addToPlan.emit()"
+    >
+      {{ saving() ? '⏳ Guardando…' : '📋 Agregar a mi plan' }}
+    </button>
   </div>
 </div>
