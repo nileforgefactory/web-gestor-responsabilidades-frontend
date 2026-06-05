@@ -12,7 +12,7 @@ export interface OrchestratorParams {
   maxIteraciones: number;
 }
 
-const DEFAULT_SECTORS = ['Salud', 'Educación', 'Ambiente', 'Agua', 'Vías', 'Vivienda'];
+const DEFAULT_SECTORS = ['Salud', 'Educación', 'Ambiente', 'Agua', 'Vías', 'Vivienda', 'Gobierno', 'Hacienda', 'Cultura', 'Seguridad', 'TIC', 'Planeación'];
 
 @Component({
   selector: 'app-orchestrator-card',

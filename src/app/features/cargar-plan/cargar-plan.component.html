@@ -116,7 +116,7 @@
               </div>
             </div>
             <div class="card-body card-body--tabs">
-              <app-result-tabs [tabs]="extractedTabs()" (addToPlan)="onAddToPlan()" />
+              <app-result-tabs [tabs]="extractedTabs()" [activateTab]="activeAnalysisTab()" (addToPlan)="onAddToPlan()" />
             </div>
           </div>
         }

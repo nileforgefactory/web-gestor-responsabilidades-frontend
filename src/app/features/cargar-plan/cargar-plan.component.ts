@@ -30,6 +30,7 @@ export class CargarPlanComponent {
   logs               = signal<LogLine[]>([]);
   progress           = signal<number>(0);
   extractedTabs      = signal<ResultTab[]>([]);
+  activeAnalysisTab  = signal<string>('');
   ingestDocId        = signal<string | null>(null);
   createdPlanId      = signal<string | null>(null);
   analysisResult     = signal<Record<string, any> | null>(null);
@@ -114,6 +115,7 @@ export class CargarPlanComponent {
     this.logs.set([]);
     this.progress.set(0);
     this.extractedTabs.set([]);
+    this.activeAnalysisTab.set('');
     this.runPipeline(params);
   }
 
@@ -121,9 +123,11 @@ export class CargarPlanComponent {
   async onAddToPlan(): Promise<void> {
     const params = this.orchestratorParams();
     const result = this.analysisResult();
-    console.log('[onAddToPlan] result keys:', result ? Object.keys(result) : 'NULL');
-    console.log('[onAddToPlan] responsabilidades:', result?.['responsabilidades']?.length, 'leyes:', result?.['leyes']?.length, 'actores:', result?.['actores']?.length);
-    if (!params || !result) return;
+
+    if (!params || !result) {
+      this.addLog('warn', '⚠ No hay resultado de análisis para guardar. Ejecuta primero el análisis.');
+      return;
+    }
 
     const nivelMap: Record<string, string> = {
       Municipal: 'municipal', Departamental: 'departamental',
@@ -131,6 +135,15 @@ export class CargarPlanComponent {
     };
 
     const titulo = `Plan ${params.entidad}${params.periodo ? ' ' + params.periodo : ''}`;
+
+    // Asegurar que el payload de result contiene las listas completas (no truncadas)
+    const resultPayload = {
+      responsabilidades: result['responsabilidades'] ?? [],
+      leyes:             result['leyes']             ?? [],
+      actores:           result['actores']           ?? [],
+      brechas:           result['brechas']           ?? [],
+      matriz:            result['matriz']            ?? [],
+    };
 
     const payload = {
       titulo,
@@ -140,8 +153,10 @@ export class CargarPlanComponent {
       periodo:        params.periodo || undefined,
       archivo_nombre: this.selectedFile()?.name,
       qdrant_doc_id:  this.ingestDocId() ?? undefined,
-      result,
+      result:         resultPayload,
     };
+
+    this.addLog('proc', '⚙ Guardando plan en base de datos…');
 
     try {
       const res = await fetch(`${environment.ragApiUrl}/api/v1/analysis/save-result`, {
@@ -149,13 +164,20 @@ export class CargarPlanComponent {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
+
       if (res.ok) {
         const data = await res.json();
         this.createdPlanId.set(data.plan_id);
+        this.addLog('ok', `✓ Plan guardado — ID: ${data.plan_id}`);
+        await this.planService.refresh();
+        this.router.navigate(['/biblioteca']);
+      } else {
+        const err = await res.json().catch(() => ({ detail: res.statusText }));
+        this.addLog('warn', `⚠ No se pudo guardar: ${err.detail ?? res.statusText}`);
       }
-    } catch { /* navegar igual */ }
-
-    this.router.navigate(['/biblioteca']);
+    } catch (e: any) {
+      this.addLog('warn', `⚠ Error de conexión al guardar: ${e?.message ?? 'desconocido'}`);
+    }
   }
 
   async stopAnalysis(): Promise<void> {
@@ -179,6 +201,7 @@ export class CargarPlanComponent {
     this.logs.set([]);
     this.progress.set(0);
     this.extractedTabs.set([]);
+    this.activeAnalysisTab.set('');
     this.ingestDocId.set(null);
     this.createdPlanId.set(null);
     this._sessionId = null;
@@ -315,12 +338,37 @@ export class CargarPlanComponent {
   private buildTabsFromResult(result: Record<string, any> | null | undefined): void {
     if (!result) return;
 
+    const ACTOR_TIPO_LABEL: Record<string, string> = {
+      ejecutor: 'Ejecutor', beneficiario: 'Beneficiario', financiador: 'Financiador',
+      coordinador: 'Coordinador', regulador: 'Regulador', aliado: 'Aliado',
+      operador: 'Operador', supervisor: 'Supervisor', tomador_decision: 'Tomador decisión',
+      participante: 'Participante', apoyo_tecnico: 'Apoyo técnico', control: 'Control', otro: 'Otro',
+    };
+    const ACTOR_TIPO_VARIANT: Record<string, BadgeVariant> = {
+      ejecutor: 'green', beneficiario: 'blue', financiador: 'gold', coordinador: 'purple',
+      regulador: 'red', aliado: 'green', operador: 'blue', supervisor: 'gold',
+      tomador_decision: 'purple', participante: 'gray', apoyo_tecnico: 'blue', control: 'red', otro: 'gray',
+    };
+
     const makeItems = (rows: any[], icon: string, titleKey = 'titulo') =>
-      (rows ?? []).slice(0, 10).map((r: any) => ({
+      (rows ?? []).map((r: any) => ({
         icon,
-        title:  r[titleKey] ?? r['nombre'] ?? 'Sin título',
-        body:   r['descripcion'] ?? r['relevancia'] ?? '',
-        badges: r['sector'] ? [{ label: r['sector'], variant: 'blue' as BadgeVariant }] : [],
+        title:   r[titleKey] ?? r['nombre'] ?? 'Sin título',
+        body:    r['descripcion'] ?? r['relevancia'] ?? r['competencias'] ?? '',
+        badges:  r['sector'] ? [{ label: r['sector'], variant: 'blue' as BadgeVariant }] : [],
+        rawData: r,
+      }));
+
+    const makeActorItems = (rows: any[]) =>
+      (rows ?? []).map((r: any) => ({
+        icon:    '🏛️',
+        title:   r['nombre'] ?? 'Sin nombre',
+        body:    r['competencias'] ?? r['descripcion'] ?? '',
+        badges:  [
+          { label: ACTOR_TIPO_LABEL[r['tipo']] ?? r['tipo'] ?? 'Otro', variant: (ACTOR_TIPO_VARIANT[r['tipo']] ?? 'gray') as BadgeVariant },
+          ...(r['nivel'] ? [{ label: r['nivel'], variant: 'blue' as BadgeVariant }] : []),
+        ],
+        rawData: r,
       }));
 
     const tabs: ResultTab[] = [];
@@ -330,24 +378,38 @@ export class CargarPlanComponent {
     if (result['leyes']?.length)
       tabs.push({ id: 'leyes',   icon: '⚖️', label: 'Marco legal',       count: result['leyes'].length,           items: makeItems(result['leyes'], '📜', 'codigo') });
     if (result['actores']?.length)
-      tabs.push({ id: 'actores', icon: '🏛️', label: 'Actores',           count: result['actores'].length,         items: makeItems(result['actores'], '🏢', 'nombre') });
+      tabs.push({ id: 'actores', icon: '🏛️', label: 'Actores',           count: result['actores'].length,         items: makeActorItems(result['actores']) });
     if (result['brechas']?.length)
-      tabs.push({ id: 'brechas', icon: '🚨', label: 'Brechas', count: result['brechas'].length, items: makeItems(result['brechas'], '⚠️') });
+      tabs.push({ id: 'brechas', icon: '🚨', label: 'Brechas', count: result['brechas'].length, countVariant: 'red' as BadgeVariant, items: makeItems(result['brechas'], '⚠️') });
     if (result['matriz']?.length)
       tabs.push({
         id: 'matriz', icon: '📐', label: 'Matriz', count: result['matriz'].length, items: [],
         matrizRows: (result['matriz'] as any[]).map(r => ({
-          competencia:   r['competencia'] ?? '',
-          leyBase:       r['ley_base'] ?? '',
-          nacion:        r['nacion']        ?? 'N',
-          departamento:  r['departamento']  ?? 'N',
-          municipio:     r['municipio']     ?? 'N',
-          especializado: r['especializado'] ?? 'N',
-          brecha:        r['brecha']        ?? 'ok',
+          competencia:      r['competencia']       ?? '',
+          leyBase:          r['ley_base']           ?? '',
+          nacion:           r['nacion']             ?? 'N',
+          departamento:     r['departamento']       ?? 'N',
+          municipio:        r['municipio']          ?? 'N',
+          especializado:    r['especializado']      ?? 'N',
+          brecha:           r['brecha']             ?? 'ok',
+          sector:           r['sector']             ?? '',
+          actoresVinculados: (r['actores_vinculados'] ?? []).map((a: any) => ({
+            nombre: a['nombre'] ?? '',
+            nivel:  a['nivel']  ?? '',
+            tipo:   a['tipo']   ?? '',
+          })),
+          leyesVinculadas: (r['leyes_vinculadas'] ?? []).map((l: any) => ({
+            codigo: l['codigo'] ?? '',
+            titulo: l['titulo'] ?? '',
+          })),
         })),
       });
 
     this.extractedTabs.set(tabs);
+    // Auto-activate matriz tab if present so the heat map is immediately visible
+    if (tabs.some(t => t.id === 'matriz')) {
+      this.activeAnalysisTab.set('matriz');
+    }
   }
 
   private addLog(type: LogLine['type'], message: string): void {
