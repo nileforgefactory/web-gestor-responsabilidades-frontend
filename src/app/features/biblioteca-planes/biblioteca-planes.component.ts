@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { PlanService } from '../../core/services/plan.service';
 import { Plan, NivelTerritorial, PlanStatus } from '../../core/models/plan.model';
@@ -12,7 +12,7 @@ import { PlanCardComponent } from '../../shared/components/plan-card/plan-card.c
   templateUrl: './biblioteca-planes.component.html',
   styleUrl: './biblioteca-planes.component.css',
 })
-export class BibliotecaPlanes {
+export class BibliotecaPlanes implements OnInit {
   private planService = inject(PlanService);
   private router      = inject(Router);
 
@@ -66,6 +66,10 @@ export class BibliotecaPlanes {
     return Math.round(plans.reduce((sum, p) => sum + p.avance, 0) / plans.length);
   });
 
+  ngOnInit(): void {
+    this.planService.refresh();
+  }
+
   onFilterClick(item: SidebarItem): void {
     if (!item.id) return;
     if (item.id.startsWith('nivel-')) {
@@ -83,5 +87,14 @@ export class BibliotecaPlanes {
 
   openDetail(plan: Plan): void {
     this.router.navigate(['/plan', plan.id]);
+  }
+
+  async onDeletePlan(plan: Plan): Promise<void> {
+    if (!confirm(`¿Eliminar "${plan.shortName}"? Esta acción no se puede deshacer.`)) return;
+    try {
+      await this.planService.deletePlan(plan.id);
+    } catch {
+      alert('No se pudo eliminar el plan. Intenta de nuevo.');
+    }
   }
 }
