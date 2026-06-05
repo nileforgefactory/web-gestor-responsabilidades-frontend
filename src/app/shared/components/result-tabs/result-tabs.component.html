@@ -3,15 +3,11 @@
   <!-- Tab bar -->
   <div class="tabs-bar">
     @for (tab of tabs(); track tab.id) {
-      <button
-        class="tab-btn"
-        [class.tab-btn--active]="isActive(tab.id)"
-        (click)="setTab(tab.id)"
-      >
+      <button class="tab-btn" [class.tab-btn--active]="isActive(tab.id)" (click)="setTab(tab.id)">
         <span>{{ tab.icon }} {{ tab.label }}</span>
-        <span class="tab-count" [class.tab-count--red]="tab.countVariant === 'red'">
-          {{ tab.count }}
-        </span>
+        @if (tab.count > 0) {
+          <span class="tab-count" [class.tab-count--red]="tab.countVariant === 'red'">{{ tab.count }}</span>
+        }
       </button>
     }
   </div>
@@ -20,60 +16,348 @@
   <div class="tab-panel">
     @if (activeTab(); as tab) {
 
-      <!-- ── Matrix view ── -->
-      @if (tab.matrizRows?.length) {
-        <div class="matriz-wrap">
+      <!-- ══════════════════════════════════════════════════════════════════
+           RESUMEN GENERAL
+      ══════════════════════════════════════════════════════════════════ -->
+      @if (tab.id === 'resumen' && tab.resumenData; as r) {
 
-          <div class="matriz-legend">
-            <span><span class="resp-dot lvl-P">P</span> Principal</span>
-            <span><span class="resp-dot lvl-C">C</span> Concurrente</span>
-            <span><span class="resp-dot lvl-S">S</span> Subsidiario</span>
-            <span><span class="resp-dot lvl-N">—</span> No aplica</span>
+        <!-- Totales -->
+        <div class="kpi-strip">
+          <div class="kpi-card kpi-blue">
+            <div class="kpi-value">{{ r.respTotal }}</div>
+            <div class="kpi-label">Responsabilidades</div>
           </div>
-
-          <div class="table-scroll">
-            <table class="matrix-table">
-              <thead>
-                <tr>
-                  <th class="col-competencia">Proceso / Competencia</th>
-                  <th class="col-ley">Ley base</th>
-                  <th class="col-actor">Nación</th>
-                  <th class="col-actor">Depto.</th>
-                  <th class="col-actor">Municipio</th>
-                  <th class="col-actor">CAR / Esp.</th>
-                  <th class="col-brecha">Brecha</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (row of tab.matrizRows!; track row.competencia) {
-                  <tr
-                    [class.row-critica]="row.brecha === 'critica'"
-                    [class.row-duplicidad]="row.brecha === 'duplicidad'"
-                  >
-                    <td class="td-competencia"><strong>{{ row.competencia }}</strong></td>
-                    <td><span class="ley-badge">{{ row.leyBase }}</span></td>
-                    <td class="td-actor"><span class="resp-dot" [class]="levelClass(row.nacion)">{{ levelText(row.nacion) }}</span></td>
-                    <td class="td-actor"><span class="resp-dot" [class]="levelClass(row.departamento)">{{ levelText(row.departamento) }}</span></td>
-                    <td class="td-actor"><span class="resp-dot" [class]="levelClass(row.municipio)">{{ levelText(row.municipio) }}</span></td>
-                    <td class="td-actor"><span class="resp-dot" [class]="levelClass(row.especializado)">{{ levelText(row.especializado) }}</span></td>
-                    <td>
-                      @if (brechaInfo(row.brecha); as b) {
-                        <span class="brecha-badge" [class]="b.cls">{{ b.text }}</span>
-                      }
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
+          <div class="kpi-card kpi-green">
+            <div class="kpi-value">{{ r.leyesTotal }}</div>
+            <div class="kpi-label">Leyes aplicables</div>
           </div>
-
+          <div class="kpi-card kpi-gold">
+            <div class="kpi-value">{{ r.actoresTotal }}</div>
+            <div class="kpi-label">Actores</div>
+          </div>
+          <div class="kpi-card kpi-red">
+            <div class="kpi-value">{{ r.brechasTotal }}</div>
+            <div class="kpi-label">Brechas</div>
+          </div>
         </div>
 
-      <!-- ── Items grid view ── -->
-      } @else {
+        <!-- Síntesis IA -->
+        @if (r.descripcion) {
+          <div class="resumen-sintesis">
+            <div class="resumen-sintesis-label">🤖 Síntesis del análisis</div>
+            <p class="resumen-sintesis-text">{{ r.descripcion }}</p>
+          </div>
+        }
+
+        <div class="resumen-cols">
+
+          <!-- Brechas críticas -->
+          @if (r.brechasCriticas.length) {
+            <div class="resumen-section">
+              <div class="resumen-section-title">🚨 Brechas críticas</div>
+              @for (b of r.brechasCriticas; track b.titulo) {
+                <div class="resumen-brecha-item resumen-brecha-critica">
+                  <div class="resumen-brecha-titulo">{{ b.titulo }}</div>
+                  @if (b.descripcion) { <div class="resumen-brecha-desc">{{ b.descripcion }}</div> }
+                  <span class="resumen-sev-badge" [style.color]="resumenSeveridadColor(b.severidad)" [style.borderColor]="resumenSeveridadColor(b.severidad)">
+                    {{ b.severidad }}
+                  </span>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Brechas de duplicidad -->
+          @if (r.brechasDuplicidad.length) {
+            <div class="resumen-section">
+              <div class="resumen-section-title">⚠️ Duplicidades identificadas</div>
+              @for (b of r.brechasDuplicidad; track b.titulo) {
+                <div class="resumen-brecha-item resumen-brecha-dup">
+                  <div class="resumen-brecha-titulo">{{ b.titulo }}</div>
+                  @if (b.descripcion) { <div class="resumen-brecha-desc">{{ b.descripcion }}</div> }
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Cobertura por sector -->
+          @if (r.sectors.length) {
+            <div class="resumen-section">
+              <div class="resumen-section-title">📈 Cobertura por sector</div>
+              @for (s of r.sectors; track s.sector) {
+                <div class="resumen-sector-item">
+                  <div class="resumen-sector-header">
+                    <span>{{ s.icon }} {{ s.sector }}</span>
+                    <span [style.color]="coverageColor(s.pct)">{{ s.pct }}%</span>
+                  </div>
+                  <div class="resumen-sector-bar">
+                    <div class="resumen-sector-fill" [style.width.%]="s.pct" [style.background]="coverageColor(s.pct)"></div>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+        </div>
+      }
+
+      <!-- ══════════════════════════════════════════════════════════════════
+           MATRIZ
+      ══════════════════════════════════════════════════════════════════ -->
+      @if (tab.matrizRows?.length) {
+        @if (kpis(tab.matrizRows!); as k) {
+
+          <!-- ── KPI strip ── -->
+          <div class="kpi-strip">
+            <div class="kpi-card kpi-green">
+              <div class="kpi-value">{{ k.cobertura }}%</div>
+              <div class="kpi-label">Cobertura</div>
+              <div class="kpi-bar"><div class="kpi-bar-fill" [style.width]="k.cobertura + '%'"></div></div>
+            </div>
+            <div class="kpi-card kpi-gold">
+              <div class="kpi-value">{{ k.duplicidad }}%</div>
+              <div class="kpi-label">Duplicidad</div>
+              <div class="kpi-bar kpi-bar-gold"><div class="kpi-bar-fill" [style.width]="k.duplicidad + '%'"></div></div>
+            </div>
+            <div class="kpi-card kpi-red">
+              <div class="kpi-value">{{ k.sinResponsable }}</div>
+              <div class="kpi-label">Sin responsable</div>
+              <div class="kpi-sub">de {{ k.total }} competencias</div>
+            </div>
+            <div class="kpi-card kpi-blue">
+              <div class="kpi-value">{{ k.conLeyBase }}%</div>
+              <div class="kpi-label">Con base legal</div>
+              <div class="kpi-bar kpi-bar-blue"><div class="kpi-bar-fill" [style.width]="k.conLeyBase + '%'"></div></div>
+            </div>
+          </div>
+
+          <!-- ── Controles ── -->
+          <div class="matriz-controls">
+            <!-- Sub-vista -->
+            <div class="sub-view-toggle">
+              <button class="svt-btn" [class.svt-btn--active]="matrizSubView() === 'territorial'" (click)="matrizSubView.set('territorial')">
+                🗺️ Territorial
+              </button>
+              <button class="svt-btn" [class.svt-btn--active]="matrizSubView() === 'actores'" (click)="matrizSubView.set('actores')">
+                🏛️ Por actores
+              </button>
+            </div>
+
+            <!-- Filtro brecha -->
+            <div class="brecha-filter">
+              <span class="filter-label">Filtrar:</span>
+              <button class="filter-btn" [class.filter-btn--active]="brechaFilter() === ''" (click)="brechaFilter.set('')">Todos</button>
+              <button class="filter-btn filter-btn-red" [class.filter-btn--active]="brechaFilter() === 'critica'" (click)="brechaFilter.set('critica')">🚨 Críticas</button>
+              <button class="filter-btn filter-btn-gold" [class.filter-btn--active]="brechaFilter() === 'duplicidad'" (click)="brechaFilter.set('duplicidad')">⚠️ Duplicidad</button>
+              <button class="filter-btn filter-btn-green" [class.filter-btn--active]="brechaFilter() === 'ok'" (click)="brechaFilter.set('ok')">✓ Cubiertas</button>
+            </div>
+
+            <!-- Toggle calor/tabla (solo vista territorial) -->
+            @if (matrizSubView() === 'territorial') {
+              <button class="view-toggle" (click)="heatmapView.set(!heatmapView())">
+                {{ heatmapView() ? '📋 Tabla' : '🌡️ Calor' }}
+              </button>
+            }
+          </div>
+
+          <!-- Leyenda P/C/S -->
+          @if (matrizSubView() === 'territorial') {
+            <div class="matriz-legend">
+              <span><span class="heat-pill heat-ok heat-p">P</span> Principal</span>
+              <span><span class="heat-pill heat-ok heat-c">C</span> Concurrente</span>
+              <span><span class="heat-pill heat-ok heat-s">S</span> Subsidiario</span>
+              <span><span class="heat-pill heat-n">—</span> No aplica</span>
+              <span class="sep">|</span>
+              <span><span class="heat-pill heat-critica heat-p">P</span> Brecha crítica</span>
+              <span><span class="heat-pill heat-duplicidad heat-c">C</span> Duplicidad</span>
+            </div>
+          }
+
+          <!-- ══ VISTA TERRITORIAL ══ -->
+          @if (matrizSubView() === 'territorial') {
+
+            <!-- MAPA DE CALOR agrupado por sector -->
+            @if (heatmapView()) {
+              <div class="heat-container">
+                @for (group of sectorGroups(tab.matrizRows!); track group.sector) {
+                  <!-- Cabecera de sector -->
+                  <div class="sector-header" (click)="toggleSector(group.sector)">
+                    <div class="sector-header-left">
+                      <span class="sector-chevron">{{ isSectorCollapsed(group.sector) ? '▶' : '▼' }}</span>
+                      <span class="sector-icon">{{ sectorIcon(group.sector) }}</span>
+                      <span class="sector-name">{{ group.sector | titlecase }}</span>
+                      <span class="sector-count">{{ group.rows.length }}</span>
+                    </div>
+                    <div class="sector-stats">
+                      @if (group.cubiertos) { <span class="stat-pill stat-green">✓ {{ group.cubiertos }}</span> }
+                      @if (group.brechas)   { <span class="stat-pill stat-red">🚨 {{ group.brechas }}</span> }
+                      @if (group.duplicidades) { <span class="stat-pill stat-gold">⚠️ {{ group.duplicidades }}</span> }
+                    </div>
+                  </div>
+
+                  <!-- Filas del sector -->
+                  @if (!isSectorCollapsed(group.sector)) {
+                    <div class="heat-grid">
+                      <!-- Encabezados de columna (solo en primer grupo o siempre) -->
+                      <div class="heat-col-header heat-col-competencia">Responsabilidad / Competencia</div>
+                      <div class="heat-col-header heat-col-label">Nación</div>
+                      <div class="heat-col-header heat-col-label">Depto.</div>
+                      <div class="heat-col-header heat-col-label">Municipio</div>
+                      <div class="heat-col-header heat-col-label">Esp.</div>
+                      <div class="heat-col-header heat-col-label">Brecha</div>
+
+                      @for (row of group.rows; track row.competencia; let i = $index) {
+                        <div class="heat-row-label"
+                          [class.heat-row-selected]="selectedRow()?.competencia === row.competencia"
+                          [class.brecha-row-critica]="row.brecha === 'critica'"
+                          [class.brecha-row-dup]="row.brecha === 'duplicidad'"
+                          (click)="onRowClick(row)" [title]="row.competencia">
+                          <span class="row-num">{{ i + 1 }}</span>
+                          <span class="row-text">{{ row.competencia }}</span>
+                          @if (row.actoresVinculados?.length) {
+                            <span class="row-actor-dot" [title]="row.actoresVinculados![0].nombre">●</span>
+                          }
+                        </div>
+                        <div class="heat-cell" [class]="heatCellClass(row.nacion, row.brecha)"
+                          (click)="onRowClick(row)" [title]="heatTooltip(row.nacion, 'Nación', row)">{{ levelText(row.nacion) }}</div>
+                        <div class="heat-cell" [class]="heatCellClass(row.departamento, row.brecha)"
+                          (click)="onRowClick(row)" [title]="heatTooltip(row.departamento, 'Depto.', row)">{{ levelText(row.departamento) }}</div>
+                        <div class="heat-cell" [class]="heatCellClass(row.municipio, row.brecha)"
+                          (click)="onRowClick(row)" [title]="heatTooltip(row.municipio, 'Municipio', row)">{{ levelText(row.municipio) }}</div>
+                        <div class="heat-cell" [class]="heatCellClass(row.especializado, row.brecha)"
+                          (click)="onRowClick(row)" [title]="heatTooltip(row.especializado, 'Especializado', row)">{{ levelText(row.especializado) }}</div>
+                        <div class="heat-brecha-cell" (click)="onRowClick(row)">
+                          @if (brechaInfo(row.brecha); as b) {
+                            <span class="brecha-badge" [class]="b.cls">{{ b.text }}</span>
+                          }
+                        </div>
+                      }
+                    </div>
+                  }
+                }
+              </div>
+
+            <!-- TABLA agrupada por sector -->
+            } @else {
+              <div class="table-scroll">
+                @for (group of sectorGroups(tab.matrizRows!); track group.sector) {
+                  <div class="sector-header" (click)="toggleSector(group.sector)">
+                    <div class="sector-header-left">
+                      <span class="sector-chevron">{{ isSectorCollapsed(group.sector) ? '▶' : '▼' }}</span>
+                      <span class="sector-icon">{{ sectorIcon(group.sector) }}</span>
+                      <span class="sector-name">{{ group.sector | titlecase }}</span>
+                      <span class="sector-count">{{ group.rows.length }}</span>
+                    </div>
+                    <div class="sector-stats">
+                      @if (group.cubiertos) { <span class="stat-pill stat-green">✓ {{ group.cubiertos }}</span> }
+                      @if (group.brechas)   { <span class="stat-pill stat-red">🚨 {{ group.brechas }}</span> }
+                      @if (group.duplicidades) { <span class="stat-pill stat-gold">⚠️ {{ group.duplicidades }}</span> }
+                    </div>
+                  </div>
+                  @if (!isSectorCollapsed(group.sector)) {
+                    <table class="matrix-table">
+                      <thead>
+                        <tr>
+                          <th class="col-competencia">Proceso / Competencia</th>
+                          <th class="col-ley">Ley base</th>
+                          <th class="col-actor">Nación</th>
+                          <th class="col-actor">Depto.</th>
+                          <th class="col-actor">Municipio</th>
+                          <th class="col-actor">Esp.</th>
+                          <th class="col-brecha">Brecha</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (row of group.rows; track row.competencia) {
+                          <tr [class.row-critica]="row.brecha === 'critica'"
+                            [class.row-duplicidad]="row.brecha === 'duplicidad'"
+                            [class.row-selected]="selectedRow()?.competencia === row.competencia"
+                            (click)="onRowClick(row)">
+                            <td class="td-competencia">
+                              <strong>{{ row.competencia }}</strong>
+                              @if (row.actoresVinculados?.length) {
+                                <span class="td-actor-dot">● {{ row.actoresVinculados![0].nombre }}</span>
+                              }
+                            </td>
+                            <td><span class="ley-badge">{{ row.leyBase }}</span></td>
+                            <td class="td-actor"><span class="resp-dot" [class]="levelClass(row.nacion)">{{ levelText(row.nacion) }}</span></td>
+                            <td class="td-actor"><span class="resp-dot" [class]="levelClass(row.departamento)">{{ levelText(row.departamento) }}</span></td>
+                            <td class="td-actor"><span class="resp-dot" [class]="levelClass(row.municipio)">{{ levelText(row.municipio) }}</span></td>
+                            <td class="td-actor"><span class="resp-dot" [class]="levelClass(row.especializado)">{{ levelText(row.especializado) }}</span></td>
+                            <td>
+                              @if (brechaInfo(row.brecha); as b) {
+                                <span class="brecha-badge" [class]="b.cls">{{ b.text }}</span>
+                              }
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  }
+                }
+              </div>
+            }
+
+          }
+
+          <!-- ══ VISTA POR ACTORES ══ -->
+          @if (matrizSubView() === 'actores') {
+            @if (actorMatrix(tab.matrizRows!); as am) {
+              @if (am.actors.length) {
+                <div class="actor-matrix-wrap">
+                  <div class="actor-matrix-scroll">
+                    <table class="actor-matrix-table">
+                      <thead>
+                        <tr>
+                          <th class="am-col-actor">Actor</th>
+                          <th class="am-col-tipo">Rol</th>
+                          @for (s of am.sectors; track s) {
+                            <th class="am-col-sector" [title]="s">{{ sectorIcon(s) }} {{ s | titlecase }}</th>
+                          }
+                          <th class="am-col-total">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (actor of am.actors; track actor.nombre) {
+                          <tr class="am-row" (click)="onActorMatrixClick(actor, tabs(), tab.matrizRows!)">
+                            <td class="am-td-actor">{{ actor.nombre }}</td>
+                            <td class="am-td-tipo">
+                              <span class="chip-tipo" [style.background]="actorTipoColor(actor.tipo) + '22'" [style.color]="actorTipoColor(actor.tipo)">
+                                {{ actorTipoLabel(actor.tipo) }}
+                              </span>
+                            </td>
+                            @for (s of am.sectors; track s) {
+                              <td class="am-td-cell"
+                                [style.background]="actorCellIntensity(actor.cells[s] ?? 0, maxActorCell(am.actors))"
+                                [style.color]="actorCellColor(actor.cells[s] ?? 0)"
+                                [title]="actor.nombre + ' — ' + s + ': ' + (actor.cells[s] ?? 0) + ' competencias'">
+                                {{ (actor.cells[s] ?? 0) || '—' }}
+                              </td>
+                            }
+                            <td class="am-td-total">{{ actor.total }}</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                  <p class="am-hint">Clic en un actor para ver sus responsabilidades y leyes</p>
+                </div>
+              } @else {
+                <p class="detail-empty" style="padding:16px">Sin actores vinculados en esta matriz</p>
+              }
+            }
+          }
+
+        }
+      }
+
+      <!-- ══ ITEMS GRID (responsabilidades, leyes, actores, brechas) ══ -->
+      @if (!tab.matrizRows?.length && tab.id !== 'resumen') {
         <div class="items-grid">
           @for (item of tab.items; track item.title) {
-            <div class="result-item">
+            <div class="result-item"
+              [class.result-item--clickable]="tab.id === 'actores'"
+              (click)="tab.id === 'actores' ? onActorItemClick(item, tabs()) : null">
               <div class="result-icon">{{ item.icon }}</div>
               <div class="result-body">
                 <div class="result-title">{{ item.title }}</div>
@@ -86,6 +370,7 @@
                   </div>
                 }
               </div>
+              @if (tab.id === 'actores') { <span class="item-expand-icon">›</span> }
             </div>
           }
         </div>
@@ -98,10 +383,167 @@
   @if (showActions()) {
     <div class="tabs-footer">
       <button class="action-btn">📥 Exportar PDF</button>
-      <button class="action-btn action-btn--primary" (click)="addToPlan.emit()">
-        📋 Agregar a mi plan
-      </button>
+      <button class="action-btn action-btn--primary" (click)="addToPlan.emit()">📋 Agregar a mi plan</button>
     </div>
   }
 
 </div>
+
+<!-- ── Modal de detalle de fila (competencia) ── -->
+@if (selectedRow(); as row) {
+  <div class="actor-modal-backdrop" (click)="closeDetail()">
+    <div class="actor-modal row-modal" (click)="$event.stopPropagation()">
+
+      <!-- Cabecera -->
+      <div class="actor-modal-header">
+        <div class="actor-modal-title-wrap">
+          <span class="actor-modal-icon">📋</span>
+          <div>
+            <div class="actor-modal-name">{{ row.competencia }}</div>
+            <div class="actor-modal-meta">
+              @if (row.brecha !== 'ok') {
+                <span class="row-modal-brecha-badge" [class]="'brecha-badge brecha-' + (row.brecha === 'critica' ? 'red' : row.brecha === 'duplicidad' ? 'gold' : 'gray')">
+                  {{ row.brecha === 'critica' ? '🚨 Brecha crítica' : row.brecha === 'duplicidad' ? '⚠️ Duplicidad' : '? Indefinido' }}
+                </span>
+              }
+              @if (row.leyBase) { <span class="actor-modal-nivel">⚖️ {{ row.leyBase }}</span> }
+            </div>
+          </div>
+        </div>
+        <button class="actor-modal-close" (click)="closeDetail()">✕</button>
+      </div>
+
+      <!-- Explicación de brecha -->
+      @if (row.brecha !== 'ok') {
+        <div class="row-modal-brecha-explain"
+          [class.row-modal-explain-critica]="row.brecha === 'critica'"
+          [class.row-modal-explain-dup]="row.brecha === 'duplicidad'">
+          <span class="row-modal-explain-text">{{ brechaExplicacion(row.brecha) }}</span>
+          @if (row.brechaDesc) {
+            <span class="row-modal-explain-detail"> — {{ row.brechaDesc }}</span>
+          }
+        </div>
+      }
+
+      <!-- Distribución territorial -->
+      <div class="row-modal-niveles">
+        <div class="row-modal-niveles-title">Distribución territorial</div>
+        <div class="row-modal-niveles-grid">
+          @for (nivel of [
+            { col: 'Nación',     val: row.nacion       },
+            { col: 'Dpto.',      val: row.departamento  },
+            { col: 'Municipio',  val: row.municipio     },
+            { col: 'Esp.',       val: row.especializado }
+          ]; track nivel.col) {
+            <div class="row-modal-nivel-cell">
+              <div class="row-modal-nivel-label">{{ nivel.col }}</div>
+              <div class="row-modal-nivel-pill"
+                [style.background]="nivelBg(nivel.val)"
+                [style.color]="nivelColor(nivel.val)">
+                {{ nivel.val === 'N' ? '—' : nivel.val }}
+              </div>
+              <div class="row-modal-nivel-texto" [style.color]="nivelColor(nivel.val)">
+                {{ nivelLabel(nivel.val) }}
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Actores y leyes -->
+      <div class="actor-modal-body">
+        <div class="actor-modal-col">
+          <div class="actor-modal-col-title">🏛️ Actores vinculados</div>
+          @if (row.actoresVinculados?.length) {
+            <div class="actor-chips" style="flex-direction:column; align-items:flex-start;">
+              @for (actor of row.actoresVinculados!; track actor.nombre) {
+                <button class="actor-chip"
+                  [class.actor-chip--active]="selectedActor()?.nombre === actor.nombre"
+                  (click)="onActorClick(actor, row, tabs())">
+                  @if (actor.tipo) {
+                    <span class="chip-tipo" [style.background]="actorTipoColor(actor.tipo) + '22'" [style.color]="actorTipoColor(actor.tipo)">{{ actorTipoLabel(actor.tipo) }}</span>
+                  }
+                  <span class="chip-nivel">{{ actor.nivel }}</span>
+                  {{ actor.nombre }}
+                </button>
+              }
+            </div>
+          } @else {
+            <p class="actor-modal-empty">🚨 Sin actores vinculados — posible brecha</p>
+          }
+        </div>
+        <div class="actor-modal-col">
+          <div class="actor-modal-col-title">📜 Marco legal aplicable</div>
+          @if (row.leyesVinculadas?.length) {
+            <div class="ley-list">
+              @for (ley of row.leyesVinculadas!; track ley.codigo) {
+                <div class="ley-item">
+                  <span class="ley-code">{{ ley.codigo }}</span>
+                  <span class="ley-name">{{ ley.titulo }}</span>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="actor-modal-empty">Sin leyes directamente vinculadas</p>
+          }
+        </div>
+      </div>
+
+    </div>
+  </div>
+}
+
+<!-- ── Modal de detalle de actor ── -->
+@if (selectedActor(); as actor) {
+  <div class="actor-modal-backdrop" (click)="closeDetail()">
+    <div class="actor-modal" (click)="$event.stopPropagation()">
+      <div class="actor-modal-header">
+        <div class="actor-modal-title-wrap">
+          <span class="actor-modal-icon">🏢</span>
+          <div>
+            <div class="actor-modal-name">{{ actor.nombre }}</div>
+            <div class="actor-modal-meta">
+              <span class="actor-modal-tipo-badge" [style.background]="actorTipoColor(actor.tipo) + '22'" [style.color]="actorTipoColor(actor.tipo)">{{ actorTipoLabel(actor.tipo) }}</span>
+              @if (actor.nivel) { <span class="actor-modal-nivel">{{ actor.nivel }}</span> }
+              @if (actor.sector) { <span class="actor-modal-nivel" style="background:var(--accent-soft);color:var(--accent)">{{ actor.sector }}</span> }
+            </div>
+          </div>
+        </div>
+        <button class="actor-modal-close" (click)="closeDetail()">✕</button>
+      </div>
+
+      <!-- Competencias de la tabla puente -->
+      @if (actor.competencias.length) {
+        <div class="actor-modal-competencias">
+          <div class="actor-modal-col-title" style="padding:12px 20px 6px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2)">
+            🎯 Competencias asignadas ({{ actor.competencias.length }})
+          </div>
+          <div class="actor-comp-list">
+            @for (c of actor.competencias; track c) {
+              <div class="actor-comp-item">{{ c }}</div>
+            }
+          </div>
+        </div>
+      }
+
+      <div class="actor-modal-body">
+        <div class="actor-modal-col">
+          <div class="actor-modal-col-title">📋 Responsabilidades que ejecuta</div>
+          @if (actor.responsabilidades.length) {
+            <ul class="actor-modal-list">
+              @for (r of actor.responsabilidades; track r) { <li>{{ r }}</li> }
+            </ul>
+          } @else { <p class="actor-modal-empty">Sin responsabilidades mapeadas</p> }
+        </div>
+        <div class="actor-modal-col">
+          <div class="actor-modal-col-title">⚖️ Leyes que lo habilitan</div>
+          @if (actor.leyes.length) {
+            <ul class="actor-modal-list">
+              @for (l of actor.leyes; track l) { <li>{{ l }}</li> }
+            </ul>
+          } @else { <p class="actor-modal-empty">Sin leyes directamente vinculadas</p> }
+        </div>
+      </div>
+    </div>
+  </div>
+}

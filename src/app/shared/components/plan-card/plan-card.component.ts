@@ -12,4 +12,5 @@ import { BadgeComponent } from '../badge/badge.component';
 export class PlanCardComponent {
   plan       = input.required<Plan>();
   viewDetail = output<Plan>();
+  deletePlan = output<Plan>();
 }

@@ -53,20 +53,13 @@
     </div>
   </div>
 
-  <!-- Footer: avance + CTA -->
+  <!-- Footer: acciones -->
   <div class="card-footer">
-    <div class="avance-wrap">
-      <div class="avance-track">
-        <div
-          class="avance-fill"
-          [style.width.%]="plan().avance"
-          [style.background]="plan().avanceColor"
-        ></div>
-      </div>
-      <span class="avance-label" [style.color]="plan().avanceColor">
-        {{ plan().avance }}% avance
-      </span>
-    </div>
+    <button
+      class="delete-btn"
+      (click)="deletePlan.emit(plan()); $event.stopPropagation()"
+      title="Eliminar plan"
+    >🗑️</button>
     <button
       class="detail-btn"
       (click)="viewDetail.emit(plan()); $event.stopPropagation()"
