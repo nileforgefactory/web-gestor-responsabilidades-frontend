@@ -1,7 +1,7 @@
 import { computed, Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { Plan, NivelTerritorial, PlanStatus, avanceColor, nivelMeta, statusMeta } from '../models/plan.model';
-import { ResultTab, MatrizRow } from '../../shared/components/result-tabs/result-tabs.component';
+import { ResultTab, MatrizRow, ResumenData } from '../../shared/components/result-tabs/result-tabs.component';
 import { PlanApiService, ApiPlanSummary, ApiPlanDetail } from './plan-api.service';
 import type { BadgeVariant } from '../../shared/components/badge/badge.component';
 
@@ -50,6 +50,41 @@ function tipoVariant(t: string): BadgeVariant {
   return (({ P: 'green', C: 'gold', S: 'purple', N: 'gray' } as Record<string, BadgeVariant>)[t]) ?? 'gray';
 }
 
+const ACTOR_TIPO_LABEL: Record<string, string> = {
+  ejecutor:         'Ejecutor',
+  beneficiario:     'Beneficiario',
+  financiador:      'Financiador',
+  coordinador:      'Coordinador',
+  regulador:        'Regulador',
+  aliado:           'Aliado',
+  operador:         'Operador',
+  supervisor:       'Supervisor',
+  tomador_decision: 'Tomador decisión',
+  participante:     'Participante',
+  apoyo_tecnico:    'Apoyo técnico',
+  control:          'Control',
+  otro:             'Otro',
+};
+
+const ACTOR_TIPO_VARIANT: Record<string, BadgeVariant> = {
+  ejecutor:         'green',
+  beneficiario:     'blue',
+  financiador:      'gold',
+  coordinador:      'purple',
+  regulador:        'red',
+  aliado:           'green',
+  operador:         'blue',
+  supervisor:       'gold',
+  tomador_decision: 'purple',
+  participante:     'gray',
+  apoyo_tecnico:    'blue',
+  control:          'red',
+  otro:             'gray',
+};
+
+function actorTipoLabel(t: string): string   { return ACTOR_TIPO_LABEL[t]   ?? t; }
+function actorTipoVariant(t: string): BadgeVariant { return ACTOR_TIPO_VARIANT[t] ?? 'gray'; }
+
 function brechaVariant(sev: string): BadgeVariant {
   return (({ alta: 'red', media: 'gold', baja: 'gray' } as Record<string, BadgeVariant>)[sev]) ?? 'gray';
 }
@@ -90,12 +125,31 @@ function mapApiDetail(api: ApiPlanDetail): Plan {
   if (api.actores.length) {
     tabs.push({
       id: 'actores', icon: '🏛️', label: 'Actores', count: api.actores.length,
-      items: api.actores.map(a => ({
-        icon:   a.icono ?? '🏛️',
-        title:  a.nombre,
-        body:   `${a.resp_count} responsabilidades`,
-        badges: a.badge_label ? [{ label: a.badge_label, variant: a.badge_variant as BadgeVariant }] : [],
-      })),
+      items: api.actores.map(a => {
+        const nivelLabel = a.nivel ? a.nivel.charAt(0).toUpperCase() + a.nivel.slice(1) : '';
+        const comps = (a.competencias ?? []);
+        const compPreview = comps.slice(0, 2).map(c => c.titulo).join('; ');
+        const bodyParts = [
+          compPreview || (a.resp_count ? `${a.resp_count} responsabilidades` : ''),
+          comps.length > 2 ? `+${comps.length - 2} más` : '',
+        ].filter(Boolean);
+        return {
+          icon:    a.icono ?? '🏛️',
+          title:   a.nombre,
+          body:    bodyParts.join(' ') || 'Sin competencias registradas',
+          badges:  [
+            { label: actorTipoLabel(a.tipo), variant: actorTipoVariant(a.tipo) },
+            ...(nivelLabel ? [{ label: nivelLabel,          variant: 'blue'   as BadgeVariant }] : []),
+            ...(a.sector   ? [{ label: a.sector,            variant: 'purple' as BadgeVariant }] : []),
+            ...(comps.length ? [{ label: `${comps.length} competencias`, variant: 'gray' as BadgeVariant }] : []),
+          ],
+          rawData: {
+            nombre: a.nombre, tipo: a.tipo,
+            nivel:  a.nivel ?? '', sector: a.sector ?? '',
+            competencias: comps.map(c => c.titulo),
+          },
+        };
+      }),
     });
   }
 
@@ -114,21 +168,54 @@ function mapApiDetail(api: ApiPlanDetail): Plan {
     });
   }
 
+  // Índice de brechas por tipo para cruzar con la matriz
+  const brechaDescByTipo = new Map<string, string>();
+  for (const b of api.brechas) {
+    if (!brechaDescByTipo.has(b.tipo) && b.descripcion) {
+      brechaDescByTipo.set(b.tipo, b.descripcion);
+    }
+  }
+
   if (api.matriz.length) {
     tabs.push({
       id: 'matriz', icon: '🗃️', label: 'Matriz de competencias', count: api.matriz.length,
       items: [],
       matrizRows: api.matriz.map(m => ({
-        competencia:   m.competencia,
-        leyBase:       m.ley_base ?? '',
-        nacion:        m.nacion        as MatrizRow['nacion'],
-        departamento:  m.departamento  as MatrizRow['departamento'],
-        municipio:     m.municipio     as MatrizRow['municipio'],
-        especializado: m.especializado as MatrizRow['especializado'],
-        brecha:        m.brecha        as MatrizRow['brecha'],
+        competencia:      m.competencia,
+        leyBase:          m.ley_base ?? '',
+        nacion:           m.nacion        as MatrizRow['nacion'],
+        departamento:     m.departamento  as MatrizRow['departamento'],
+        municipio:        m.municipio     as MatrizRow['municipio'],
+        especializado:    m.especializado as MatrizRow['especializado'],
+        brecha:           m.brecha        as MatrizRow['brecha'],
+        brechaDesc:       brechaDescByTipo.get(m.brecha),
+        actoresVinculados: (m.actores_vinculados ?? []).map(a => ({
+          nombre: a.nombre,
+          nivel:  a.nivel,
+          tipo:   a.tipo,
+        })),
       })),
     });
   }
+
+  // Tab resumen — siempre presente
+  const resumenData: ResumenData = {
+    descripcion:       api.descripcion ?? '',
+    respTotal:         api.resp_total,
+    leyesTotal:        api.leyes_total,
+    actoresTotal:      api.actores_total,
+    brechasTotal:      api.brechas_total,
+    brechasCriticas:   api.brechas
+      .filter(b => b.tipo === 'critica' || b.tipo === 'sin_responsable')
+      .map(b => ({ titulo: b.titulo, descripcion: b.descripcion ?? '', severidad: b.severidad }))
+      .slice(0, 6),
+    brechasDuplicidad: api.brechas
+      .filter(b => b.tipo === 'duplicidad')
+      .map(b => ({ titulo: b.titulo, descripcion: b.descripcion ?? '', severidad: b.severidad }))
+      .slice(0, 4),
+    sectors: api.sectores.map(s => ({ sector: s.sector, icon: s.icono ?? '📋', pct: s.cobertura_pct })),
+  };
+  tabs.unshift({ id: 'resumen', icon: '📊', label: 'Resumen', count: 0, items: [], resumenData });
 
   const base = mapApiSummary(api);
   return {
@@ -161,6 +248,11 @@ export class PlanService {
     this.loadFromApi();
   }
 
+  async refresh(): Promise<void> {
+    this._loaded.set(false);
+    await this.loadFromApi();
+  }
+
   private async loadFromApi(): Promise<void> {
     try {
       const summaries = await firstValueFrom(this.planApi.listPlanes({ limit: 200 }));
@@ -187,6 +279,11 @@ export class PlanService {
 
   getPlan(id: string): Plan | undefined {
     return this._plans().find(p => p.id === id);
+  }
+
+  async deletePlan(id: string): Promise<void> {
+    await firstValueFrom(this.planApi.deletePlan(id));
+    this._plans.update(ps => ps.filter(p => p.id !== id));
   }
 
   async loadPlanDetail(id: string): Promise<void> {

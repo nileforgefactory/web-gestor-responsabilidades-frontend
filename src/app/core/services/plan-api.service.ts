@@ -12,12 +12,21 @@ export interface ApiSectorOut {
   cobertura_pct: number;
 }
 
+export interface ApiActorCompetencia {
+  id:     number;
+  titulo: string;
+  sector: string | null;
+}
+
 export interface ApiActorOut {
   id: number;
   nombre: string;
   tipo: string;
   icono: string | null;
   resp_count: number;
+  nivel: string | null;
+  sector: string | null;
+  competencias: ApiActorCompetencia[];
   badge_label: string | null;
   badge_variant: string;
   destacado: boolean;
@@ -43,6 +52,12 @@ export interface ApiBrechaOut {
   icono: string;
 }
 
+export interface ApiActorVinculado {
+  nombre: string;
+  nivel:  string;
+  tipo:   string;
+}
+
 export interface ApiMatrizOut {
   id: number;
   competencia: string;
@@ -52,6 +67,7 @@ export interface ApiMatrizOut {
   municipio: string;
   especializado: string;
   brecha: string;
+  actores_vinculados: ApiActorVinculado[];
 }
 
 export interface ApiNormaOut {
@@ -192,7 +208,7 @@ export class PlanApiService {
     if (params?.skip  != null) qp['skip']  = String(params.skip);
     if (params?.limit != null) qp['limit'] = String(params.limit);
     return this.http
-      .get<ApiPlanSummary[]>(`${this.base}/api/v1/planes`, { params: qp })
+      .get<ApiPlanSummary[]>(`${this.base}/api/v1/planes/`, { params: qp })
       .pipe(catchError(this.handleError));
   }
 
@@ -214,19 +230,19 @@ export class PlanApiService {
     if (params?.skip  != null) qp['skip']  = String(params.skip);
     if (params?.limit != null) qp['limit'] = String(params.limit);
     return this.http
-      .get<ApiConocimientoOut[]>(`${this.base}/api/v1/conocimiento`, { params: qp })
+      .get<ApiConocimientoOut[]>(`${this.base}/api/v1/conocimiento/`, { params: qp })
       .pipe(catchError(this.handleError));
   }
 
   createConocimiento(data: ApiConocimientoCreate): Observable<ApiConocimientoOut> {
     return this.http
-      .post<ApiConocimientoOut>(`${this.base}/api/v1/conocimiento`, data)
+      .post<ApiConocimientoOut>(`${this.base}/api/v1/conocimiento/`, data)
       .pipe(catchError(this.handleError));
   }
 
   createPlan(data: ApiPlanCreate): Observable<ApiPlanDetail> {
     return this.http
-      .post<ApiPlanDetail>(`${this.base}/api/v1/planes`, data)
+      .post<ApiPlanDetail>(`${this.base}/api/v1/planes/`, data)
       .pipe(catchError(this.handleError));
   }
 
@@ -239,6 +255,14 @@ export class PlanApiService {
   deletePlan(planId: string): Observable<void> {
     return this.http
       .delete<void>(`${this.base}/api/v1/planes/${encodeURIComponent(planId)}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  exportPdf(planId: string): Observable<Blob> {
+    return this.http
+      .get(`${this.base}/api/v1/analysis/export-pdf/${encodeURIComponent(planId)}`, {
+        responseType: 'blob',
+      })
       .pipe(catchError(this.handleError));
   }
 
