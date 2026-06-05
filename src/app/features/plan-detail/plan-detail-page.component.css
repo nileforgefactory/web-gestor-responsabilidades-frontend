@@ -21,6 +21,24 @@
   margin-bottom: 20px;
 }
 
+.delete-btn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid #FCA5A5;
+  background: #FEF2F2;
+  color: #DC2626;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+.delete-btn:hover:not(:disabled) { background: #FEE2E2; border-color: #DC2626; }
+.delete-btn:disabled { opacity: .55; cursor: not-allowed; }
+
 .back-btn {
   display: inline-flex;
   align-items: center;

@@ -3,21 +3,24 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 import { PlanService } from '../../core/services/plan.service';
+import { PlanApiService } from '../../core/services/plan-api.service';
 import { SidebarComponent, SidebarItem, SidebarSection } from '../../shared/components/sidebar/sidebar.component';
 import { ResultTabsComponent } from '../../shared/components/result-tabs/result-tabs.component';
-import { BadgeComponent } from '../../shared/components/badge/badge.component';
 
 @Component({
   selector: 'app-plan-detail-page',
   standalone: true,
-  imports: [SidebarComponent, ResultTabsComponent, BadgeComponent],
+  imports: [SidebarComponent, ResultTabsComponent],
   templateUrl: './plan-detail-page.component.html',
   styleUrl: './plan-detail-page.component.css',
 })
 export class PlanDetailPageComponent {
-  private planService = inject(PlanService);
-  private route       = inject(ActivatedRoute);
-  private router      = inject(Router);
+  private planService    = inject(PlanService);
+  private planApiService = inject(PlanApiService);
+  private route          = inject(ActivatedRoute);
+  private router         = inject(Router);
+
+  exportingPdf = signal<boolean>(false);
 
   private planId = toSignal(this.route.paramMap.pipe(map(p => p.get('id') ?? '')));
 
@@ -27,12 +30,20 @@ export class PlanDetailPageComponent {
   });
 
   activeTab = signal<string>('');
+  deleting  = signal<boolean>(false);
 
   constructor() {
     effect(() => {
       const id = this.planId();
       if (id) this.planService.loadPlanDetail(id);
     });
+    // Auto-activa 'matriz' cuando el plan carga y tiene esa tab
+    effect(() => {
+      const tabs = this.plan()?.resultTabs ?? [];
+      if (tabs.some(t => t.id === 'matriz') && !this.activeTab()) {
+        this.activeTab.set('matriz');
+      }
+    }, { allowSignalWrites: true });
   }
 
   sidebarSections = computed<SidebarSection[]>(() => {
@@ -71,11 +82,50 @@ export class PlanDetailPageComponent {
       this.activeTab.set('');
     } else if (item.id === 'reanalizar') {
       this.router.navigate(['/cargar-plan']);
+    } else if (item.id === 'exportar') {
+      this.exportPdf();
     }
+  }
+
+  exportPdf(): void {
+    const id = this.planId();
+    if (!id || this.exportingPdf()) return;
+    this.exportingPdf.set(true);
+    this.planApiService.exportPdf(id).subscribe({
+      next: (blob) => {
+        const titulo = this.plan()?.title ?? 'plan';
+        const filename = `analisis_${titulo.substring(0, 40).replace(/\s+/g, '_')}.pdf`;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exportingPdf.set(false);
+      },
+      error: (err) => {
+        alert(`Error al exportar PDF: ${err.message}`);
+        this.exportingPdf.set(false);
+      },
+    });
   }
 
   onTabChange(tabId: string): void {
     this.activeTab.set(tabId);
+  }
+
+  async deletePlan(): Promise<void> {
+    const id = this.planId();
+    if (!id || this.deleting()) return;
+    if (!confirm('¿Eliminar este plan y todos sus datos? Esta acción no se puede deshacer.')) return;
+    this.deleting.set(true);
+    try {
+      await this.planService.deletePlan(id);
+      this.router.navigate(['/biblioteca']);
+    } catch {
+      alert('No se pudo eliminar el plan. Intenta de nuevo.');
+      this.deleting.set(false);
+    }
   }
 
   back(): void {
