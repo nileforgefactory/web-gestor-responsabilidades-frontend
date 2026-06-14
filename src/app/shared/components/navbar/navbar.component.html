@@ -20,6 +20,23 @@
       </a>
     }
   }
+
+  @if (user()) {
+    <div class="navbar-user">
+      <div class="user-avatar">{{ initials(user()!.nombre) }}</div>
+      <div class="user-info">
+        <span class="user-name">{{ user()!.nombre }}</span>
+        <span
+          class="user-role"
+          [style.background]="rolColor(user()!.rol) + '22'"
+          [style.color]="rolColor(user()!.rol)"
+        >{{ rolLabel(user()!.rol) }}</span>
+      </div>
+      <button class="logout-btn" (click)="onLogout()" title="Cerrar sesión">
+        ⎋
+      </button>
+    </div>
+  }
 </nav>
 
 <!-- Spacer so page content clears the fixed bar -->

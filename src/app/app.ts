@@ -1,6 +1,9 @@
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component, computed, inject } from '@angular/core';
+import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { filter, map } from 'rxjs';
 import { NavbarComponent, NavItem } from './shared/components/navbar/navbar.component';
+import { AuthService } from './core/services/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -10,10 +13,34 @@ import { NavbarComponent, NavItem } from './shared/components/navbar/navbar.comp
   styleUrl: './app.css',
 })
 export class App {
-  readonly navItems: NavItem[] = [
-    { label: 'Cargar Plan',          route: '/cargar-plan',        icon: '📂', highlighted: true },
-    { label: 'Biblioteca de Planes', route: '/biblioteca',         icon: '📚' },
-    { label: 'Búsqueda RAG',         route: '/busqueda-raag',      icon: '🔍' },
-    { label: 'Base de Conocimiento', route: '/base-conocimiento',  icon: '⚡' },
-  ];
+  readonly auth   = inject(AuthService);
+  private  router = inject(Router);
+
+  private currentUrl = toSignal(
+    this.router.events.pipe(
+      filter(e => e instanceof NavigationEnd),
+      map(e => (e as NavigationEnd).urlAfterRedirects),
+    ),
+    { initialValue: this.router.url },
+  );
+
+  readonly showNavbar = computed(() => !this.currentUrl().startsWith('/login'));
+
+  readonly navItems = computed<NavItem[]>(() => {
+    const rol = this.auth.rol();
+    const items: NavItem[] = [
+      { label: 'Cargar Plan',          route: '/cargar-plan',        icon: '📂', highlighted: true },
+      { label: 'Biblioteca de Planes', route: '/biblioteca',         icon: '📚' },
+      { label: 'Búsqueda RAG',         route: '/busqueda-raag',      icon: '🔍' },
+      { label: 'Base de Conocimiento', route: '/base-conocimiento',  icon: '⚡' },
+    ];
+    if (rol === 'superadmin' || rol === 'administrador') {
+      items.push({ label: 'Usuarios', route: '/admin/usuarios', icon: '👥' });
+    }
+    return items;
+  });
+
+  logout(): void {
+    this.auth.logout();
+  }
 }

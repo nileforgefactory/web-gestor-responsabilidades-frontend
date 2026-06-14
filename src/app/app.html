@@ -1,2 +1,10 @@
-<app-navbar appName="Gestor de Leyes" appIcon="⚖️" [items]="navItems" />
+@if (showNavbar()) {
+  <app-navbar
+    appName="Gestor de Leyes"
+    appIcon="⚖️"
+    [items]="navItems()"
+    [user]="auth.user()"
+    (logoutClick)="logout()"
+  />
+}
 <router-outlet />
