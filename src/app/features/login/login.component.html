@@ -1,0 +1,61 @@
+<div class="login-bg">
+  <div class="blob blob-tr"></div>
+  <div class="blob blob-bl"></div>
+
+  <div class="login-card">
+
+    <div class="card-header">
+      <div class="card-icon">⚖️</div>
+      <h2>Iniciar sesión</h2>
+      <p>Ingresa con tu cuenta institucional</p>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()">
+
+      <label class="field-label">Correo institucional</label>
+      <input
+        class="field-input"
+        type="email"
+        placeholder="usuario&#64;entidad.gov.co"
+        formControlName="email"
+        autocomplete="username"
+        [class.field-input--error]="form.get('email')!.invalid && form.get('email')!.touched"
+      />
+
+      <label class="field-label">Contraseña</label>
+      <div class="password-wrap">
+        <input
+          class="field-input"
+          [type]="showPassword() ? 'text' : 'password'"
+          placeholder="••••••••"
+          formControlName="password"
+          autocomplete="current-password"
+          [class.field-input--error]="form.get('password')!.invalid && form.get('password')!.touched"
+        />
+        <button type="button" class="toggle-pw" (click)="togglePassword()" tabindex="-1">
+          {{ showPassword() ? '🙈' : '👁️' }}
+        </button>
+      </div>
+
+      @if (errorMsg()) {
+        <div class="error-banner">⚠️ {{ errorMsg() }}</div>
+      }
+
+      <button
+        type="submit"
+        class="submit-btn"
+        [disabled]="form.invalid || loading()"
+        [class.submit-btn--loading]="loading()"
+      >
+        @if (loading()) {
+          <span class="spinner"></span> Verificando…
+        } @else {
+          Ingresar al sistema →
+        }
+      </button>
+
+    </form>
+
+    <div class="card-footer">🔒 Plataforma segura · Datos cifrados · v1.0.0-beta</div>
+  </div>
+</div>
