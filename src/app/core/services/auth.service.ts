@@ -2,7 +2,7 @@ import { PLATFORM_ID, computed, inject, Injectable, signal } from '@angular/core
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, catchError, switchMap, tap, throwError } from 'rxjs';
+import { Observable, catchError, retry, switchMap, tap, throwError, timer } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { LoginRequest, MeResponse, TokenResponse } from '../models/auth.model';
 
@@ -26,12 +26,27 @@ export class AuthService {
 
   constructor() {
     if (this.isBrowser && this.getToken()) {
-      this.fetchMe().subscribe({
-        next:  () => this._initialized.set(true),
-        error: () => { this.clearSession(); this._initialized.set(true); },
-      });
+      this.fetchMe()
+        .pipe(retry({ count: 2, delay: (_, n) => timer(n * 1500) }))
+        .subscribe({
+          next:  () => this._initialized.set(true),
+          error: (err) => {
+            console.error('[Auth] fetchMe falló al iniciar sesión:', err?.status, err?.message);
+            if (err?.status === 401) this.clearSession();
+            this._initialized.set(true);
+          },
+        });
     } else {
       this._initialized.set(true);
+    }
+  }
+
+  /** Recarga el perfil del usuario si hay token pero el usuario aún no está cargado. */
+  reloadUser(): void {
+    if (this.isBrowser && this.getToken() && !this._user()) {
+      this.fetchMe().subscribe({
+        error: (err) => console.error('[Auth] reloadUser falló:', err?.status),
+      });
     }
   }
 

@@ -8,13 +8,12 @@ export const authGuard: CanActivateFn = () => {
   const auth   = inject(AuthService);
   const router = inject(Router);
 
+  // Tiene sesión si hay usuario cargado O si hay token (fetchMe pudo fallar por red pero el token es válido)
   const decide = () =>
-    auth.isLoggedIn() ? true : router.createUrlTree(['/login']);
+    (auth.isLoggedIn() || !!auth.getToken()) ? true : router.createUrlTree(['/login']);
 
-  // Si ya se inicializó (sin token o fetchMe ya terminó) decidimos de inmediato
   if (auth.initialized()) return decide();
 
-  // Si fetchMe todavía está en vuelo esperamos a que termine
   return toObservable(auth.initialized).pipe(
     filter(Boolean),
     take(1),

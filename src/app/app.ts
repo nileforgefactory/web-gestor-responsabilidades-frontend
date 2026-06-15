@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, effect, inject } from '@angular/core';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map } from 'rxjs';
@@ -15,6 +15,15 @@ import { AuthService } from './core/services/auth.service';
 export class App {
   readonly auth   = inject(AuthService);
   private  router = inject(Router);
+
+  constructor() {
+    // Si la sesión inicializó pero el usuario sigue nulo (fetchMe falló), reintenta.
+    effect(() => {
+      if (this.auth.initialized() && !this.auth.user() && !!this.auth.getToken()) {
+        this.auth.reloadUser();
+      }
+    });
+  }
 
   private currentUrl = toSignal(
     this.router.events.pipe(
