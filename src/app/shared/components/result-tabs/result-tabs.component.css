@@ -75,7 +75,7 @@
 
 .result-icon  { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
 .result-title { font-size: 13px; font-weight: 600; color: var(--text); }
-.result-sub   { font-size: 12px; color: var(--text2); margin-top: 3px; line-height: 1.5; }
+.result-sub   { font-size: 12px; color: var(--text2); margin-top: 3px; line-height: 1.5; white-space: pre-line; }
 .result-badges { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px; }
 
 /* ── Matriz: cabecera ── */
@@ -135,10 +135,10 @@
 
 .heat-grid {
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) 64px 64px 64px 64px minmax(100px, auto);
+  grid-template-columns: minmax(180px, 1fr) minmax(110px, 160px) 56px 56px 56px 56px minmax(90px, auto);
   gap: 1px;
   background: var(--border);
-  min-width: 560px;
+  min-width: 680px;
 }
 
 .heat-col-header {
@@ -154,6 +154,47 @@
 .heat-col-competencia {
   text-align: left;
   padding-left: 12px;
+}
+
+.heat-col-sector { text-align: left; padding-left: 8px; }
+
+.heat-sector-cell {
+  display: flex;
+  align-items: center;
+  background: var(--surface);
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.heat-sector-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 20px;
+  border: 1px solid transparent;
+  padding: 2px 7px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+
+.heat-sector-empty {
+  color: var(--text2);
+  font-size: 12px;
+}
+
+.actor-modal-sector {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 20px;
+  padding: 3px 10px;
+  margin-right: 6px;
 }
 
 .heat-row-label {
@@ -256,6 +297,8 @@
 
 .col-actor  { text-align: center !important; }
 .td-actor   { text-align: center; }
+.col-sector { min-width: 110px; max-width: 150px; }
+.td-sector  { white-space: nowrap; }
 
 .resp-dot {
   width: 26px; height: 26px;
@@ -697,6 +740,16 @@
 .row-modal-explain-dup      { background: #fffbeb; color: #92400e; }
 .row-modal-explain-text     { font-weight: 600; }
 .row-modal-explain-detail   { font-weight: 400; }
+
+.row-modal-origen {
+  padding: 10px 20px;
+  font-size: 12px;
+  line-height: 1.5;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface2);
+}
+.row-modal-origen-label { font-weight: 600; color: var(--text2); margin-right: 4px; }
+.row-modal-origen-text  { color: var(--text2); font-style: italic; }
 
 .row-modal-niveles {
   padding: 12px 20px;

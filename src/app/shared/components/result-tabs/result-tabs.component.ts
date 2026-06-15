@@ -23,6 +23,7 @@ const _ACTOR_TIPO_COLOR: Record<string, string> = {
 
 export interface MatrizRow {
   competencia:        string;
+  actor?:             string;
   leyBase:            string;
   nacion:             MatrizLevel;
   departamento:       MatrizLevel;
@@ -31,6 +32,7 @@ export interface MatrizRow {
   brecha:             BrechaStatus;
   brechaDesc?:        string;
   sector?:            string;
+  origenContexto?:    string;
   actoresVinculados?: { nombre: string; nivel: string; tipo: string }[];
   leyesVinculadas?:   { codigo: string; titulo: string }[];
 }
@@ -178,12 +180,49 @@ export class ResultTabsComponent {
   isSectorCollapsed(s: string): boolean { return this.collapsedSectors().has(s); }
 
   sectorIcon(s: string): string {
-    const icons: Record<string, string> = {
-      salud: '🏥', educacion: '🎓', agua: '💧', vivienda: '🏠', transporte: '🛣️',
-      gobierno: '🏛️', hacienda: '💰', cultura: '🎭', deporte: '⚽', tic: '💻',
-      medio_ambiente: '🌿', seguridad: '🛡️', planeacion: '📐', juridica: '⚖️', general: '📋',
-    };
-    return icons[s.toLowerCase()] ?? '📋';
+    const n = s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    const icons: [RegExp, string][] = [
+      [/salud|hospital|medicina|sanitari/,          '🏥'],
+      [/educac|escuela|colegio|instruct|formac/,    '🎓'],
+      [/agua|acueducto|alcantarill|saneamiento/,    '💧'],
+      [/vivienda|habitat|urbanismo|construcci/,     '🏠'],
+      [/transport|vial|movilidad|carretera|via\b/,  '🛣️'],
+      [/gobierno|gobernanza|administrac|alcald/,    '🏛️'],
+      [/hacienda|fiscal|presupuest|financ|tribut/,  '💰'],
+      [/cultura|patrimoni|artistic|biblioteca/,     '🎭'],
+      [/deport|recreac|actividad.fisica|juego/,     '⚽'],
+      [/tic|tecnolog|digital|comunicac|internet/,   '💻'],
+      [/ambiente|ambiental|ecolog|natur|biodiv/,    '🌿'],
+      [/seguridad|policia|convivencia|orden/,       '🛡️'],
+      [/planeac|ordenam|territorial|urbanist/,      '📐'],
+      [/juridic|legal|derecho|normativ|justicia/,   '⚖️'],
+      [/agro|agricul|rural|campo|pecuari|pesca/,    '🌾'],
+      [/social|bienestar|familia|infancia|mujer/,   '👨‍👩‍👧'],
+      [/empleo|trabajo|laboral|productiv|empresa/,  '💼'],
+      [/energia|electr|gas\b|combustible/,          '⚡'],
+      [/turismo|turistic/,                          '🗺️'],
+      [/mineria|miner|extrac/,                      '⛏️'],
+      [/general|sin.sector|otro/,                   '📋'],
+    ];
+    for (const [re, icon] of icons) {
+      if (re.test(n)) return icon;
+    }
+    return '📋';
+  }
+
+  sectorColor(s: string): string {
+    const n = s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    if (/salud/.test(n))        return '#dc2626';
+    if (/educac/.test(n))       return '#2563eb';
+    if (/agua/.test(n))         return '#0284c7';
+    if (/vivienda/.test(n))     return '#d97706';
+    if (/transport/.test(n))    return '#7c3aed';
+    if (/ambiente/.test(n))     return '#059669';
+    if (/seguridad/.test(n))    return '#1e40af';
+    if (/hacienda|financ/.test(n)) return '#b45309';
+    if (/social|bienestar/.test(n)) return '#be185d';
+    if (/agro|rural/.test(n))   return '#15803d';
+    return '#6b7280';
   }
 
   // ── Matriz de actores ─────────────────────────────────────────────────────

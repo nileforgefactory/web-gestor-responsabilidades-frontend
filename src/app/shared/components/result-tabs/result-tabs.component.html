@@ -198,8 +198,9 @@
                   <!-- Filas del sector -->
                   @if (!isSectorCollapsed(group.sector)) {
                     <div class="heat-grid">
-                      <!-- Encabezados de columna (solo en primer grupo o siempre) -->
+                      <!-- Encabezados de columna -->
                       <div class="heat-col-header heat-col-competencia">Responsabilidad / Competencia</div>
+                      <div class="heat-col-header heat-col-sector">Sector</div>
                       <div class="heat-col-header heat-col-label">Nación</div>
                       <div class="heat-col-header heat-col-label">Depto.</div>
                       <div class="heat-col-header heat-col-label">Municipio</div>
@@ -216,6 +217,20 @@
                           <span class="row-text">{{ row.competencia }}</span>
                           @if (row.actoresVinculados?.length) {
                             <span class="row-actor-dot" [title]="row.actoresVinculados![0].nombre">●</span>
+                          }
+                        </div>
+                        <!-- Columna Sector dinámica -->
+                        <div class="heat-sector-cell" (click)="onRowClick(row)"
+                          [title]="row.sector || 'Sin sector'">
+                          @if (row.sector) {
+                            <span class="heat-sector-badge"
+                              [style.background]="sectorColor(row.sector) + '22'"
+                              [style.color]="sectorColor(row.sector)"
+                              [style.borderColor]="sectorColor(row.sector) + '55'">
+                              {{ sectorIcon(row.sector) }} {{ row.sector | titlecase }}
+                            </span>
+                          } @else {
+                            <span class="heat-sector-empty">—</span>
                           }
                         </div>
                         <div class="heat-cell" [class]="heatCellClass(row.nacion, row.brecha)"
@@ -259,6 +274,7 @@
                       <thead>
                         <tr>
                           <th class="col-competencia">Proceso / Competencia</th>
+                          <th class="col-sector">Sector</th>
                           <th class="col-ley">Ley base</th>
                           <th class="col-actor">Nación</th>
                           <th class="col-actor">Depto.</th>
@@ -278,6 +294,16 @@
                               @if (row.actoresVinculados?.length) {
                                 <span class="td-actor-dot">● {{ row.actoresVinculados![0].nombre }}</span>
                               }
+                            </td>
+                            <td class="td-sector">
+                              @if (row.sector) {
+                                <span class="heat-sector-badge"
+                                  [style.background]="sectorColor(row.sector) + '22'"
+                                  [style.color]="sectorColor(row.sector)"
+                                  [style.borderColor]="sectorColor(row.sector) + '55'">
+                                  {{ sectorIcon(row.sector) }} {{ row.sector | titlecase }}
+                                </span>
+                              } @else { <span class="heat-sector-empty">—</span> }
                             </td>
                             <td><span class="ley-badge">{{ row.leyBase }}</span></td>
                             <td class="td-actor"><span class="resp-dot" [class]="levelClass(row.nacion)">{{ levelText(row.nacion) }}</span></td>
@@ -406,6 +432,13 @@
                   {{ row.brecha === 'critica' ? '🚨 Brecha crítica' : row.brecha === 'duplicidad' ? '⚠️ Duplicidad' : '? Indefinido' }}
                 </span>
               }
+              @if (row.sector) {
+                <span class="actor-modal-sector"
+                  [style.background]="sectorColor(row.sector) + '22'"
+                  [style.color]="sectorColor(row.sector)">
+                  {{ sectorIcon(row.sector) }} {{ row.sector | titlecase }}
+                </span>
+              }
               @if (row.leyBase) { <span class="actor-modal-nivel">⚖️ {{ row.leyBase }}</span> }
             </div>
           </div>
@@ -422,6 +455,14 @@
           @if (row.brechaDesc) {
             <span class="row-modal-explain-detail"> — {{ row.brechaDesc }}</span>
           }
+        </div>
+      }
+
+      <!-- Trazabilidad: fragmento del plan que originó esta competencia -->
+      @if (row.origenContexto) {
+        <div class="row-modal-origen">
+          <span class="row-modal-origen-label">📍 Origen en el plan:</span>
+          <span class="row-modal-origen-text">{{ row.origenContexto }}</span>
         </div>
       }
 
