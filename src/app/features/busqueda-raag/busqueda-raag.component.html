@@ -108,9 +108,73 @@
         </div>
       }
 
-      <div style="height: 2.5rem"></div>
+      <div style="height: 1.5rem"></div>
 
     }
+
+    <!-- ── Panel de conocimientos ──────────────────────────────────────── -->
+    <div class="conocimiento-panel">
+      <div class="conocimiento-header" (click)="showConocimiento.set(!showConocimiento())">
+        <div class="conocimiento-title">
+          <span class="conocimiento-icon">📚</span>
+          <span>Base de Conocimiento</span>
+          <span class="conocimiento-count">{{ conocimientos().length }} documentos</span>
+        </div>
+        <div class="conocimiento-header-actions">
+          <button class="conocimiento-refresh" (click)="$event.stopPropagation(); loadConocimientos()" title="Refrescar">↻</button>
+          <span class="conocimiento-chevron" [class.open]="showConocimiento()">›</span>
+        </div>
+      </div>
+
+      @if (showConocimiento()) {
+        <!-- Filtro tabs -->
+        <div class="conocimiento-tabs">
+          @for (tab of [['todos','Todos'],['indexado','Activos'],['deshabilitado','Deshabilitados']] ; track tab[0]) {
+            <button
+              class="conocimiento-tab"
+              [class.active]="conocimientoFilter() === tab[0]"
+              (click)="conocimientoFilter.set($any(tab[0]))"
+            >{{ tab[1] }}</button>
+          }
+        </div>
+
+        <!-- Lista -->
+        <div class="conocimiento-list">
+          @if (filteredConocimientos().length === 0) {
+            <div class="conocimiento-empty">No hay documentos en esta categoría.</div>
+          }
+          @for (doc of filteredConocimientos(); track doc.id) {
+            <div class="conocimiento-row" [class.disabled]="doc.estado === 'deshabilitado'">
+              <div class="conocimiento-row-info">
+                <span class="conocimiento-tipo">{{ doc.tipo }}</span>
+                <span class="conocimiento-nombre" [title]="doc.nombre">{{ doc.nombre }}</span>
+                <span class="conocimiento-chunks">{{ doc.chunk_count }} chunks</span>
+              </div>
+              <div class="conocimiento-row-actions">
+                <span class="conocimiento-estado" [class]="'estado-' + doc.estado">
+                  {{ estadoLabel(doc.estado) }}
+                </span>
+                @if (doc.estado === 'indexado' || doc.estado === 'deshabilitado') {
+                  <button
+                    class="toggle-btn"
+                    [class.toggle-btn--disable]="doc.estado === 'indexado'"
+                    [class.toggle-btn--enable]="doc.estado === 'deshabilitado'"
+                    [disabled]="togglingId() === doc.id"
+                    (click)="toggleConocimiento(doc)"
+                    [title]="doc.estado === 'deshabilitado' ? 'Habilitar' : 'Deshabilitar'"
+                  >
+                    @if (togglingId() === doc.id) { … }
+                    @else { {{ doc.estado === 'deshabilitado' ? '✓ Habilitar' : '✕ Deshabilitar' }} }
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <div style="height: 2.5rem"></div>
 
   </main>
 
