@@ -1,6 +1,7 @@
-import { Component, EventEmitter, Output, input } from '@angular/core';
+import { Component, EventEmitter, Output, input, inject, effect, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { MeResponse, RolCodigo } from '../../../core/models/auth.model';
+import { BackgroundScraperService } from '../../../core/services/background-scraper.service';
 
 export interface NavItem {
   label: string;
@@ -36,17 +37,39 @@ export class NavbarComponent {
 
   @Output() logoutClick = new EventEmitter<void>();
 
-  initials(nombre: string): string {
-    return nombre
-      .split(' ')
-      .slice(0, 2)
-      .map(w => w[0])
-      .join('')
-      .toUpperCase();
+  readonly scraper = inject(BackgroundScraperService);
+  readonly showCompletedAlert = signal(false);
+  private prevEstado = '';
+
+  constructor() {
+    effect(() => {
+      const estado = this.scraper.estado().estado;
+      if (this.prevEstado === 'running' && estado === 'completed') {
+        this.showCompletedAlert.set(true);
+        setTimeout(() => this.showCompletedAlert.set(false), 6000);
+      }
+      this.prevEstado = estado;
+    });
   }
 
-  rolLabel(rol: RolCodigo): string  { return ROL_LABEL[rol] ?? rol; }
-  rolColor(rol: RolCodigo): string  { return ROL_COLOR[rol] ?? 'var(--accent)'; }
+  initials(nombre: string): string {
+    return nombre.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
+  }
+
+  rolLabel(rol: RolCodigo): string { return ROL_LABEL[rol] ?? rol; }
+  rolColor(rol: RolCodigo): string { return ROL_COLOR[rol] ?? 'var(--accent)'; }
 
   onLogout(): void { this.logoutClick.emit(); }
+
+  toggleScraper(): void {
+    if (this.scraper.isRunning()) {
+      this.scraper.cancelar();
+    } else {
+      this.scraper.iniciar();
+    }
+  }
+
+  dismissAlert(): void {
+    this.showCompletedAlert.set(false);
+  }
 }
