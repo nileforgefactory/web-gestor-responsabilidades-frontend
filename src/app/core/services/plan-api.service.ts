@@ -26,6 +26,7 @@ export interface ApiActorOut {
   resp_count: number;
   nivel: string | null;
   sector: string | null;
+  origen_contexto: string | null;
   competencias: ApiActorCompetencia[];
   badge_label: string | null;
   badge_variant: string;
@@ -39,6 +40,7 @@ export interface ApiResponsabilidadOut {
   sector: string | null;
   tipo: string;
   referencia_legal: string | null;
+  origen_contexto: string | null;
   icono: string;
 }
 
@@ -49,6 +51,9 @@ export interface ApiBrechaOut {
   tipo: string;
   severidad: string;
   referencia_legal: string | null;
+  tipo_detallado: string | null;
+  recomendacion: string | null;
+  origen_contexto: string | null;
   icono: string;
 }
 
@@ -61,17 +66,21 @@ export interface ApiActorVinculado {
 export interface ApiMatrizOut {
   id: number;
   competencia: string;
+  actor: string | null;
   ley_base: string | null;
   nacion: string;
   departamento: string;
   municipio: string;
   especializado: string;
   brecha: string;
+  sector: string | null;
+  origen_contexto: string | null;
   actores_vinculados: ApiActorVinculado[];
 }
 
 export interface ApiNormaOut {
   id: number;
+  id_norma: string | null;
   norma_codigo: string | null;
   titulo: string;
   articulos: string | null;
@@ -237,6 +246,24 @@ export class PlanApiService {
   createConocimiento(data: ApiConocimientoCreate): Observable<ApiConocimientoOut> {
     return this.http
       .post<ApiConocimientoOut>(`${this.base}/api/v1/conocimiento/`, data)
+      .pipe(catchError(this.handleError));
+  }
+
+  deshabilitarConocimiento(docId: string): Observable<ApiConocimientoOut> {
+    return this.http
+      .post<ApiConocimientoOut>(`${this.base}/api/v1/conocimiento/${encodeURIComponent(docId)}/deshabilitar`, {})
+      .pipe(catchError(this.handleError));
+  }
+
+  habilitarConocimiento(docId: string): Observable<ApiConocimientoOut> {
+    return this.http
+      .post<ApiConocimientoOut>(`${this.base}/api/v1/conocimiento/${encodeURIComponent(docId)}/habilitar`, {})
+      .pipe(catchError(this.handleError));
+  }
+
+  deleteConocimiento(docId: string): Observable<void> {
+    return this.http
+      .delete<void>(`${this.base}/api/v1/conocimiento/${encodeURIComponent(docId)}`)
       .pipe(catchError(this.handleError));
   }
 
