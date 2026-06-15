@@ -6,6 +6,7 @@ import { UploadZoneComponent } from '../../shared/components/upload-zone/upload-
 import { ResultTab, ResultTabsComponent } from '../../shared/components/result-tabs/result-tabs.component';
 import { OrchestratorCardComponent, OrchestratorParams } from './components/orchestrator-card/orchestrator-card.component';
 import { PlanService } from '../../core/services/plan.service';
+import { AuthService } from '../../core/services/auth.service';
 import { environment } from '../../../environments/environment';
 import type { BadgeVariant } from '../../shared/components/badge/badge.component';
 
@@ -20,7 +21,7 @@ type PageState = 'idle' | 'file-loaded' | 'processing' | 'done';
 })
 export class CargarPlanComponent {
   private planService = inject(PlanService);
-
+  private auth        = inject(AuthService);
   private router      = inject(Router);
 
   state              = signal<PageState>('idle');
@@ -161,7 +162,7 @@ export class CargarPlanComponent {
     try {
       const res = await fetch(`${environment.ragApiUrl}/api/v1/analysis/save-result`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...this.authHeader() },
         body: JSON.stringify(payload),
       });
 
@@ -183,7 +184,7 @@ export class CargarPlanComponent {
   async stopAnalysis(): Promise<void> {
     // Cancela la tarea en el backend
     if (this._sessionId) {
-      fetch(`${environment.ragApiUrl}/api/v1/analysis/session/${this._sessionId}/cancel`, { method: 'POST' })
+      fetch(`${environment.ragApiUrl}/api/v1/analysis/session/${this._sessionId}/cancel`, { method: 'POST', headers: this.authHeader() })
         .catch(() => {});
     }
     // Corta la conexión SSE en el frontend
@@ -192,6 +193,11 @@ export class CargarPlanComponent {
     this._abortController = null;
     this.addLog('warn', '⚠ Análisis detenido por el usuario');
     this.state.set('file-loaded');
+  }
+
+  private authHeader(): Record<string, string> {
+    const token = this.auth.getToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
   }
 
   reset(): void {
@@ -237,7 +243,7 @@ export class CargarPlanComponent {
     try {
       response = await fetch(
         `${environment.ragApiUrl}/api/v1/analysis/analyze-document`,
-        { method: 'POST', body: form, signal: this._abortController.signal },
+        { method: 'POST', body: form, headers: this.authHeader(), signal: this._abortController.signal },
       );
     } catch (err: any) {
       if (err?.name === 'AbortError') return; // detenido por el usuario

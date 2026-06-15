@@ -1,0 +1,380 @@
+<div class="app-shell">
+
+  <!-- ── Sidebar ─────────────────────────────────────────────────────────── -->
+  <app-sidebar
+    [sections]="sidebarSections()"
+    [user]="sidebarUser()"
+    (itemClick)="onSidebarClick($event)"
+  />
+
+  <!-- ── Main ───────────────────────────────────────────────────────────── -->
+  <main class="main-content">
+
+    <!-- Page header -->
+    <div class="page-header">
+      <div>
+        <div class="breadcrumb">Admin / Usuarios y roles</div>
+        <h2>Gestión de Usuarios</h2>
+        <p>Administra cuentas, roles y territorios del sistema</p>
+      </div>
+      <button class="btn btn--primary" (click)="openCreate()">
+        + Nuevo usuario
+      </button>
+    </div>
+
+    <!-- Stats -->
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#EFF6FF;">👥</div>
+        <div>
+          <div class="stat-value">{{ totalCount() }}</div>
+          <div class="stat-label">Usuarios activos</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#EFF6FF;">🛡️</div>
+        <div>
+          <div class="stat-value">{{ adminCount() }}</div>
+          <div class="stat-label">Administradores</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#ECFDF5;">👤</div>
+        <div>
+          <div class="stat-value">{{ userCount() }}</div>
+          <div class="stat-label">Usuarios básicos</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#F5F3FF;">🔑</div>
+        <div>
+          <div class="stat-value">1</div>
+          <div class="stat-label">Super Administrador</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search -->
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input
+        class="search-bar"
+        type="text"
+        placeholder="Buscar por nombre, correo o territorio…"
+        [value]="search()"
+        (input)="search.set($any($event.target).value)"
+      />
+      @if (search()) {
+        <button class="search-clear" (click)="search.set('')">✕</button>
+      }
+    </div>
+
+    <!-- Error state -->
+    @if (pageError()) {
+      <div class="error-banner">
+        ⚠️ {{ pageError() }}
+        <button class="btn btn--sm" (click)="loadUsers()">Reintentar</button>
+      </div>
+    }
+
+    <!-- Users table card -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#EFF6FF;">👥</div>
+        <div>
+          <h3>Usuarios del sistema</h3>
+          <div class="card-sub">
+            @if (search()) {
+              {{ filteredUsers().length }} de {{ totalCount() }} resultados
+            } @else {
+              {{ totalCount() }} usuarios registrados
+            }
+          </div>
+        </div>
+        <button class="btn btn--sm" style="margin-left:auto;" (click)="loadUsers()">
+          🔄 Actualizar
+        </button>
+      </div>
+
+      <!-- Loading -->
+      @if (loading()) {
+        <div class="loading-state">
+          <div class="spinner spinner--lg"></div>
+          <span>Cargando usuarios…</span>
+        </div>
+      } @else if (filteredUsers().length === 0) {
+        <div class="empty-state">
+          <div class="empty-icon">👤</div>
+          <div class="empty-title">
+            {{ search() ? 'Sin resultados' : 'No hay usuarios aún' }}
+          </div>
+          <div class="empty-sub">
+            {{ search() ? 'Prueba con otro término de búsqueda' : 'Crea el primer usuario con el botón superior' }}
+          </div>
+          @if (!search()) {
+            <button class="btn btn--primary btn--sm" (click)="openCreate()">+ Nuevo usuario</button>
+          }
+        </div>
+      } @else {
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Usuario</th>
+                <th>Rol</th>
+                <th>Territorio</th>
+                <th>Registrado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (u of filteredUsers(); track u.id) {
+                <tr [class.row--self]="isSelf(u.id)">
+                  <!-- Avatar + nombre + email -->
+                  <td>
+                    <div class="user-cell">
+                      <div
+                        class="user-avatar"
+                        [class.user-avatar--admin]="u.rol === 'administrador'"
+                        [class.user-avatar--super]="u.rol === 'superadmin'"
+                      >{{ initials(u.nombre) }}</div>
+                      <div>
+                        <div class="user-name">
+                          {{ u.nombre }}
+                          @if (isSelf(u.id)) {
+                            <span class="self-chip">Tú</span>
+                          }
+                        </div>
+                        <div class="user-email">{{ u.email }}</div>
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- Rol badge -->
+                  <td>
+                    <app-badge [variant]="rolBadge(u.rol)">{{ rolLabel(u.rol) }}</app-badge>
+                  </td>
+
+                  <!-- Territorio -->
+                  <td>
+                    <div class="territorio-label">{{ territorioLabel(u) }}</div>
+                    <div class="coleccion-id">{{ u.territorio.coleccion_id }}</div>
+                  </td>
+
+                  <!-- Fecha -->
+                  <td class="date-cell">{{ formatDate(u.creado_en) }}</td>
+
+                  <!-- Acciones -->
+                  <td>
+                    <div class="action-row">
+                      <!-- Toggle rol (no está disponible para superadmin ni para uno mismo) -->
+                      @if (u.rol !== 'superadmin' && !isSelf(u.id)) {
+                        <button
+                          class="btn btn--sm btn--ghost"
+                          [disabled]="changingId() === u.id"
+                          (click)="toggleRol(u)"
+                          [title]="u.rol === 'administrador' ? 'Cambiar a Usuario' : 'Cambiar a Administrador'"
+                        >
+                          @if (changingId() === u.id) {
+                            <span class="spinner"></span>
+                          } @else {
+                            {{ u.rol === 'administrador' ? '⬇ Usuario' : '⬆ Admin' }}
+                          }
+                        </button>
+                      }
+
+                      <!-- Delete (no disponible para superadmin ni para uno mismo) -->
+                      @if (u.rol !== 'superadmin' && !isSelf(u.id)) {
+                        <button
+                          class="btn btn--sm btn--danger-ghost"
+                          (click)="confirmDelete(u)"
+                          title="Desactivar usuario"
+                        >🗑</button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+
+  </main>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL — Crear usuario
+═══════════════════════════════════════════════════════════ -->
+@if (showCreate()) {
+  <div class="modal-overlay" (click)="closeCreate()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+
+      <div class="modal-header">
+        <div>
+          <h3>Nuevo usuario</h3>
+          <p>Completa los datos para crear la cuenta</p>
+        </div>
+        <button class="modal-close" (click)="closeCreate()">✕</button>
+      </div>
+
+      <form [formGroup]="createForm" (ngSubmit)="submitCreate()">
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Nombre completo</label>
+            <input
+              class="form-input"
+              type="text"
+              placeholder="Ej. Ana García López"
+              formControlName="nombre"
+              [class.form-input--error]="createForm.get('nombre')!.invalid && createForm.get('nombre')!.touched"
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Correo institucional</label>
+            <input
+              class="form-input"
+              type="email"
+              placeholder="usuario&#64;gov.co"
+              formControlName="email"
+              [class.form-input--error]="createForm.get('email')!.invalid && createForm.get('email')!.touched"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Contraseña temporal</label>
+          <input
+            class="form-input"
+            type="password"
+            placeholder="Mínimo 6 caracteres"
+            formControlName="password"
+            [class.form-input--error]="createForm.get('password')!.invalid && createForm.get('password')!.touched"
+          />
+        </div>
+
+        <!-- Role selector -->
+        <div class="form-group">
+          <label class="form-label">Rol asignado</label>
+          <div class="role-grid">
+            <button
+              type="button"
+              class="role-card"
+              [class.role-card--selected]="createRole() === 'usuario'"
+              (click)="setCreateRole('usuario')"
+            >
+              <div class="role-icon">👤</div>
+              <div class="role-name">Usuario</div>
+              <div class="role-sub">Solo lectura</div>
+            </button>
+            <button
+              type="button"
+              class="role-card"
+              [class.role-card--selected]="createRole() === 'administrador'"
+              (click)="setCreateRole('administrador')"
+            >
+              <div class="role-icon">🛡️</div>
+              <div class="role-name">Administrador</div>
+              <div class="role-sub">Gestión completa</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Territory -->
+        <div class="form-group">
+          <label class="form-label">Territorio</label>
+          <div class="territory-row">
+            <div class="form-group form-group--inline">
+              <label class="form-label form-label--sm">País</label>
+              <input
+                class="form-input"
+                type="text"
+                placeholder="COLOMBIA"
+                formControlName="pais"
+              />
+            </div>
+            <div class="form-group form-group--inline">
+              <label class="form-label form-label--sm">Departamento</label>
+              <input
+                class="form-input"
+                type="text"
+                placeholder="Opcional · ej. CUNDINAMARCA"
+                formControlName="departamento"
+              />
+            </div>
+            <div class="form-group form-group--inline">
+              <label class="form-label form-label--sm">Municipio</label>
+              <input
+                class="form-input"
+                type="text"
+                placeholder="Opcional · ej. ZIPAQUIRA"
+                formControlName="municipio"
+              />
+            </div>
+          </div>
+          <div class="field-hint">Escribe en mayúsculas. Deja vacío para asignar solo el nivel superior.</div>
+        </div>
+
+        @if (createError()) {
+          <div class="error-banner">⚠️ {{ createError() }}</div>
+        }
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn--secondary" (click)="closeCreate()">
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            class="btn btn--primary"
+            [disabled]="createForm.invalid || creating()"
+          >
+            @if (creating()) {
+              <span class="spinner"></span> Creando…
+            } @else {
+              Crear usuario →
+            }
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+}
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL — Confirmar eliminación
+═══════════════════════════════════════════════════════════ -->
+@if (deleteTarget()) {
+  <div class="modal-overlay" (click)="cancelDelete()">
+    <div class="modal-card modal-card--sm" (click)="$event.stopPropagation()">
+
+      <div class="delete-icon">🗑️</div>
+      <h3 class="delete-title">Desactivar usuario</h3>
+      <p class="delete-body">
+        ¿Estás seguro de desactivar a
+        <strong>{{ deleteTarget()!.nombre }}</strong>?
+        El usuario no podrá iniciar sesión pero sus datos se conservarán.
+      </p>
+
+      <div class="modal-actions">
+        <button class="btn btn--secondary" (click)="cancelDelete()">
+          Cancelar
+        </button>
+        <button
+          class="btn btn--danger"
+          [disabled]="deleting()"
+          (click)="submitDelete()"
+        >
+          @if (deleting()) {
+            <span class="spinner"></span> Desactivando…
+          } @else {
+            Sí, desactivar
+          }
+        </button>
+      </div>
+
+    </div>
+  </div>
+}

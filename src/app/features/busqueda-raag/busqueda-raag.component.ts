@@ -19,6 +19,7 @@ import {
 import { BadgeVariant } from '../../shared/components/badge/badge.component';
 import { PlanService } from '../../core/services/plan.service';
 import { RagApiService, HealthReadyResponse } from '../../core/services/rag-api.service';
+import { PlanApiService, ApiConocimientoOut } from '../../core/services/plan-api.service';
 import { environment } from '../../../environments/environment';
 import { SearchInputComponent } from './components/search-input/search-input.component';
 import { RagResultCardComponent } from './components/rag-result-card/rag-result-card.component';
@@ -39,6 +40,7 @@ import { AiSynthesisCardComponent } from './components/ai-synthesis-card/ai-synt
 export class BusquedaRaagComponent implements OnInit {
   private planService = inject(PlanService);
   private ragApi      = inject(RagApiService);
+  private planApi     = inject(PlanApiService);
   private router      = inject(Router);
 
   state        = signal<RagState>('idle');
@@ -50,6 +52,12 @@ export class BusquedaRaagComponent implements OnInit {
   totalHits    = signal<number>(0);
   errorMsg     = signal<string | null>(null);
   health       = signal<HealthReadyResponse | null>(null);
+
+  // ── Base de conocimiento ──────────────────────────────────────────────────
+  conocimientos      = signal<ApiConocimientoOut[]>([]);
+  conocimientoFilter = signal<'todos' | 'indexado' | 'deshabilitado'>('todos');
+  togglingId         = signal<string | null>(null);
+  showConocimiento   = signal(true);
 
   readonly suggestions   = SEARCH_SUGGESTIONS;
   readonly filterOptions = FILTER_OPTIONS;
@@ -67,8 +75,14 @@ export class BusquedaRaagComponent implements OnInit {
     return filter === 'all' ? results : results.filter(r => r.type === filter);
   });
 
-  // ── Sidebar ──────────────────────────────────────────────────────────────
+  filteredConocimientos = computed(() => {
+    const f = this.conocimientoFilter();
+    const docs = this.conocimientos();
+    if (f === 'todos') return docs;
+    return docs.filter(d => d.estado === f);
+  });
 
+  // ── Sidebar ──────────────────────────────────────────────────────────────
   readonly sidebarUser: SidebarUser = {
     initials: 'AL',
     avatarColor: '#059669',
@@ -82,10 +96,14 @@ export class BusquedaRaagComponent implements OnInit {
     const history      = this.queryHistory();
     const plan         = this.activePlan();
     const h            = this.health();
+    const docs         = this.conocimientos();
 
     const icon  = (ok: boolean | undefined) => ok ? '✅' : ok === false ? '❌' : '🔄';
     const label = (ok: boolean | undefined) => ok ? 'Online' : ok === false ? 'Offline' : 'Verificando…';
     const color = (ok: boolean | undefined) => ok ? 'var(--green)' : h ? 'var(--red)' : 'var(--gold)';
+
+    const indexados      = docs.filter(d => d.estado === 'indexado').length;
+    const deshabilitados = docs.filter(d => d.estado === 'deshabilitado').length;
 
     const sections: SidebarSection[] = [
       {
@@ -97,7 +115,15 @@ export class BusquedaRaagComponent implements OnInit {
         ],
       },
       {
-        label: 'Filtros',
+        label: 'Base de conocimiento',
+        items: [
+          { icon: '📄', label: 'Total documentos', badge: docs.length },
+          { icon: '✅', label: 'Activos',          badge: indexados },
+          { icon: '🚫', label: 'Deshabilitados',   badge: deshabilitados },
+        ],
+      },
+      {
+        label: 'Filtros de búsqueda',
         items: FILTER_OPTIONS.map(f => ({
           id:     `filter:${f.type}`,
           icon:   f.icon,
@@ -135,6 +161,7 @@ export class BusquedaRaagComponent implements OnInit {
       next:  h  => this.health.set(h),
       error: () => this.health.set({ app_env: '', healthy: false, checks: {} }),
     });
+    this.loadConocimientos();
   }
 
   onSidebarItemClick(item: SidebarItem): void {
@@ -142,6 +169,32 @@ export class BusquedaRaagComponent implements OnInit {
     if (id.startsWith('filter:')) { this.activeFilter.set(id.replace('filter:', '') as FilterType); return; }
     if (id.startsWith('history:')) { this.onSearch(id.replace('history:', '')); return; }
     if (id) this.router.navigate(['/plan', id]);
+  }
+
+  // ── Conocimiento ──────────────────────────────────────────────────────────
+
+  loadConocimientos(): void {
+    this.planApi.listConocimiento({ limit: 500 }).subscribe({
+      next: docs => this.conocimientos.set(docs),
+      error: () => {},
+    });
+  }
+
+  toggleConocimiento(doc: ApiConocimientoOut): void {
+    if (this.togglingId()) return;
+    this.togglingId.set(doc.id);
+
+    const accion$ = doc.estado === 'deshabilitado'
+      ? this.planApi.habilitarConocimiento(doc.id)
+      : this.planApi.deshabilitarConocimiento(doc.id);
+
+    accion$.subscribe({
+      next: updated => {
+        this.conocimientos.update(docs => docs.map(d => d.id === updated.id ? updated : d));
+        this.togglingId.set(null);
+      },
+      error: () => this.togglingId.set(null),
+    });
   }
 
   // ── Search ────────────────────────────────────────────────────────────────
@@ -158,7 +211,6 @@ export class BusquedaRaagComponent implements OnInit {
     this.activeFilter.set('all');
 
     this.queryHistory.update(h => [query, ...h.filter(q => q !== query)].slice(0, 5));
-
     this.runSearch(query);
   }
 
@@ -220,5 +272,13 @@ export class BusquedaRaagComponent implements OnInit {
     if (n.includes('resolucion') || n.includes('res_')) return { type: 'resolucion', typeLabel: 'Resolución', badgeVariant: 'gold'   };
     if (n.includes('circular'))                          return { type: 'circular',   typeLabel: 'Circular',   badgeVariant: 'green'  };
     return { type: 'otro', typeLabel: 'Documento', badgeVariant: 'gray' };
+  }
+
+  estadoLabel(estado: string): string {
+    const m: Record<string, string> = {
+      indexado: 'Activo', deshabilitado: 'Deshabilitado',
+      procesando: 'Procesando', pendiente: 'Pendiente', error: 'Error',
+    };
+    return m[estado] ?? estado;
   }
 }

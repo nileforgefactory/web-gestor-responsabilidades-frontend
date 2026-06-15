@@ -92,6 +92,15 @@ function brechaVariant(sev: string): BadgeVariant {
 function mapApiDetail(api: ApiPlanDetail): Plan {
   const tabs: ResultTab[] = [];
 
+  // Mapa id_norma (snake_case) → código legible (ej: ley_715_2001 → "Ley 715 de 2001")
+  // El backend usa ids relacionales en referencia_legal / ley_base; aquí los volvemos legibles.
+  const normaLegible = new Map<string, string>();
+  for (const n of api.normas) {
+    if (n.id_norma) normaLegible.set(n.id_norma.toLowerCase(), n.norma_codigo || n.titulo);
+  }
+  const legibleNorma = (ref: string | null): string =>
+    ref ? (normaLegible.get(ref.toLowerCase()) ?? ref) : '';
+
   if (api.responsabilidades.length) {
     tabs.push({
       id: 'resp', icon: '👥', label: 'Responsabilidades', count: api.responsabilidades.length,
@@ -100,7 +109,7 @@ function mapApiDetail(api: ApiPlanDetail): Plan {
         title:  r.titulo,
         body:   r.descripcion ?? '',
         badges: [
-          ...(r.referencia_legal ? [{ label: r.referencia_legal, variant: 'blue' as BadgeVariant }] : []),
+          ...(r.referencia_legal ? [{ label: legibleNorma(r.referencia_legal), variant: 'blue' as BadgeVariant }] : []),
           { label: tipoLabel(r.tipo), variant: tipoVariant(r.tipo) },
         ],
       })),
@@ -159,10 +168,14 @@ function mapApiDetail(api: ApiPlanDetail): Plan {
       items: api.brechas.map(b => ({
         icon:   b.tipo === 'critica' ? '🚨' : '⚠️',
         title:  b.titulo,
-        body:   b.descripcion ?? '',
+        body:   [
+          b.descripcion ?? '',
+          b.recomendacion ? `💡 Cómo mitigarla: ${b.recomendacion}` : '',
+        ].filter(Boolean).join('\n\n'),
         badges: [
-          { label: b.tipo,                    variant: brechaVariant(b.severidad) },
+          { label: b.tipo_detallado || b.tipo, variant: brechaVariant(b.severidad) },
           { label: `Severidad ${b.severidad}`, variant: brechaVariant(b.severidad) },
+          ...(b.referencia_legal ? [{ label: legibleNorma(b.referencia_legal), variant: 'blue' as BadgeVariant }] : []),
         ],
       })),
     });
@@ -180,21 +193,30 @@ function mapApiDetail(api: ApiPlanDetail): Plan {
     tabs.push({
       id: 'matriz', icon: '🗃️', label: 'Matriz de competencias', count: api.matriz.length,
       items: [],
-      matrizRows: api.matriz.map(m => ({
-        competencia:      m.competencia,
-        leyBase:          m.ley_base ?? '',
-        nacion:           m.nacion        as MatrizRow['nacion'],
-        departamento:     m.departamento  as MatrizRow['departamento'],
-        municipio:        m.municipio     as MatrizRow['municipio'],
-        especializado:    m.especializado as MatrizRow['especializado'],
-        brecha:           m.brecha        as MatrizRow['brecha'],
-        brechaDesc:       brechaDescByTipo.get(m.brecha),
-        actoresVinculados: (m.actores_vinculados ?? []).map(a => ({
-          nombre: a.nombre,
-          nivel:  a.nivel,
-          tipo:   a.tipo,
-        })),
-      })),
+      matrizRows: api.matriz.map(m => {
+        // El actor de primer nivel es la clave relacional de la vista "Por Actores".
+        // Si la fila no trae lista anidada (modo LLM), se deriva del campo `actor`.
+        const vinculados = (m.actores_vinculados ?? []).map(a => ({
+          nombre: a.nombre, nivel: a.nivel, tipo: a.tipo,
+        }));
+        if (!vinculados.length && m.actor) {
+          vinculados.push({ nombre: m.actor, nivel: '', tipo: '' });
+        }
+        return {
+          competencia:      m.competencia,
+          actor:            m.actor ?? '',
+          leyBase:          legibleNorma(m.ley_base),
+          nacion:           m.nacion        as MatrizRow['nacion'],
+          departamento:     m.departamento  as MatrizRow['departamento'],
+          municipio:        m.municipio     as MatrizRow['municipio'],
+          especializado:    m.especializado as MatrizRow['especializado'],
+          brecha:           m.brecha        as MatrizRow['brecha'],
+          brechaDesc:       brechaDescByTipo.get(m.brecha),
+          sector:           m.sector ?? '',
+          origenContexto:   m.origen_contexto ?? '',
+          actoresVinculados: vinculados,
+        };
+      }),
     });
   }
 

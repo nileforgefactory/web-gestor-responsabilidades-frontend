@@ -20,7 +20,77 @@
       </a>
     }
   }
+
+  <!-- Indicador y control del proceso automático de normativa -->
+  <div class="navbar-scraper">
+    @if (scraper.isRunning()) {
+      <div class="scraper-indicator">
+        <span class="scraper-pulse"></span>
+        <div class="scraper-info">
+          <span class="scraper-label">Indexando normativa</span>
+          <div class="scraper-progress-row">
+            <div class="scraper-bar">
+              <div class="scraper-bar-fill" [style.width.%]="scraper.progresoPct()"></div>
+            </div>
+            <span class="scraper-pct">{{ scraper.progresoPct() }}%</span>
+          </div>
+          @if (scraper.minutosRestantes() !== null) {
+            <span class="scraper-time">~{{ scraper.minutosRestantes() }} min restantes</span>
+          }
+          @if (scraper.estado().norma_actual) {
+            <span class="scraper-current" [title]="scraper.estado().norma_actual!">
+              {{ scraper.estado().norma_actual }}
+            </span>
+          }
+        </div>
+        <button class="scraper-btn scraper-btn--stop" (click)="toggleScraper()" title="Detener proceso">
+          ⏹
+        </button>
+      </div>
+    } @else {
+      <button
+        class="scraper-btn scraper-btn--start"
+        (click)="toggleScraper()"
+        [title]="'Iniciar ingesta automática de normativa (' + scraper.estado().duracion_max_min + ' min)'"
+      >
+        <span class="scraper-btn-icon">⚡</span>
+        <span>Indexar normas</span>
+      </button>
+    }
+  </div>
+
+  @if (user()) {
+    <div class="navbar-user">
+      <div class="user-avatar">{{ initials(user()!.nombre) }}</div>
+      <div class="user-info">
+        <span class="user-name">{{ user()!.nombre }}</span>
+        <span
+          class="user-role"
+          [style.background]="rolColor(user()!.rol) + '22'"
+          [style.color]="rolColor(user()!.rol)"
+        >{{ rolLabel(user()!.rol) }}</span>
+      </div>
+      <button class="logout-btn" (click)="onLogout()" title="Cerrar sesión">
+        ⎋
+      </button>
+    </div>
+  }
 </nav>
 
 <!-- Spacer so page content clears the fixed bar -->
 <div class="navbar-spacer"></div>
+
+<!-- Alert de finalización -->
+@if (showCompletedAlert()) {
+  <div class="scraper-alert">
+    <span class="scraper-alert-icon">✅</span>
+    <div class="scraper-alert-body">
+      <strong>Ingesta completada</strong>
+      <span>
+        {{ scraper.estado().normas_indexadas }} norma(s) indexadas de
+        {{ scraper.estado().normas_total }} procesadas.
+      </span>
+    </div>
+    <button class="scraper-alert-close" (click)="dismissAlert()">✕</button>
+  </div>
+}
