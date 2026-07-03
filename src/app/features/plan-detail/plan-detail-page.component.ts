@@ -65,6 +65,7 @@ export class PlanDetailPageComponent {
       {
         label: 'Acciones',
         items: [
+          { id: 'sgr',        icon: '💰', label: 'Evaluar SGR'  },
           { id: 'reanalizar', icon: '🔄', label: 'Reanalizar'  },
           { id: 'exportar',   icon: '📥', label: 'Exportar PDF' },
           { id: 'rag',        icon: '🔍', label: 'Buscar RAG'   },
@@ -80,6 +81,9 @@ export class PlanDetailPageComponent {
       this.activeTab.set(item.id);
     } else if (item.id === 'resumen') {
       this.activeTab.set('');
+    } else if (item.id === 'sgr') {
+      const id = this.planId();
+      if (id) this.router.navigate(['/sgr/oportunidades', id]);
     } else if (item.id === 'reanalizar') {
       this.router.navigate(['/cargar-plan']);
     } else if (item.id === 'exportar') {
@@ -134,6 +138,11 @@ export class PlanDetailPageComponent {
 
   reanalyze(): void {
     this.router.navigate(['/cargar-plan']);
+  }
+
+  irSGR(): void {
+    const id = this.planId();
+    if (id) this.router.navigate(['/sgr/oportunidades', id]);
   }
 
   coverageColor(pct: number): string {

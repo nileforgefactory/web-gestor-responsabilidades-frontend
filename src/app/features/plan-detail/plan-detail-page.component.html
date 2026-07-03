@@ -123,6 +123,7 @@
               <div class="card-sub">Resultados del Agente IA · {{ p.shortName }}</div>
             </div>
             <div class="card-actions">
+              <button class="btn-sm btn-sgr" (click)="irSGR()">💰 Evaluar SGR</button>
               <button class="btn-sm" (click)="exportPdf()" [disabled]="exportingPdf()">
                 {{ exportingPdf() ? '⏳ Generando PDF…' : '📥 Exportar PDF' }}
               </button>
