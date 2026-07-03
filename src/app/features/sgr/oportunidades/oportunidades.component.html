@@ -1,0 +1,154 @@
+<div class="oportunidades">
+
+  <!-- Header + controles -->
+  <div class="panel-header">
+    <div>
+      <h2>Oportunidades SGR</h2>
+      <p class="subtitle">Brechas del plan evaluadas como proyectos elegibles para el SGR</p>
+    </div>
+    <div class="controls">
+      <label class="toggle">
+        <input type="checkbox" [checked]="soloElegibles()" (change)="soloElegibles.set(!soloElegibles())">
+        Solo elegibles
+      </label>
+      <select [value]="topN()" (change)="topN.set(+($any($event.target).value))">
+        <option value="5">Top 5</option>
+        <option value="10" selected>Top 10</option>
+        <option value="20">Top 20</option>
+        <option value="50">Top 50</option>
+      </select>
+      <button class="btn-evaluar" (click)="evaluar()" [disabled]="loading()">
+        @if (loading()) { <span class="spinner"></span> Evaluando… }
+        @else { Evaluar plan }
+      </button>
+    </div>
+  </div>
+
+  <!-- Error -->
+  @if (errorMsg()) {
+    <div class="alert alert-error">{{ errorMsg() }}</div>
+  }
+
+  <!-- Resumen estadístico -->
+  @if (resumen()) {
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-num">{{ resumen()!.total }}</div>
+        <div class="stat-label">Brechas analizadas</div>
+      </div>
+      <div class="stat-card verde">
+        <div class="stat-num">{{ resumen()!.elegibles }}</div>
+        <div class="stat-label">Elegibles SGR</div>
+      </div>
+      <div class="stat-card rojo">
+        <div class="stat-num">{{ resumen()!.noElegibles }}</div>
+        <div class="stat-label">No elegibles</div>
+      </div>
+      <div class="stat-card pct">
+        <div class="stat-num">{{ resumen()!.pct }}%</div>
+        <div class="stat-label">Tasa de elegibilidad</div>
+      </div>
+    </div>
+
+    @if (resultado()!.advertencias.length > 0) {
+      <div class="warnings">
+        @for (w of resultado()!.advertencias; track w) {
+          <div class="warning-item">⚠️ {{ w }}</div>
+        }
+      </div>
+    }
+  }
+
+  <!-- Tabla de candidatos -->
+  @if (candidatos().length > 0) {
+    <div class="candidatos-grid">
+      @for (c of candidatos(); track c.brecha_id; let i = $index) {
+        <div class="candidato-card" [class]="semaforoClass(c.semaforo)">
+          <div class="card-rank">#{{ i + 1 }}</div>
+
+          <div class="card-header">
+            <div class="semaforo-dot" [class]="semaforoClass(c.semaforo)">
+              {{ semaforoIcon(c.semaforo) }}
+            </div>
+            <div>
+              <h3 class="card-title">{{ c.nombre }}</h3>
+              <div class="card-meta">
+                <span class="badge sector">{{ c.sector_sgr }}</span>
+                <span class="badge" [class]="severidadClass(c.brecha_severidad)">
+                  {{ c.brecha_severidad | titlecase }}
+                </span>
+                <span class="badge fuente">{{ c.fuente_label }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Score total -->
+          <div class="score-row">
+            <span class="score-label">Viabilidad</span>
+            <div class="score-bar-bg">
+              <div class="score-bar-fill" [style.width]="scoreBar(c.score_sgr)" [class]="semaforoClass(c.semaforo)"></div>
+            </div>
+            <span class="score-val">{{ (c.score_sgr * 100) | number: '1.0-0' }}%</span>
+          </div>
+
+          <!-- Dimensiones -->
+          <div class="dims">
+            <div class="dim">
+              <span>Severidad</span>
+              <div class="dim-bar" [style.width]="scoreBar(c.score_severidad)"></div>
+            </div>
+            <div class="dim">
+              <span>Alineación</span>
+              <div class="dim-bar" [style.width]="scoreBar(c.score_alineacion)"></div>
+            </div>
+            <div class="dim">
+              <span>Elegibilidad</span>
+              <div class="dim-bar" [style.width]="scoreBar(c.score_elegibilidad)"></div>
+            </div>
+            <div class="dim">
+              <span>Viabilidad fuente</span>
+              <div class="dim-bar" [style.width]="scoreBar(c.score_viabilidad)"></div>
+            </div>
+          </div>
+
+          <!-- Razón -->
+          <p class="card-razon">{{ c.razon_elegibilidad }}</p>
+
+          @if (c.condiciones.length > 0) {
+            <div class="condiciones">
+              <span class="cond-label">Condiciones:</span>
+              @for (cond of c.condiciones; track cond) {
+                <span class="cond-item">{{ cond }}</span>
+              }
+            </div>
+          }
+
+          <!-- Acciones -->
+          @if (c.id) {
+            <div class="card-actions">
+              <a [routerLink]="['/sgr/ficha-mga', c.id]" class="btn-sm btn-mga">
+                Generar Ficha MGA
+              </a>
+              <a [routerLink]="['/sgr/duplicidad', c.id]" class="btn-sm btn-dup">
+                Verificar duplicidad
+              </a>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  } @else if (resultado()) {
+    <div class="empty-state">
+      <div class="empty-icon">📋</div>
+      <p>No se encontraron candidatos SGR para este plan.</p>
+      <p class="empty-hint">Verifica que el plan haya sido analizado completamente.</p>
+    </div>
+  } @else if (!loading()) {
+    <div class="empty-state intro">
+      <div class="empty-icon">🚀</div>
+      <h3>Descubre oportunidades de financiación SGR</h3>
+      <p>Haz clic en <strong>Evaluar plan</strong> para identificar las brechas del Plan de Desarrollo
+      que pueden convertirse en proyectos financiables con el SGR (Asignación Inversión Local).</p>
+    </div>
+  }
+</div>

@@ -8,13 +8,36 @@ import { AdminUsuariosComponent } from './features/admin-usuarios/admin-usuarios
 import { LoginComponent } from './features/login/login.component';
 import { authGuard } from './core/guards/auth.guard';
 import { adminGuard } from './core/guards/admin.guard';
+import { onboardingGuard } from './core/guards/onboarding.guard';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: '',      redirectTo: 'cargar-plan', pathMatch: 'full' },
+
+  // ── Onboarding — rutas públicas (solo requieren auth) ────────────────────
+  {
+    path: 'onboarding',
+    canActivate: [authGuard],
+    children: [
+      {
+        path: 'cambiar-contrasena',
+        loadComponent: () =>
+          import('./features/onboarding/cambiar-contrasena/cambiar-contrasena.component')
+            .then(m => m.CambiarContrasenaComponent),
+      },
+      {
+        path: 'cargar-plan',
+        loadComponent: () =>
+          import('./features/cargar-plan/cargar-plan.component')
+            .then(m => m.CargarPlanComponent),
+      },
+    ],
+  },
+
+  // ── App principal — requiere auth + onboarding completo ──────────────────
   {
     path: '',
-    canActivate: [authGuard],
+    canActivate: [authGuard, onboardingGuard],
     children: [
       { path: 'cargar-plan',       component: CargarPlanComponent },
       { path: 'biblioteca',        component: BibliotecaPlanes },
@@ -25,6 +48,32 @@ export const routes: Routes = [
         path: 'admin/usuarios',
         component: AdminUsuariosComponent,
         canActivate: [adminGuard],
+      },
+
+      // ── SGR — Caja de Herramientas ─────────────────────────────────────
+      {
+        path: 'sgr/oportunidades/:planId',
+        loadComponent: () =>
+          import('./features/sgr/oportunidades/oportunidades.component')
+            .then(m => m.OportunidadesComponent),
+      },
+      {
+        path: 'sgr/evaluar-proyecto',
+        loadComponent: () =>
+          import('./features/sgr/evaluar-proyecto/evaluar-proyecto.component')
+            .then(m => m.EvaluarProyectoComponent),
+      },
+      {
+        path: 'sgr/ficha-mga/:proyectoId',
+        loadComponent: () =>
+          import('./features/sgr/ficha-proyecto/ficha-proyecto.component')
+            .then(m => m.FichaProyectoComponent),
+      },
+      {
+        path: 'sgr/duplicidad/:proyectoId',
+        loadComponent: () =>
+          import('./features/sgr/duplicidad-check/duplicidad-check.component')
+            .then(m => m.DuplicidadCheckComponent),
       },
     ],
   },

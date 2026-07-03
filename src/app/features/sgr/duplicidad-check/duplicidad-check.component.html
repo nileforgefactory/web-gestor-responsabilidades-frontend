@@ -1,0 +1,96 @@
+<div class="dup-wrapper">
+
+  <div class="dup-header">
+    <h2>Verificación de Duplicidad</h2>
+    <p class="subtitle">Compara el proyecto contra el Mapa de Inversiones SGR (datos.gov.co + base local)</p>
+  </div>
+
+  @if (errorMsg()) {
+    <div class="alert alert-error">{{ errorMsg() }}</div>
+  }
+
+  @if (loading() && !resultado()) {
+    <div class="loading-state">
+      <div class="spinner-lg"></div>
+      <p>Buscando proyectos similares en el Mapa de Inversiones…</p>
+      <p class="loading-hint">Consultando base local (Qdrant) y datos.gov.co</p>
+    </div>
+  }
+
+  @if (resultado(); as r) {
+    <!-- Banner principal -->
+    <div class="resultado-banner" [class]="nivelClass(r.nivel)" [class.bloqueado]="r.bloqueado">
+      <div class="banner-left">
+        <span class="nivel-icon">{{ nivelIcon(r.nivel) }}</span>
+        <div>
+          <div class="nivel-label">Duplicidad {{ r.nivel }}</div>
+          @if (r.bloqueado) {
+            <div class="bloqueado-tag">⛔ BLOQUEADO — No puede avanzar en la formulación</div>
+          } @else {
+            <div class="puede-tag">{{ r.puede_continuar ? '✅ Puede continuar con la formulación' : '⚠️ Revisar antes de continuar' }}</div>
+          }
+        </div>
+      </div>
+      <div class="score-circle" [class]="nivelClass(r.nivel)">
+        <span>{{ (r.score_similitud * 100) | number:'1.0-0' }}%</span>
+        <small>similitud</small>
+      </div>
+    </div>
+
+    <!-- Proyecto similar encontrado -->
+    @if (r.proyecto_similar) {
+      <div class="similar-card">
+        <h3>Proyecto similar detectado</h3>
+        <div class="similar-info">
+          <div><span class="info-label">Nombre:</span> {{ r.proyecto_similar }}</div>
+          @if (r.codigo_bpin) {
+            <div><span class="info-label">BPIN:</span> <code>{{ r.codigo_bpin }}</code></div>
+          }
+          @if (r.estado_similar) {
+            <div><span class="info-label">Estado:</span>
+              <span class="estado-badge">{{ r.estado_similar }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Recomendación -->
+    <div class="recomendacion-card" [class]="nivelClass(r.nivel)">
+      <h4>Recomendación</h4>
+      <p>{{ r.recomendacion }}</p>
+    </div>
+
+    <!-- Similares RAG -->
+    @if (r.similares_rag.length > 0) {
+      <div class="similares-section">
+        <h3>Proyectos similares en la base de datos</h3>
+        <div class="similares-list">
+          @for (s of r.similares_rag; track s.nombre_proyecto) {
+            <div class="similar-item">
+              <div class="similar-nombre">{{ s.nombre_proyecto || s.texto }}</div>
+              <div class="similar-meta">
+                @if (s.codigo_bpin) { <span class="meta-pill">BPIN: {{ s.codigo_bpin }}</span> }
+                @if (s.municipio) { <span class="meta-pill">{{ s.municipio }}</span> }
+                @if (s.score_qdrant > 0) {
+                  <span class="meta-pill score-pill">{{ (s.score_qdrant * 100) | number:'1.0-0' }}% sim.</span>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Fecha -->
+    <div class="verificado-en">
+      Verificado: {{ r.verificado_en | date:'dd/MM/yyyy HH:mm' }}
+    </div>
+
+    <!-- Re-verificar -->
+    <button class="btn-reverificar" (click)="verificar()" [disabled]="loading()">
+      Reverificar
+    </button>
+  }
+
+</div>

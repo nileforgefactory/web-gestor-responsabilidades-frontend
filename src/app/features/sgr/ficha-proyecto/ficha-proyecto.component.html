@@ -1,0 +1,86 @@
+<div class="ficha-wrapper">
+
+  <div class="ficha-header">
+    <div>
+      <h2>Ficha MGA Web</h2>
+      <p class="subtitle">Contenido generado con IA para las 4 secciones de la MGA Web del DNP</p>
+    </div>
+    <div class="header-actions">
+      @if (ficha()) {
+        <div class="completado-badge" [class]="completadoClass()">
+          {{ ficha()!.campos_completos }}/4 secciones
+        </div>
+        <button class="btn-regenerar" (click)="cargarFicha(true)" [disabled]="loading()">
+          Regenerar con IA
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (errorMsg()) {
+    <div class="alert alert-error">{{ errorMsg() }}</div>
+  }
+
+  @if (loading() && !ficha()) {
+    <div class="loading-state">
+      <div class="spinner-lg"></div>
+      <p>Generando Ficha MGA con el agente de IA…</p>
+      <p class="loading-hint">Este proceso puede tomar 30–60 segundos.</p>
+    </div>
+  }
+
+  @if (ficha(); as f) {
+    <!-- Progreso MGA -->
+    <div class="mga-progress">
+      @for (s of secciones; track s.key) {
+        <div class="progress-step" [class.completado]="getSeccion(s.key)" (click)="tabActiva.set(s.key)">
+          <div class="step-num" [class.done]="getSeccion(s.key)">
+            {{ getSeccion(s.key) ? '✓' : s.num }}
+          </div>
+          <span>{{ s.label }}</span>
+        </div>
+      }
+    </div>
+
+    <!-- Tabs de secciones MGA -->
+    <div class="tabs">
+      @for (s of secciones; track s.key) {
+        <button [class.active]="tabActiva() === s.key" (click)="tabActiva.set(s.key)">
+          {{ s.icon }} {{ s.label }}
+          @if (!getSeccion(s.key)) { <span class="missing">!</span> }
+        </button>
+      }
+    </div>
+
+    <!-- Contenido de la sección activa -->
+    <div class="seccion-content">
+      @for (s of secciones; track s.key) {
+        @if (tabActiva() === s.key) {
+          <div class="seccion-panel">
+            <div class="seccion-header">
+              <h3>{{ s.num }}. {{ s.label }}</h3>
+              @if (getSeccion(s.key)) {
+                <button class="btn-copy" (click)="copiarSeccion(getSeccion(s.key))">Copiar</button>
+              }
+            </div>
+
+            @if (getSeccion(s.key); as texto) {
+              <div class="mga-text">{{ texto }}</div>
+            } @else {
+              <div class="seccion-vacia">
+                <p>Esta sección no se pudo generar. Haz clic en <strong>Regenerar con IA</strong> para intentarlo nuevamente.</p>
+              </div>
+            }
+          </div>
+        }
+      }
+    </div>
+
+    <!-- Metadata -->
+    <div class="ficha-meta">
+      <span>Modelo: {{ f.modelo_usado ?? 'N/D' }}</span>
+      <span>Generado: {{ f.generado_en | date:'dd/MM/yyyy HH:mm' }}</span>
+    </div>
+  }
+
+</div>

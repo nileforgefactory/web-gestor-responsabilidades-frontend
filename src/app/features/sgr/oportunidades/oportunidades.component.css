@@ -1,0 +1,239 @@
+.oportunidades { padding: 1.5rem; max-width: 1200px; margin: 0 auto; }
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.panel-header h2 { font-size: 1.4rem; font-weight: 700; color: #0f172a; margin: 0 0 0.25rem; }
+.subtitle { color: #64748b; font-size: 0.875rem; margin: 0; }
+
+.controls { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+
+.toggle { display: flex; align-items: center; gap: 0.4rem; font-size: 0.875rem; cursor: pointer; color: #374151; }
+
+.controls select {
+  padding: 0.45rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  background: #fff;
+  cursor: pointer;
+}
+
+.btn-evaluar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1.25rem;
+  background: #1d4ed8;
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-evaluar:hover:not(:disabled) { background: #1e40af; }
+.btn-evaluar:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.spinner {
+  width: 14px; height: 14px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Estadísticas */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.stat-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 1rem 1.25rem;
+  text-align: center;
+}
+
+.stat-card.verde  { border-color: #86efac; background: #f0fdf4; }
+.stat-card.rojo   { border-color: #fca5a5; background: #fef2f2; }
+.stat-card.pct    { border-color: #93c5fd; background: #eff6ff; }
+
+.stat-num { font-size: 1.75rem; font-weight: 800; color: #0f172a; }
+.stat-card.verde  .stat-num { color: #166534; }
+.stat-card.rojo   .stat-num { color: #991b1b; }
+.stat-card.pct    .stat-num { color: #1d4ed8; }
+.stat-label { font-size: 0.78rem; color: #64748b; margin-top: 0.25rem; }
+
+.warnings { margin-bottom: 1.25rem; }
+.warning-item {
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 0.5rem;
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  color: #92400e;
+  margin-bottom: 0.5rem;
+}
+
+/* Candidatos */
+.candidatos-grid { display: grid; gap: 1.25rem; }
+
+.candidato-card {
+  background: #fff;
+  border: 2px solid #e2e8f0;
+  border-radius: 1rem;
+  padding: 1.25rem;
+  position: relative;
+  transition: box-shadow 0.2s;
+}
+
+.candidato-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+.candidato-card.semaforo-verde  { border-left: 4px solid #22c55e; }
+.candidato-card.semaforo-amarillo { border-left: 4px solid #eab308; }
+.candidato-card.semaforo-rojo   { border-left: 4px solid #ef4444; }
+
+.card-rank {
+  position: absolute;
+  top: 0.75rem;
+  right: 1rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 0.05em;
+}
+
+.card-header { display: flex; gap: 0.875rem; align-items: flex-start; margin-bottom: 0.875rem; }
+.semaforo-dot { font-size: 1.25rem; margin-top: 0.1rem; flex-shrink: 0; }
+.card-title { font-size: 1rem; font-weight: 700; color: #0f172a; margin: 0 0 0.375rem; }
+.card-meta { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+.badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.badge.sector { background: #dbeafe; color: #1e40af; }
+.badge.fuente { background: #f3e8ff; color: #7c3aed; }
+.badge.sev-alta   { background: #fee2e2; color: #991b1b; }
+.badge.sev-media  { background: #fef9c3; color: #854d0e; }
+.badge.sev-baja   { background: #dcfce7; color: #166534; }
+
+/* Score bar */
+.score-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.score-label { font-size: 0.8rem; color: #64748b; width: 4.5rem; flex-shrink: 0; }
+.score-val   { font-size: 0.875rem; font-weight: 700; width: 2.5rem; text-align: right; }
+
+.score-bar-bg {
+  flex: 1;
+  height: 8px;
+  background: #f1f5f9;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.score-bar-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.6s ease;
+  background: #94a3b8;
+}
+
+.score-bar-fill.semaforo-verde    { background: #22c55e; }
+.score-bar-fill.semaforo-amarillo { background: #eab308; }
+.score-bar-fill.semaforo-rojo     { background: #ef4444; }
+
+/* Dimensiones mini */
+.dims {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem 1rem;
+  margin-bottom: 0.875rem;
+}
+
+.dim {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dim span { font-size: 0.72rem; color: #94a3b8; width: 7rem; flex-shrink: 0; }
+
+.dim-bar {
+  height: 4px;
+  background: #3b82f6;
+  border-radius: 9999px;
+  min-width: 4px;
+  max-width: 100%;
+}
+
+.card-razon { font-size: 0.82rem; color: #475569; margin: 0 0 0.75rem; line-height: 1.5; }
+
+.condiciones { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.875rem; align-items: baseline; }
+.cond-label { font-size: 0.72rem; color: #94a3b8; font-weight: 600; margin-right: 0.25rem; }
+.cond-item {
+  font-size: 0.72rem;
+  background: #fef3c7;
+  color: #92400e;
+  padding: 0.15rem 0.5rem;
+  border-radius: 0.25rem;
+}
+
+.card-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+
+.btn-sm {
+  padding: 0.35rem 0.875rem;
+  border-radius: 0.375rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s;
+}
+
+.btn-sm:hover { opacity: 0.85; }
+.btn-mga { background: #0284c7; color: #fff; }
+.btn-dup { background: #7c3aed; color: #fff; }
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: #64748b;
+}
+
+.empty-state.intro { background: #f8fafc; border-radius: 1rem; border: 2px dashed #e2e8f0; }
+.empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+.empty-state h3 { font-size: 1.1rem; font-weight: 700; color: #0f172a; margin: 0 0 0.75rem; }
+.empty-state p { margin: 0 0 0.5rem; font-size: 0.875rem; }
+.empty-hint { color: #94a3b8; font-size: 0.8rem !important; }
+
+.alert { padding: 0.875rem 1rem; border-radius: 0.5rem; font-size: 0.875rem; margin-bottom: 1.25rem; }
+.alert-error { background: #fef2f2; color: #b91c1c; border: 1px solid #fca5a5; }

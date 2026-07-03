@@ -38,10 +38,11 @@ export class App {
   readonly navItems = computed<NavItem[]>(() => {
     const rol = this.auth.rol();
     const items: NavItem[] = [
-      { label: 'Cargar Plan',          route: '/cargar-plan',        icon: '📂', highlighted: true },
-      { label: 'Biblioteca de Planes', route: '/biblioteca',         icon: '📚' },
-      { label: 'Búsqueda RAG',         route: '/busqueda-raag',      icon: '🔍' },
-      { label: 'Base de Conocimiento', route: '/base-conocimiento',  icon: '⚡' },
+      { label: 'Cargar Plan',          route: '/cargar-plan',          icon: '📂', highlighted: true },
+      { label: 'Biblioteca',           route: '/biblioteca',           icon: '📚' },
+      { label: 'SGR',                  route: '/sgr/evaluar-proyecto', icon: '💰' },
+      { label: 'Búsqueda RAG',         route: '/busqueda-raag',        icon: '🔍' },
+      { label: 'Base de Conocimiento', route: '/base-conocimiento',    icon: '⚡' },
     ];
     if (rol === 'superadmin' || rol === 'administrador') {
       items.push({ label: 'Usuarios', route: '/admin/usuarios', icon: '👥' });

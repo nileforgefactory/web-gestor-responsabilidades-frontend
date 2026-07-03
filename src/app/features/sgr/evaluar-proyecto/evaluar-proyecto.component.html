@@ -1,0 +1,205 @@
+<div class="evaluar-wrapper">
+
+  <div class="page-header">
+    <h1>Evaluación Inversa de Proyecto</h1>
+    <p class="subtitle">Modo 2 — Diagnostica un proyecto ya formulado: estructura MGA, alineación con el Plan de Desarrollo y elegibilidad SGR</p>
+  </div>
+
+  <!-- Formulario de entrada -->
+  @if (!resultado()) {
+    <div class="input-card">
+      <form [formGroup]="form" (ngSubmit)="evaluar()" novalidate>
+
+        <div class="field">
+          <label>Descripción del proyecto</label>
+          <textarea
+            formControlName="texto_proyecto"
+            rows="10"
+            placeholder="Pega aquí el resumen ejecutivo, ficha técnica o descripción del proyecto a evaluar.
+Incluye: nombre, objeto, sector, justificación, valor estimado, fuente SGR propuesta, municipio.
+Mínimo 50 caracteres."
+          ></textarea>
+          <div class="char-count" [class.error]="charCount < 50 && form.get('texto_proyecto')?.touched">
+            {{ charCount }} caracteres {{ charCount < 50 ? '(mínimo 50)' : '' }}
+          </div>
+        </div>
+
+        <div class="optional-row">
+          <div class="field">
+            <label>ID del Plan de Desarrollo <span class="opt">(opcional)</span></label>
+            <input formControlName="plan_id" placeholder="Para buscar contexto en el Plan vía RAG" />
+          </div>
+          <div class="field">
+            <label>ID del Proyecto SGR <span class="opt">(opcional)</span></label>
+            <input formControlName="proyecto_id" placeholder="Para persistir el diagnóstico" />
+          </div>
+        </div>
+
+        @if (errorMsg()) {
+          <div class="alert alert-error">{{ errorMsg() }}</div>
+        }
+
+        <button type="submit" class="btn-evaluar" [disabled]="form.invalid || loading()">
+          @if (loading()) { <span class="spinner"></span> Evaluando con IA… }
+          @else { Evaluar proyecto }
+        </button>
+      </form>
+    </div>
+  }
+
+  <!-- Resultado -->
+  @if (resultado(); as r) {
+    <div class="resultado-section">
+
+      <!-- Resumen top -->
+      <div class="resultado-hero" [class]="'hero-' + r.semaforo">
+        <div class="hero-left">
+          <div class="cuadrante-badge" [class]="cuadranteClass(r.cuadrante)">
+            {{ cuadranteIcon(r.cuadrante) }} {{ r.cuadrante_label }}
+          </div>
+          <div class="score-hero">
+            <span class="score-big">{{ (r.score_total * 100) | number:'1.0-0' }}%</span>
+            <span class="score-label">Viabilidad global</span>
+          </div>
+        </div>
+        <div class="hero-right">
+          <div class="semaforo-indicator" [class]="'sem-' + r.semaforo">
+            {{ r.semaforo === 'verde' ? '🟢' : r.semaforo === 'amarillo' ? '🟡' : '🔴' }}
+            {{ r.semaforo_label }}
+          </div>
+          <div class="en-plan-badge" [class]="r.en_plan ? 'en-plan-si' : 'en-plan-no'">
+            {{ r.en_plan ? '✅ Incluido en el Plan' : '⚠️ No está en el Plan' }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs de navegación -->
+      <div class="tabs">
+        <button [class.active]="tabActiva() === 'resumen'"     (click)="tabActiva.set('resumen')">Resumen</button>
+        <button [class.active]="tabActiva() === 'dimensiones'" (click)="tabActiva.set('dimensiones')">4 Dimensiones</button>
+        <button [class.active]="tabActiva() === 'plan'"        (click)="tabActiva.set('plan')">
+          Evidencia Plan {{ r.en_plan ? '✅' : '⚠️' }}
+        </button>
+        @if (!r.en_plan) {
+          <button [class.active]="tabActiva() === 'concejo'"   (click)="tabActiva.set('concejo')" class="tab-concejo">
+            Acuerdo Concejo 📜
+          </button>
+        }
+      </div>
+
+      <!-- Tab: Resumen -->
+      @if (tabActiva() === 'resumen') {
+        <div class="tab-content">
+          <div class="dim-summary-grid">
+            @for (dim of dimensiones; track dim.key) {
+              @if (getDimension(dim.key); as d) {
+                <div class="dim-card" [class]="nivelClass(d.nivel)">
+                  <div class="dim-icon">{{ dim.icon }}</div>
+                  <div class="dim-name">{{ dim.label }}</div>
+                  <div class="dim-score">{{ scorePercent(d) }}%</div>
+                  <div class="dim-bar-bg">
+                    <div class="dim-bar-fill" [style.width.%]="scorePercent(d)" [class]="nivelClass(d.nivel)"></div>
+                  </div>
+                  <div class="dim-nivel" [class]="nivelClass(d.nivel)">{{ d.nivel | titlecase }}</div>
+                </div>
+              }
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Tab: 4 Dimensiones detalle -->
+      @if (tabActiva() === 'dimensiones') {
+        <div class="tab-content">
+          @for (dim of dimensiones; track dim.key) {
+            @if (getDimension(dim.key); as d) {
+              <div class="dim-detail" [class]="nivelClass(d.nivel)">
+                <div class="dim-detail-header">
+                  <span class="dim-detail-icon">{{ dim.icon }}</span>
+                  <h3>{{ dim.label }}</h3>
+                  <div class="dim-score-pill" [class]="nivelClass(d.nivel)">{{ scorePercent(d) }}%</div>
+                </div>
+                @if (d.hallazgos.length > 0) {
+                  <div class="findings-block">
+                    <h4>Hallazgos</h4>
+                    <ul>
+                      @for (h of d.hallazgos; track h) { <li>{{ h }}</li> }
+                    </ul>
+                  </div>
+                }
+                @if (d.recomendaciones.length > 0) {
+                  <div class="recs-block">
+                    <h4>Recomendaciones</h4>
+                    <ul>
+                      @for (r of d.recomendaciones; track r) { <li>{{ r }}</li> }
+                    </ul>
+                  </div>
+                }
+              </div>
+            }
+          }
+        </div>
+      }
+
+      <!-- Tab: Evidencia en el Plan -->
+      @if (tabActiva() === 'plan') {
+        <div class="tab-content">
+          @if (r.en_plan) {
+            <div class="plan-si">
+              <h3>✅ El proyecto está respaldado en el Plan de Desarrollo</h3>
+              <blockquote>{{ r.evidencia_plan }}</blockquote>
+            </div>
+          } @else {
+            <div class="plan-no">
+              <h3>⚠️ El proyecto no fue encontrado en el Plan de Desarrollo</h3>
+              <p>Antes de radicar en el DNP/SGR, el proyecto debe estar incluido explícitamente
+              en el Plan de Desarrollo Municipal. Para eso se requiere un Acuerdo del Concejo.</p>
+              @if (r.evidencia_plan) {
+                <blockquote>{{ r.evidencia_plan }}</blockquote>
+              }
+              <button class="btn-goto-concejo" (click)="tabActiva.set('concejo')">
+                Ver texto del Acuerdo sugerido →
+              </button>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Tab: Acuerdo del Concejo -->
+      @if (tabActiva() === 'concejo' && !r.en_plan) {
+        <div class="tab-content">
+          <h3>Checklist para inclusión en el Plan de Desarrollo</h3>
+          <div class="checklist">
+            @for (item of r.subflujo_inclusion.checklist_concejo; track item; let i = $index) {
+              <div class="check-item">
+                <input type="checkbox" [id]="'chk-' + i" />
+                <label [for]="'chk-' + i">{{ item }}</label>
+              </div>
+            }
+          </div>
+
+          @if (r.subflujo_inclusion.texto_acuerdo_sugerido) {
+            <div class="acuerdo-card">
+              <div class="acuerdo-header">
+                <h3>Texto sugerido para el Acuerdo Municipal</h3>
+                <button class="btn-copy" (click)="copiarAcuerdo(r.subflujo_inclusion.texto_acuerdo_sugerido)">
+                  Copiar texto
+                </button>
+              </div>
+              <pre class="acuerdo-text">{{ r.subflujo_inclusion.texto_acuerdo_sugerido }}</pre>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Nueva evaluación -->
+      <div class="nueva-eval">
+        <button class="btn-nueva" (click)="resultado.set(null)">
+          ← Nueva evaluación
+        </button>
+      </div>
+
+    </div>
+  }
+
+</div>
