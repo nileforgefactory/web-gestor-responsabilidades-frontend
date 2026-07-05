@@ -1,30 +1,39 @@
-<aside class="sidebar">
+<aside class="sticky top-[56px] flex h-[calc(100vh-56px)] w-[220px] shrink-0 flex-col overflow-y-auto border-r border-border bg-surface pt-5">
 
   @for (section of sections(); track section.label) {
-    <div class="sidebar-section">
-      <div class="section-label">{{ section.label }}</div>
+    <div class="mb-6 px-3">
+      <div class="mb-1.5 px-2 text-[10px] font-bold uppercase tracking-wide text-ink-faint">{{ section.label }}</div>
 
       @for (item of section.items; track item.label) {
         <div
-          class="sidebar-item"
-          [class.sidebar-item--active]="item.status === 'active'"
-          [class.sidebar-item--done]="item.status === 'done'"
-          [class.sidebar-item--pending]="item.status === 'pending'"
+          class="mb-0.5 flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] text-ink-soft transition-colors duration-150"
+          [class.bg-success-soft]="item.status === 'active'"
+          [class.text-success]="item.status === 'active'"
+          [class.font-semibold]="item.status === 'active'"
+          [class.text-ink-faint]="item.status === 'pending'"
+          [class.cursor-default]="item.status === 'pending'"
+          [class.hover:bg-surface2]="item.status !== 'pending'"
+          [class.hover:text-ink]="item.status !== 'pending'"
           (click)="onItemClick(item)"
         >
-          <span class="item-icon">{{ item.icon }}</span>
+          <app-icon [emoji]="item.icon" class="w-5 shrink-0 text-center text-[15px]" />
 
           @if (item.sublabel) {
-            <div class="item-content">
-              <div class="item-label">{{ item.label }}</div>
-              <div class="item-sublabel" [style.color]="item.sublabelColor">{{ item.sublabel }}</div>
+            <div class="flex min-w-0 flex-1 flex-col gap-px">
+              <div class="overflow-hidden text-ellipsis whitespace-nowrap text-[13px] font-semibold text-inherit">{{ item.label }}</div>
+              <div class="text-[11px] text-ink-soft" [style.color]="item.sublabelColor">{{ item.sublabel }}</div>
             </div>
           } @else {
-            <span class="item-label">{{ item.label }}</span>
+            <span class="overflow-hidden text-ellipsis whitespace-nowrap text-[13px] font-semibold text-inherit" [class.font-normal]="item.status === 'pending'">
+              {{ item.label }}
+              @if (item.status === 'done') {
+                <fa-icon [icon]="faCheck" class="ml-1 text-[10px] text-success" />
+              }
+            </span>
           }
 
           @if (item.badge !== undefined) {
-            <span class="item-badge">{{ item.badge }}</span>
+            <span class="ml-auto shrink-0 rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-bold text-white">{{ item.badge }}</span>
           }
         </div>
       }
@@ -33,12 +42,12 @@
 
   <!-- User section -->
   @if (user()) {
-    <div class="sidebar-user">
-      <div class="user-avatar" [style.background]="user()!.avatarColor ?? 'var(--primary)'">
+    <div class="mt-auto border-t border-border px-5 py-3.5">
+      <div class="mb-2 flex h-8 w-8 items-center justify-center rounded-full text-[13px] font-bold text-white" [style.background]="user()!.avatarColor ?? 'var(--color-primary)'">
         {{ user()!.initials }}
       </div>
-      <div class="user-name">{{ user()!.name }}</div>
-      <div class="user-role">
+      <div class="mb-1 text-[13px] font-semibold text-ink">{{ user()!.name }}</div>
+      <div class="flex">
         <app-badge [variant]="user()!.roleVariant ?? 'green'">{{ user()!.role }}</app-badge>
       </div>
     </div>

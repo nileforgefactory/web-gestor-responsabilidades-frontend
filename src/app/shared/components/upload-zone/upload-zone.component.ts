@@ -1,12 +1,19 @@
 import { Component, ElementRef, ViewChild, input, output, signal } from '@angular/core';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faFileLines, faCircleCheck, faRotate } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
   selector: 'app-upload-zone',
   standalone: true,
+  imports: [FaIconComponent],
   templateUrl: './upload-zone.component.html',
   styleUrl: './upload-zone.component.css',
 })
 export class UploadZoneComponent {
+  readonly faFileLines = faFileLines;
+  readonly faCircleCheck = faCircleCheck;
+  readonly faRotate = faRotate;
+
   accept = input<string>('.pdf,.doc,.docx,.txt,.html');
   multiple = input<boolean>(false);
   disabled = input<boolean>(false);

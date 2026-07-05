@@ -1,19 +1,24 @@
-<div class="result-tabs-wrapper">
+<div class="block">
 
   <!-- Tab bar -->
-  <div class="tabs-bar">
+  <div class="no-scrollbar flex gap-0.5 overflow-x-auto border-b-2 border-border px-1">
     @for (tab of tabs(); track tab.id) {
-      <button class="tab-btn" [class.tab-btn--active]="isActive(tab.id)" (click)="setTab(tab.id)">
-        <span>{{ tab.icon }} {{ tab.label }}</span>
+      <button
+        class="-mb-0.5 flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 border-transparent px-3.5 py-2.5 text-[13px] font-semibold text-ink-soft transition-all duration-150 hover:text-ink"
+        [class.text-accent]="isActive(tab.id)"
+        [class.border-accent]="isActive(tab.id)"
+        (click)="setTab(tab.id)"
+      >
+        <span class="inline-flex items-center gap-1.5"><app-icon [emoji]="tab.icon" /> {{ tab.label }}</span>
         @if (tab.count > 0) {
-          <span class="tab-count" [class.tab-count--red]="tab.countVariant === 'red'">{{ tab.count }}</span>
+          <span class="rounded-full bg-accent px-1.5 py-px text-[10px] font-bold text-white" [class.bg-danger]="tab.countVariant === 'red'">{{ tab.count }}</span>
         }
       </button>
     }
   </div>
 
   <!-- Panel -->
-  <div class="tab-panel">
+  <div class="py-4">
     @if (activeTab(); as tab) {
 
       <!-- ══════════════════════════════════════════════════════════════════
@@ -22,44 +27,44 @@
       @if (tab.id === 'resumen' && tab.resumenData; as r) {
 
         <!-- Totales -->
-        <div class="kpi-strip">
-          <div class="kpi-card kpi-blue">
-            <div class="kpi-value">{{ r.respTotal }}</div>
-            <div class="kpi-label">Responsabilidades</div>
+        <div class="mb-4 grid grid-cols-4 gap-2.5 max-[640px]:grid-cols-2">
+          <div class="flex flex-col gap-1.5 rounded-xl border border-border border-t-[3px] border-t-accent bg-surface px-4 pb-3 pt-3.5">
+            <div class="text-[28px] font-extrabold leading-none text-accent">{{ r.respTotal }}</div>
+            <div class="text-[11px] font-bold uppercase tracking-wide text-ink-soft">Responsabilidades</div>
           </div>
-          <div class="kpi-card kpi-green">
-            <div class="kpi-value">{{ r.leyesTotal }}</div>
-            <div class="kpi-label">Leyes aplicables</div>
+          <div class="flex flex-col gap-1.5 rounded-xl border border-border border-t-[3px] border-t-success bg-surface px-4 pb-3 pt-3.5">
+            <div class="text-[28px] font-extrabold leading-none text-success">{{ r.leyesTotal }}</div>
+            <div class="text-[11px] font-bold uppercase tracking-wide text-ink-soft">Leyes aplicables</div>
           </div>
-          <div class="kpi-card kpi-gold">
-            <div class="kpi-value">{{ r.actoresTotal }}</div>
-            <div class="kpi-label">Actores</div>
+          <div class="flex flex-col gap-1.5 rounded-xl border border-border border-t-[3px] border-t-gold bg-surface px-4 pb-3 pt-3.5">
+            <div class="text-[28px] font-extrabold leading-none text-gold">{{ r.actoresTotal }}</div>
+            <div class="text-[11px] font-bold uppercase tracking-wide text-ink-soft">Actores</div>
           </div>
-          <div class="kpi-card kpi-red">
-            <div class="kpi-value">{{ r.brechasTotal }}</div>
-            <div class="kpi-label">Brechas</div>
+          <div class="flex flex-col gap-1.5 rounded-xl border border-border border-t-[3px] border-t-danger bg-surface px-4 pb-3 pt-3.5">
+            <div class="text-[28px] font-extrabold leading-none text-danger">{{ r.brechasTotal }}</div>
+            <div class="text-[11px] font-bold uppercase tracking-wide text-ink-soft">Brechas</div>
           </div>
         </div>
 
         <!-- Síntesis IA -->
         @if (r.descripcion) {
-          <div class="resumen-sintesis">
-            <div class="resumen-sintesis-label">🤖 Síntesis del análisis</div>
-            <p class="resumen-sintesis-text">{{ r.descripcion }}</p>
+          <div class="mb-4 rounded-xl border border-accent bg-accent-soft px-4.5 py-3.5">
+            <div class="mb-1.5 text-[10px] font-bold uppercase tracking-wide text-accent"><fa-icon [icon]="faRobot" /> Síntesis del análisis</div>
+            <p class="m-0 text-[13px] leading-relaxed text-ink">{{ r.descripcion }}</p>
           </div>
         }
 
-        <div class="resumen-cols">
+        <div class="grid grid-cols-2 gap-3.5 max-[640px]:grid-cols-1">
 
           <!-- Brechas críticas -->
           @if (r.brechasCriticas.length) {
-            <div class="resumen-section">
-              <div class="resumen-section-title">🚨 Brechas críticas</div>
+            <div class="flex flex-col gap-2.5 rounded-xl border border-border bg-surface px-4 py-3.5">
+              <div class="mb-0.5 text-[11px] font-bold uppercase tracking-wide text-ink-soft"><fa-icon [icon]="faTriangleExclamation" class="text-danger" /> Brechas críticas</div>
               @for (b of r.brechasCriticas; track b.titulo) {
-                <div class="resumen-brecha-item resumen-brecha-critica">
-                  <div class="resumen-brecha-titulo">{{ b.titulo }}</div>
-                  @if (b.descripcion) { <div class="resumen-brecha-desc">{{ b.descripcion }}</div> }
-                  <span class="resumen-sev-badge" [style.color]="resumenSeveridadColor(b.severidad)" [style.borderColor]="resumenSeveridadColor(b.severidad)">
+                <div class="flex flex-col gap-1 rounded-lg border-l-[3px] border-l-danger bg-surface2 px-3 py-2.5">
+                  <div class="text-xs font-semibold leading-snug text-ink">{{ b.titulo }}</div>
+                  @if (b.descripcion) { <div class="text-[11px] leading-relaxed text-ink-soft">{{ b.descripcion }}</div> }
+                  <span class="self-start rounded-full border px-1.5 py-px text-[10px] font-bold capitalize" [style.color]="resumenSeveridadColor(b.severidad)" [style.borderColor]="resumenSeveridadColor(b.severidad)">
                     {{ b.severidad }}
                   </span>
                 </div>
@@ -69,12 +74,12 @@
 
           <!-- Brechas de duplicidad -->
           @if (r.brechasDuplicidad.length) {
-            <div class="resumen-section">
-              <div class="resumen-section-title">⚠️ Duplicidades identificadas</div>
+            <div class="flex flex-col gap-2.5 rounded-xl border border-border bg-surface px-4 py-3.5">
+              <div class="mb-0.5 text-[11px] font-bold uppercase tracking-wide text-ink-soft"><fa-icon [icon]="faTriangleExclamation" class="text-gold" /> Duplicidades identificadas</div>
               @for (b of r.brechasDuplicidad; track b.titulo) {
-                <div class="resumen-brecha-item resumen-brecha-dup">
-                  <div class="resumen-brecha-titulo">{{ b.titulo }}</div>
-                  @if (b.descripcion) { <div class="resumen-brecha-desc">{{ b.descripcion }}</div> }
+                <div class="flex flex-col gap-1 rounded-lg border-l-[3px] border-l-gold bg-surface2 px-3 py-2.5">
+                  <div class="text-xs font-semibold leading-snug text-ink">{{ b.titulo }}</div>
+                  @if (b.descripcion) { <div class="text-[11px] leading-relaxed text-ink-soft">{{ b.descripcion }}</div> }
                 </div>
               }
             </div>
@@ -82,16 +87,16 @@
 
           <!-- Cobertura por sector -->
           @if (r.sectors.length) {
-            <div class="resumen-section">
-              <div class="resumen-section-title">📈 Cobertura por sector</div>
+            <div class="flex flex-col gap-2.5 rounded-xl border border-border bg-surface px-4 py-3.5">
+              <div class="mb-0.5 text-[11px] font-bold uppercase tracking-wide text-ink-soft"><fa-icon [icon]="faChartSimple" /> Cobertura por sector</div>
               @for (s of r.sectors; track s.sector) {
-                <div class="resumen-sector-item">
-                  <div class="resumen-sector-header">
-                    <span>{{ s.icon }} {{ s.sector }}</span>
+                <div class="flex flex-col gap-1.5">
+                  <div class="flex justify-between text-xs font-semibold text-ink">
+                    <span><app-icon [emoji]="s.icon" /> {{ s.sector }}</span>
                     <span [style.color]="coverageColor(s.pct)">{{ s.pct }}%</span>
                   </div>
-                  <div class="resumen-sector-bar">
-                    <div class="resumen-sector-fill" [style.width.%]="s.pct" [style.background]="coverageColor(s.pct)"></div>
+                  <div class="h-1.5 overflow-hidden rounded-full bg-border">
+                    <div class="h-full rounded-full transition-[width] duration-400 ease-out" [style.width.%]="s.pct" [style.background]="coverageColor(s.pct)"></div>
                   </div>
                 </div>
               }
@@ -108,68 +113,68 @@
         @if (kpis(tab.matrizRows!); as k) {
 
           <!-- ── KPI strip ── -->
-          <div class="kpi-strip">
-            <div class="kpi-card kpi-green">
-              <div class="kpi-value">{{ k.cobertura }}%</div>
-              <div class="kpi-label">Cobertura</div>
-              <div class="kpi-bar"><div class="kpi-bar-fill" [style.width]="k.cobertura + '%'"></div></div>
+          <div class="mb-4 grid grid-cols-4 gap-2.5 max-[640px]:grid-cols-2">
+            <div class="flex flex-col gap-1.5 rounded-xl border border-border border-t-[3px] border-t-success bg-surface px-4 pb-3 pt-3.5">
+              <div class="text-[28px] font-extrabold leading-none text-success">{{ k.cobertura }}%</div>
+              <div class="text-[11px] font-bold uppercase tracking-wide text-ink-soft">Cobertura</div>
+              <div class="mt-1 h-1 overflow-hidden rounded-full bg-border"><div class="h-full rounded-full bg-success transition-[width] duration-400 ease-out" [style.width]="k.cobertura + '%'"></div></div>
             </div>
-            <div class="kpi-card kpi-gold">
-              <div class="kpi-value">{{ k.duplicidad }}%</div>
-              <div class="kpi-label">Duplicidad</div>
-              <div class="kpi-bar kpi-bar-gold"><div class="kpi-bar-fill" [style.width]="k.duplicidad + '%'"></div></div>
+            <div class="flex flex-col gap-1.5 rounded-xl border border-border border-t-[3px] border-t-gold bg-surface px-4 pb-3 pt-3.5">
+              <div class="text-[28px] font-extrabold leading-none text-gold">{{ k.duplicidad }}%</div>
+              <div class="text-[11px] font-bold uppercase tracking-wide text-ink-soft">Duplicidad</div>
+              <div class="mt-1 h-1 overflow-hidden rounded-full bg-border"><div class="h-full rounded-full bg-gold transition-[width] duration-400 ease-out" [style.width]="k.duplicidad + '%'"></div></div>
             </div>
-            <div class="kpi-card kpi-red">
-              <div class="kpi-value">{{ k.sinResponsable }}</div>
-              <div class="kpi-label">Sin responsable</div>
-              <div class="kpi-sub">de {{ k.total }} competencias</div>
+            <div class="flex flex-col gap-1.5 rounded-xl border border-border border-t-[3px] border-t-danger bg-surface px-4 pb-3 pt-3.5">
+              <div class="text-[28px] font-extrabold leading-none text-danger">{{ k.sinResponsable }}</div>
+              <div class="text-[11px] font-bold uppercase tracking-wide text-ink-soft">Sin responsable</div>
+              <div class="text-[10px] text-ink-faint">de {{ k.total }} competencias</div>
             </div>
-            <div class="kpi-card kpi-blue">
-              <div class="kpi-value">{{ k.conLeyBase }}%</div>
-              <div class="kpi-label">Con base legal</div>
-              <div class="kpi-bar kpi-bar-blue"><div class="kpi-bar-fill" [style.width]="k.conLeyBase + '%'"></div></div>
+            <div class="flex flex-col gap-1.5 rounded-xl border border-border border-t-[3px] border-t-accent bg-surface px-4 pb-3 pt-3.5">
+              <div class="text-[28px] font-extrabold leading-none text-accent">{{ k.conLeyBase }}%</div>
+              <div class="text-[11px] font-bold uppercase tracking-wide text-ink-soft">Con base legal</div>
+              <div class="mt-1 h-1 overflow-hidden rounded-full bg-border"><div class="h-full rounded-full bg-accent transition-[width] duration-400 ease-out" [style.width]="k.conLeyBase + '%'"></div></div>
             </div>
           </div>
 
           <!-- ── Controles ── -->
-          <div class="matriz-controls">
+          <div class="mb-3 flex flex-wrap items-center gap-2.5">
             <!-- Sub-vista -->
-            <div class="sub-view-toggle">
-              <button class="svt-btn" [class.svt-btn--active]="matrizSubView() === 'territorial'" (click)="matrizSubView.set('territorial')">
-                🗺️ Territorial
+            <div class="flex shrink-0 gap-0.5 overflow-hidden rounded-lg border border-border">
+              <button class="border-none bg-surface px-3 py-1.5 text-[11px] font-semibold text-ink-soft transition-all duration-150 hover:bg-surface2 hover:text-ink" [class.bg-accent]="matrizSubView() === 'territorial'" [class.text-white]="matrizSubView() === 'territorial'" (click)="matrizSubView.set('territorial')">
+                <fa-icon [icon]="faMap" /> Territorial
               </button>
-              <button class="svt-btn" [class.svt-btn--active]="matrizSubView() === 'actores'" (click)="matrizSubView.set('actores')">
-                🏛️ Por actores
+              <button class="border-none bg-surface px-3 py-1.5 text-[11px] font-semibold text-ink-soft transition-all duration-150 hover:bg-surface2 hover:text-ink" [class.bg-accent]="matrizSubView() === 'actores'" [class.text-white]="matrizSubView() === 'actores'" (click)="matrizSubView.set('actores')">
+                <fa-icon [icon]="faLandmark" /> Por actores
               </button>
             </div>
 
             <!-- Filtro brecha -->
-            <div class="brecha-filter">
-              <span class="filter-label">Filtrar:</span>
-              <button class="filter-btn" [class.filter-btn--active]="brechaFilter() === ''" (click)="brechaFilter.set('')">Todos</button>
-              <button class="filter-btn filter-btn-red" [class.filter-btn--active]="brechaFilter() === 'critica'" (click)="brechaFilter.set('critica')">🚨 Críticas</button>
-              <button class="filter-btn filter-btn-gold" [class.filter-btn--active]="brechaFilter() === 'duplicidad'" (click)="brechaFilter.set('duplicidad')">⚠️ Duplicidad</button>
-              <button class="filter-btn filter-btn-green" [class.filter-btn--active]="brechaFilter() === 'ok'" (click)="brechaFilter.set('ok')">✓ Cubiertas</button>
+            <div class="flex flex-1 flex-wrap gap-1">
+              <span class="text-[11px] font-semibold text-ink-soft">Filtrar:</span>
+              <button class="whitespace-nowrap rounded-full border border-border bg-surface px-2.5 py-1 text-[11px] font-semibold text-ink-soft transition-all duration-150 hover:border-accent hover:text-accent" [class.bg-accent]="brechaFilter() === ''" [class.text-white]="brechaFilter() === ''" [class.border-accent]="brechaFilter() === ''" (click)="brechaFilter.set('')">Todos</button>
+              <button class="whitespace-nowrap rounded-full border border-border bg-surface px-2.5 py-1 text-[11px] font-semibold text-ink-soft transition-all duration-150 hover:border-danger hover:text-danger" [class.bg-danger]="brechaFilter() === 'critica'" [class.text-white]="brechaFilter() === 'critica'" [class.border-danger]="brechaFilter() === 'critica'" (click)="brechaFilter.set('critica')"><fa-icon [icon]="faTriangleExclamation" /> Críticas</button>
+              <button class="whitespace-nowrap rounded-full border border-border bg-surface px-2.5 py-1 text-[11px] font-semibold text-ink-soft transition-all duration-150 hover:border-gold hover:text-gold" [class.bg-gold]="brechaFilter() === 'duplicidad'" [class.text-white]="brechaFilter() === 'duplicidad'" [class.border-gold]="brechaFilter() === 'duplicidad'" (click)="brechaFilter.set('duplicidad')"><fa-icon [icon]="faTriangleExclamation" /> Duplicidad</button>
+              <button class="whitespace-nowrap rounded-full border border-border bg-surface px-2.5 py-1 text-[11px] font-semibold text-ink-soft transition-all duration-150 hover:border-success hover:text-success" [class.bg-success]="brechaFilter() === 'ok'" [class.text-white]="brechaFilter() === 'ok'" [class.border-success]="brechaFilter() === 'ok'" (click)="brechaFilter.set('ok')"><fa-icon [icon]="faCheck" /> Cubiertas</button>
             </div>
 
             <!-- Toggle calor/tabla (solo vista territorial) -->
             @if (matrizSubView() === 'territorial') {
-              <button class="view-toggle" (click)="heatmapView.set(!heatmapView())">
-                {{ heatmapView() ? '📋 Tabla' : '🌡️ Calor' }}
+              <button class="whitespace-nowrap rounded-lg border border-border bg-surface px-3 py-1.5 text-[11px] font-semibold text-ink-soft transition-colors duration-150 hover:bg-surface2 hover:text-ink" (click)="heatmapView.set(!heatmapView())">
+                @if (heatmapView()) { <fa-icon [icon]="faClipboardList" /> Tabla } @else { <fa-icon [icon]="faTemperatureHalf" /> Calor }
               </button>
             }
           </div>
 
           <!-- Leyenda P/C/S -->
           @if (matrizSubView() === 'territorial') {
-            <div class="matriz-legend">
-              <span><span class="heat-pill heat-ok heat-p">P</span> Principal</span>
-              <span><span class="heat-pill heat-ok heat-c">C</span> Concurrente</span>
-              <span><span class="heat-pill heat-ok heat-s">S</span> Subsidiario</span>
-              <span><span class="heat-pill heat-n">—</span> No aplica</span>
-              <span class="sep">|</span>
-              <span><span class="heat-pill heat-critica heat-p">P</span> Brecha crítica</span>
-              <span><span class="heat-pill heat-duplicidad heat-c">C</span> Duplicidad</span>
+            <div class="mb-3 flex flex-wrap items-center gap-3 text-[11px] text-ink-soft">
+              <span class="flex items-center gap-1.5"><span class="heat-pill heat-ok heat-p">P</span> Principal</span>
+              <span class="flex items-center gap-1.5"><span class="heat-pill heat-ok heat-c">C</span> Concurrente</span>
+              <span class="flex items-center gap-1.5"><span class="heat-pill heat-ok heat-s">S</span> Subsidiario</span>
+              <span class="flex items-center gap-1.5"><span class="heat-pill heat-n">—</span> No aplica</span>
+              <span class="text-border">|</span>
+              <span class="flex items-center gap-1.5"><span class="heat-pill heat-critica heat-p">P</span> Brecha crítica</span>
+              <span class="flex items-center gap-1.5"><span class="heat-pill heat-duplicidad heat-c">C</span> Duplicidad</span>
             </div>
           }
 
@@ -178,20 +183,20 @@
 
             <!-- MAPA DE CALOR agrupado por sector -->
             @if (heatmapView()) {
-              <div class="heat-container">
+              <div class="overflow-x-auto rounded-xl border border-border">
                 @for (group of sectorGroups(tab.matrizRows!); track group.sector) {
                   <!-- Cabecera de sector -->
-                  <div class="sector-header" (click)="toggleSector(group.sector)">
-                    <div class="sector-header-left">
-                      <span class="sector-chevron">{{ isSectorCollapsed(group.sector) ? '▶' : '▼' }}</span>
-                      <span class="sector-icon">{{ sectorIcon(group.sector) }}</span>
-                      <span class="sector-name">{{ group.sector | titlecase }}</span>
-                      <span class="sector-count">{{ group.rows.length }}</span>
+                  <div class="flex cursor-pointer select-none items-center justify-between border-b border-border bg-surface2 py-1.5 pl-2 pr-3 transition-colors duration-150 hover:bg-border/40" (click)="toggleSector(group.sector)">
+                    <div class="flex items-center gap-2">
+                      <span class="w-3.5 text-[11px] text-ink-faint transition-transform duration-200">{{ isSectorCollapsed(group.sector) ? '▶' : '▼' }}</span>
+                      <span class="text-[15px]"><app-icon [emoji]="sectorIcon(group.sector)" /></span>
+                      <span class="text-xs font-bold capitalize text-ink">{{ group.sector | titlecase }}</span>
+                      <span class="ml-0.5 text-[11px] text-ink-faint">{{ group.rows.length }}</span>
                     </div>
-                    <div class="sector-stats">
-                      @if (group.cubiertos) { <span class="stat-pill stat-green">✓ {{ group.cubiertos }}</span> }
-                      @if (group.brechas)   { <span class="stat-pill stat-red">🚨 {{ group.brechas }}</span> }
-                      @if (group.duplicidades) { <span class="stat-pill stat-gold">⚠️ {{ group.duplicidades }}</span> }
+                    <div class="flex items-center gap-1.5">
+                      @if (group.cubiertos) { <span class="whitespace-nowrap rounded-full bg-success-soft px-1.5 py-0.5 text-[10px] font-bold text-success"><fa-icon [icon]="faCheck" /> {{ group.cubiertos }}</span> }
+                      @if (group.brechas)   { <span class="whitespace-nowrap rounded-full bg-danger-soft px-1.5 py-0.5 text-[10px] font-bold text-danger"><fa-icon [icon]="faTriangleExclamation" /> {{ group.brechas }}</span> }
+                      @if (group.duplicidades) { <span class="whitespace-nowrap rounded-full bg-gold-soft px-1.5 py-0.5 text-[10px] font-bold text-gold"><fa-icon [icon]="faTriangleExclamation" /> {{ group.duplicidades }}</span> }
                     </div>
                   </div>
 
@@ -199,13 +204,13 @@
                   @if (!isSectorCollapsed(group.sector)) {
                     <div class="heat-grid">
                       <!-- Encabezados de columna -->
-                      <div class="heat-col-header heat-col-competencia">Responsabilidad / Competencia</div>
-                      <div class="heat-col-header heat-col-sector">Sector</div>
-                      <div class="heat-col-header heat-col-label">Nación</div>
-                      <div class="heat-col-header heat-col-label">Depto.</div>
-                      <div class="heat-col-header heat-col-label">Municipio</div>
-                      <div class="heat-col-header heat-col-label">Esp.</div>
-                      <div class="heat-col-header heat-col-label">Brecha</div>
+                      <div class="heat-col-header text-left !pl-3">Responsabilidad / Competencia</div>
+                      <div class="heat-col-header !text-left !pl-2">Sector</div>
+                      <div class="heat-col-header">Nación</div>
+                      <div class="heat-col-header">Depto.</div>
+                      <div class="heat-col-header">Municipio</div>
+                      <div class="heat-col-header">Esp.</div>
+                      <div class="heat-col-header">Brecha</div>
 
                       @for (row of group.rows; track row.competencia; let i = $index) {
                         <div class="heat-row-label"
@@ -213,24 +218,24 @@
                           [class.brecha-row-critica]="row.brecha === 'critica'"
                           [class.brecha-row-dup]="row.brecha === 'duplicidad'"
                           (click)="onRowClick(row)" [title]="row.competencia">
-                          <span class="row-num">{{ i + 1 }}</span>
-                          <span class="row-text">{{ row.competencia }}</span>
+                          <span class="min-w-[18px] text-[10px] text-ink-faint">{{ i + 1 }}</span>
+                          <span class="flex-1 font-medium leading-snug">{{ row.competencia }}</span>
                           @if (row.actoresVinculados?.length) {
                             <span class="row-actor-dot" [title]="row.actoresVinculados![0].nombre">●</span>
                           }
                         </div>
                         <!-- Columna Sector dinámica -->
-                        <div class="heat-sector-cell" (click)="onRowClick(row)"
+                        <div class="flex cursor-pointer items-center bg-surface px-2 py-1" (click)="onRowClick(row)"
                           [title]="row.sector || 'Sin sector'">
                           @if (row.sector) {
                             <span class="heat-sector-badge"
                               [style.background]="sectorColor(row.sector) + '22'"
                               [style.color]="sectorColor(row.sector)"
                               [style.borderColor]="sectorColor(row.sector) + '55'">
-                              {{ sectorIcon(row.sector) }} {{ row.sector | titlecase }}
+                              <app-icon [emoji]="sectorIcon(row.sector)" /> {{ row.sector | titlecase }}
                             </span>
                           } @else {
-                            <span class="heat-sector-empty">—</span>
+                            <span class="text-xs text-ink-soft">—</span>
                           }
                         </div>
                         <div class="heat-cell" [class]="heatCellClass(row.nacion, row.brecha)"
@@ -241,7 +246,7 @@
                           (click)="onRowClick(row)" [title]="heatTooltip(row.municipio, 'Municipio', row)">{{ levelText(row.municipio) }}</div>
                         <div class="heat-cell" [class]="heatCellClass(row.especializado, row.brecha)"
                           (click)="onRowClick(row)" [title]="heatTooltip(row.especializado, 'Especializado', row)">{{ levelText(row.especializado) }}</div>
-                        <div class="heat-brecha-cell" (click)="onRowClick(row)">
+                        <div class="flex cursor-pointer items-center justify-center bg-surface px-1.5 py-1" (click)="onRowClick(row)">
                           @if (brechaInfo(row.brecha); as b) {
                             <span class="brecha-badge" [class]="b.cls">{{ b.text }}</span>
                           }
@@ -254,63 +259,63 @@
 
             <!-- TABLA agrupada por sector -->
             } @else {
-              <div class="table-scroll">
+              <div class="overflow-x-auto rounded-xl border border-border">
                 @for (group of sectorGroups(tab.matrizRows!); track group.sector) {
-                  <div class="sector-header" (click)="toggleSector(group.sector)">
-                    <div class="sector-header-left">
-                      <span class="sector-chevron">{{ isSectorCollapsed(group.sector) ? '▶' : '▼' }}</span>
-                      <span class="sector-icon">{{ sectorIcon(group.sector) }}</span>
-                      <span class="sector-name">{{ group.sector | titlecase }}</span>
-                      <span class="sector-count">{{ group.rows.length }}</span>
+                  <div class="flex cursor-pointer select-none items-center justify-between border-b border-border bg-surface2 py-1.5 pl-2 pr-3 transition-colors duration-150 hover:bg-border/40" (click)="toggleSector(group.sector)">
+                    <div class="flex items-center gap-2">
+                      <span class="w-3.5 text-[11px] text-ink-faint transition-transform duration-200">{{ isSectorCollapsed(group.sector) ? '▶' : '▼' }}</span>
+                      <span class="text-[15px]"><app-icon [emoji]="sectorIcon(group.sector)" /></span>
+                      <span class="text-xs font-bold capitalize text-ink">{{ group.sector | titlecase }}</span>
+                      <span class="ml-0.5 text-[11px] text-ink-faint">{{ group.rows.length }}</span>
                     </div>
-                    <div class="sector-stats">
-                      @if (group.cubiertos) { <span class="stat-pill stat-green">✓ {{ group.cubiertos }}</span> }
-                      @if (group.brechas)   { <span class="stat-pill stat-red">🚨 {{ group.brechas }}</span> }
-                      @if (group.duplicidades) { <span class="stat-pill stat-gold">⚠️ {{ group.duplicidades }}</span> }
+                    <div class="flex items-center gap-1.5">
+                      @if (group.cubiertos) { <span class="whitespace-nowrap rounded-full bg-success-soft px-1.5 py-0.5 text-[10px] font-bold text-success"><fa-icon [icon]="faCheck" /> {{ group.cubiertos }}</span> }
+                      @if (group.brechas)   { <span class="whitespace-nowrap rounded-full bg-danger-soft px-1.5 py-0.5 text-[10px] font-bold text-danger"><fa-icon [icon]="faTriangleExclamation" /> {{ group.brechas }}</span> }
+                      @if (group.duplicidades) { <span class="whitespace-nowrap rounded-full bg-gold-soft px-1.5 py-0.5 text-[10px] font-bold text-gold"><fa-icon [icon]="faTriangleExclamation" /> {{ group.duplicidades }}</span> }
                     </div>
                   </div>
                   @if (!isSectorCollapsed(group.sector)) {
-                    <table class="matrix-table">
-                      <thead>
+                    <table class="w-full min-w-[640px] border-collapse text-sm">
+                      <thead class="bg-surface2">
                         <tr>
-                          <th class="col-competencia">Proceso / Competencia</th>
-                          <th class="col-sector">Sector</th>
-                          <th class="col-ley">Ley base</th>
-                          <th class="col-actor">Nación</th>
-                          <th class="col-actor">Depto.</th>
-                          <th class="col-actor">Municipio</th>
-                          <th class="col-actor">Esp.</th>
-                          <th class="col-brecha">Brecha</th>
+                          <th class="matrix-th text-left">Proceso / Competencia</th>
+                          <th class="matrix-th min-w-[110px] max-w-[150px] text-left">Sector</th>
+                          <th class="matrix-th text-left">Ley base</th>
+                          <th class="matrix-th !text-center">Nación</th>
+                          <th class="matrix-th !text-center">Depto.</th>
+                          <th class="matrix-th !text-center">Municipio</th>
+                          <th class="matrix-th !text-center">Esp.</th>
+                          <th class="matrix-th text-left">Brecha</th>
                         </tr>
                       </thead>
                       <tbody>
                         @for (row of group.rows; track row.competencia) {
-                          <tr [class.row-critica]="row.brecha === 'critica'"
+                          <tr class="matrix-tr" [class.row-critica]="row.brecha === 'critica'"
                             [class.row-duplicidad]="row.brecha === 'duplicidad'"
                             [class.row-selected]="selectedRow()?.competencia === row.competencia"
                             (click)="onRowClick(row)">
-                            <td class="td-competencia">
+                            <td class="matrix-td">
                               <strong>{{ row.competencia }}</strong>
                               @if (row.actoresVinculados?.length) {
                                 <span class="td-actor-dot">● {{ row.actoresVinculados![0].nombre }}</span>
                               }
                             </td>
-                            <td class="td-sector">
+                            <td class="matrix-td whitespace-nowrap">
                               @if (row.sector) {
                                 <span class="heat-sector-badge"
                                   [style.background]="sectorColor(row.sector) + '22'"
                                   [style.color]="sectorColor(row.sector)"
                                   [style.borderColor]="sectorColor(row.sector) + '55'">
-                                  {{ sectorIcon(row.sector) }} {{ row.sector | titlecase }}
+                                  <app-icon [emoji]="sectorIcon(row.sector)" /> {{ row.sector | titlecase }}
                                 </span>
-                              } @else { <span class="heat-sector-empty">—</span> }
+                              } @else { <span class="text-xs text-ink-soft">—</span> }
                             </td>
-                            <td><span class="ley-badge">{{ row.leyBase }}</span></td>
-                            <td class="td-actor"><span class="resp-dot" [class]="levelClass(row.nacion)">{{ levelText(row.nacion) }}</span></td>
-                            <td class="td-actor"><span class="resp-dot" [class]="levelClass(row.departamento)">{{ levelText(row.departamento) }}</span></td>
-                            <td class="td-actor"><span class="resp-dot" [class]="levelClass(row.municipio)">{{ levelText(row.municipio) }}</span></td>
-                            <td class="td-actor"><span class="resp-dot" [class]="levelClass(row.especializado)">{{ levelText(row.especializado) }}</span></td>
-                            <td>
+                            <td class="matrix-td"><span class="ley-badge">{{ row.leyBase }}</span></td>
+                            <td class="matrix-td text-center"><span class="resp-dot" [class]="levelClass(row.nacion)">{{ levelText(row.nacion) }}</span></td>
+                            <td class="matrix-td text-center"><span class="resp-dot" [class]="levelClass(row.departamento)">{{ levelText(row.departamento) }}</span></td>
+                            <td class="matrix-td text-center"><span class="resp-dot" [class]="levelClass(row.municipio)">{{ levelText(row.municipio) }}</span></td>
+                            <td class="matrix-td text-center"><span class="resp-dot" [class]="levelClass(row.especializado)">{{ levelText(row.especializado) }}</span></td>
+                            <td class="matrix-td">
                               @if (brechaInfo(row.brecha); as b) {
                                 <span class="brecha-badge" [class]="b.cls">{{ b.text }}</span>
                               }
@@ -330,46 +335,46 @@
           @if (matrizSubView() === 'actores') {
             @if (actorMatrix(tab.matrizRows!); as am) {
               @if (am.actors.length) {
-                <div class="actor-matrix-wrap">
-                  <div class="actor-matrix-scroll">
-                    <table class="actor-matrix-table">
-                      <thead>
+                <div class="overflow-hidden rounded-xl border border-border">
+                  <div class="overflow-x-auto">
+                    <table class="w-full min-w-[500px] border-collapse text-[11px]">
+                      <thead class="sticky top-0 z-[2]">
                         <tr>
-                          <th class="am-col-actor">Actor</th>
-                          <th class="am-col-tipo">Rol</th>
+                          <th class="am-th !min-w-[180px] !text-left">Actor</th>
+                          <th class="am-th">Rol</th>
                           @for (s of am.sectors; track s) {
-                            <th class="am-col-sector" [title]="s">{{ sectorIcon(s) }} {{ s | titlecase }}</th>
+                            <th class="am-th" [title]="s"><app-icon [emoji]="sectorIcon(s)" /> {{ s | titlecase }}</th>
                           }
-                          <th class="am-col-total">Total</th>
+                          <th class="am-th !min-w-[48px]">Total</th>
                         </tr>
                       </thead>
                       <tbody>
                         @for (actor of am.actors; track actor.nombre) {
                           <tr class="am-row" (click)="onActorMatrixClick(actor, tabs(), tab.matrizRows!)">
-                            <td class="am-td-actor">{{ actor.nombre }}</td>
-                            <td class="am-td-tipo">
+                            <td class="am-td text-xs font-semibold text-ink">{{ actor.nombre }}</td>
+                            <td class="am-td">
                               <span class="chip-tipo" [style.background]="actorTipoColor(actor.tipo) + '22'" [style.color]="actorTipoColor(actor.tipo)">
                                 {{ actorTipoLabel(actor.tipo) }}
                               </span>
                             </td>
                             @for (s of am.sectors; track s) {
-                              <td class="am-td-cell"
+                              <td class="am-td am-td-cell"
                                 [style.background]="actorCellIntensity(actor.cells[s] ?? 0, maxActorCell(am.actors))"
                                 [style.color]="actorCellColor(actor.cells[s] ?? 0)"
                                 [title]="actor.nombre + ' — ' + s + ': ' + (actor.cells[s] ?? 0) + ' competencias'">
                                 {{ (actor.cells[s] ?? 0) || '—' }}
                               </td>
                             }
-                            <td class="am-td-total">{{ actor.total }}</td>
+                            <td class="am-td bg-surface2 text-center text-xs font-extrabold text-ink">{{ actor.total }}</td>
                           </tr>
                         }
                       </tbody>
                     </table>
                   </div>
-                  <p class="am-hint">Clic en un actor para ver sus responsabilidades y leyes</p>
+                  <p class="p-3 text-center text-[11px] italic text-ink-faint">Clic en un actor para ver sus responsabilidades y leyes</p>
                 </div>
               } @else {
-                <p class="detail-empty" style="padding:16px">Sin actores vinculados en esta matriz</p>
+                <p class="p-4 text-xs text-danger">Sin actores vinculados en esta matriz</p>
               }
             }
           }
@@ -379,24 +384,25 @@
 
       <!-- ══ ITEMS GRID (responsabilidades, leyes, actores, brechas) ══ -->
       @if (!tab.matrizRows?.length && tab.id !== 'resumen') {
-        <div class="items-grid">
+        <div class="grid grid-cols-2 gap-2 max-[640px]:grid-cols-1">
           @for (item of tab.items; track item.title) {
-            <div class="result-item"
-              [class.result-item--clickable]="tab.id === 'actores'"
+            <div class="flex items-start gap-2.5 rounded-[9px] border border-border bg-surface p-3 transition-colors duration-150 hover:border-accent"
+              [class.cursor-pointer]="tab.id === 'actores'"
+              [class.hover:bg-accent-soft]="tab.id === 'actores'"
               (click)="tab.id === 'actores' ? onActorItemClick(item, tabs()) : null">
-              <div class="result-icon">{{ item.icon }}</div>
-              <div class="result-body">
-                <div class="result-title">{{ item.title }}</div>
-                <div class="result-sub">{{ item.body }}</div>
+              <div class="mt-px shrink-0 text-lg"><app-icon [emoji]="item.icon" /></div>
+              <div class="flex-1">
+                <div class="text-[13px] font-semibold text-ink">{{ item.title }}</div>
+                <div class="mt-0.5 whitespace-pre-line text-xs leading-relaxed text-ink-soft">{{ item.body }}</div>
                 @if (item.badges?.length) {
-                  <div class="result-badges">
+                  <div class="mt-1.5 flex flex-wrap gap-1.5">
                     @for (badge of item.badges!; track badge.label) {
                       <app-badge [variant]="badge.variant">{{ badge.label }}</app-badge>
                     }
                   </div>
                 }
               </div>
-              @if (tab.id === 'actores') { <span class="item-expand-icon">›</span> }
+              @if (tab.id === 'actores') { <span class="ml-auto self-center text-lg text-ink-faint">›</span> }
             </div>
           }
         </div>
@@ -407,9 +413,9 @@
 
   <!-- Actions footer -->
   @if (showActions()) {
-    <div class="tabs-footer">
-      <button class="action-btn">📥 Exportar PDF</button>
-      <button class="action-btn action-btn--primary" (click)="addToPlan.emit()">📋 Agregar a mi plan</button>
+    <div class="flex flex-wrap gap-2 border-t border-border pt-3">
+      <button class="rounded-lg border border-border bg-surface px-3.5 py-2 text-xs font-semibold text-ink transition-colors duration-150 hover:bg-surface2"><fa-icon [icon]="faDownload" /> Exportar PDF</button>
+      <button class="rounded-lg border border-accent bg-accent px-3.5 py-2 text-xs font-semibold text-white transition-colors duration-150 hover:border-[#2563EB] hover:bg-[#2563EB]" (click)="addToPlan.emit()"><fa-icon [icon]="faClipboardList" /> Agregar a mi plan</button>
     </div>
   }
 
@@ -418,72 +424,76 @@
 <!-- ── Modal de detalle de fila (competencia) ── -->
 @if (selectedRow(); as row) {
   <div class="actor-modal-backdrop" (click)="closeDetail()">
-    <div class="actor-modal row-modal" (click)="$event.stopPropagation()">
+    <div class="actor-modal max-w-[720px]" (click)="$event.stopPropagation()">
 
       <!-- Cabecera -->
       <div class="actor-modal-header">
-        <div class="actor-modal-title-wrap">
-          <span class="actor-modal-icon">📋</span>
+        <div class="flex items-start gap-2.5">
+          <span class="text-[22px]"><fa-icon [icon]="faClipboardList" /></span>
           <div>
-            <div class="actor-modal-name">{{ row.competencia }}</div>
-            <div class="actor-modal-meta">
+            <div class="text-[15px] font-bold leading-snug text-ink">{{ row.competencia }}</div>
+            <div class="mt-1 flex items-center gap-1.5">
               @if (row.brecha !== 'ok') {
-                <span class="row-modal-brecha-badge" [class]="'brecha-badge brecha-' + (row.brecha === 'critica' ? 'red' : row.brecha === 'duplicidad' ? 'gold' : 'gray')">
-                  {{ row.brecha === 'critica' ? '🚨 Brecha crítica' : row.brecha === 'duplicidad' ? '⚠️ Duplicidad' : '? Indefinido' }}
+                <span class="mr-1.5" [class]="'brecha-badge brecha-' + (row.brecha === 'critica' ? 'red' : row.brecha === 'duplicidad' ? 'gold' : 'gray')">
+                  @if (row.brecha === 'critica') { <fa-icon [icon]="faTriangleExclamation" /> Brecha crítica }
+                  @else if (row.brecha === 'duplicidad') { <fa-icon [icon]="faTriangleExclamation" /> Duplicidad }
+                  @else { ? Indefinido }
                 </span>
               }
               @if (row.sector) {
                 <span class="actor-modal-sector"
                   [style.background]="sectorColor(row.sector) + '22'"
                   [style.color]="sectorColor(row.sector)">
-                  {{ sectorIcon(row.sector) }} {{ row.sector | titlecase }}
+                  <app-icon [emoji]="sectorIcon(row.sector)" /> {{ row.sector | titlecase }}
                 </span>
               }
-              @if (row.leyBase) { <span class="actor-modal-nivel">⚖️ {{ row.leyBase }}</span> }
+              @if (row.leyBase) { <span class="text-[11px] capitalize text-ink-soft"><fa-icon [icon]="faScaleBalanced" /> {{ row.leyBase }}</span> }
             </div>
           </div>
         </div>
-        <button class="actor-modal-close" (click)="closeDetail()">✕</button>
+        <button class="actor-modal-close" (click)="closeDetail()"><fa-icon [icon]="faXmark" /></button>
       </div>
 
       <!-- Explicación de brecha -->
       @if (row.brecha !== 'ok') {
-        <div class="row-modal-brecha-explain"
-          [class.row-modal-explain-critica]="row.brecha === 'critica'"
-          [class.row-modal-explain-dup]="row.brecha === 'duplicidad'">
-          <span class="row-modal-explain-text">{{ brechaExplicacion(row.brecha) }}</span>
+        <div class="border-b border-border px-5 py-2.5 text-xs leading-relaxed"
+          [class.bg-danger-soft]="row.brecha === 'critica'"
+          [class.text-danger]="row.brecha === 'critica'"
+          [class.bg-gold-soft]="row.brecha === 'duplicidad'"
+          [class.text-gold]="row.brecha === 'duplicidad'">
+          <span class="font-semibold">{{ brechaExplicacion(row.brecha) }}</span>
           @if (row.brechaDesc) {
-            <span class="row-modal-explain-detail"> — {{ row.brechaDesc }}</span>
+            <span class="font-normal"> — {{ row.brechaDesc }}</span>
           }
         </div>
       }
 
       <!-- Trazabilidad: fragmento del plan que originó esta competencia -->
       @if (row.origenContexto) {
-        <div class="row-modal-origen">
-          <span class="row-modal-origen-label">📍 Origen en el plan:</span>
-          <span class="row-modal-origen-text">{{ row.origenContexto }}</span>
+        <div class="border-b border-border bg-surface2 px-5 py-2.5 text-xs leading-relaxed">
+          <span class="mr-1 font-semibold text-ink-soft"><fa-icon [icon]="faLocationDot" /> Origen en el plan:</span>
+          <span class="italic text-ink-soft">{{ row.origenContexto }}</span>
         </div>
       }
 
       <!-- Distribución territorial -->
-      <div class="row-modal-niveles">
-        <div class="row-modal-niveles-title">Distribución territorial</div>
-        <div class="row-modal-niveles-grid">
+      <div class="border-b border-border bg-surface2 px-5 py-3">
+        <div class="mb-2.5 text-[10px] font-bold uppercase tracking-wide text-ink-soft">Distribución territorial</div>
+        <div class="grid grid-cols-4 gap-2">
           @for (nivel of [
             { col: 'Nación',     val: row.nacion       },
             { col: 'Dpto.',      val: row.departamento  },
             { col: 'Municipio',  val: row.municipio     },
             { col: 'Esp.',       val: row.especializado }
           ]; track nivel.col) {
-            <div class="row-modal-nivel-cell">
-              <div class="row-modal-nivel-label">{{ nivel.col }}</div>
-              <div class="row-modal-nivel-pill"
+            <div class="flex flex-col items-center gap-1">
+              <div class="text-[10px] font-bold uppercase text-ink-faint">{{ nivel.col }}</div>
+              <div class="flex h-8 w-8 items-center justify-center rounded-lg text-[13px] font-extrabold"
                 [style.background]="nivelBg(nivel.val)"
                 [style.color]="nivelColor(nivel.val)">
                 {{ nivel.val === 'N' ? '—' : nivel.val }}
               </div>
-              <div class="row-modal-nivel-texto" [style.color]="nivelColor(nivel.val)">
+              <div class="text-center text-[9px] font-semibold" [style.color]="nivelColor(nivel.val)">
                 {{ nivelLabel(nivel.val) }}
               </div>
             </div>
@@ -494,9 +504,9 @@
       <!-- Actores y leyes -->
       <div class="actor-modal-body">
         <div class="actor-modal-col">
-          <div class="actor-modal-col-title">🏛️ Actores vinculados</div>
+          <div class="actor-modal-col-title"><fa-icon [icon]="faLandmark" /> Actores vinculados</div>
           @if (row.actoresVinculados?.length) {
-            <div class="actor-chips" style="flex-direction:column; align-items:flex-start;">
+            <div class="flex flex-col items-start gap-1.5">
               @for (actor of row.actoresVinculados!; track actor.nombre) {
                 <button class="actor-chip"
                   [class.actor-chip--active]="selectedActor()?.nombre === actor.nombre"
@@ -510,11 +520,11 @@
               }
             </div>
           } @else {
-            <p class="actor-modal-empty">🚨 Sin actores vinculados — posible brecha</p>
+            <p class="actor-modal-empty"><fa-icon [icon]="faTriangleExclamation" /> Sin actores vinculados — posible brecha</p>
           }
         </div>
         <div class="actor-modal-col">
-          <div class="actor-modal-col-title">📜 Marco legal aplicable</div>
+          <div class="actor-modal-col-title"><fa-icon [icon]="faScroll" /> Marco legal aplicable</div>
           @if (row.leyesVinculadas?.length) {
             <div class="ley-list">
               @for (ley of row.leyesVinculadas!; track ley.codigo) {
@@ -539,29 +549,29 @@
   <div class="actor-modal-backdrop" (click)="closeDetail()">
     <div class="actor-modal" (click)="$event.stopPropagation()">
       <div class="actor-modal-header">
-        <div class="actor-modal-title-wrap">
-          <span class="actor-modal-icon">🏢</span>
+        <div class="flex items-start gap-2.5">
+          <span class="text-[22px]"><fa-icon [icon]="faCity" /></span>
           <div>
-            <div class="actor-modal-name">{{ actor.nombre }}</div>
-            <div class="actor-modal-meta">
+            <div class="text-[15px] font-bold leading-snug text-ink">{{ actor.nombre }}</div>
+            <div class="mt-1 flex items-center gap-1.5">
               <span class="actor-modal-tipo-badge" [style.background]="actorTipoColor(actor.tipo) + '22'" [style.color]="actorTipoColor(actor.tipo)">{{ actorTipoLabel(actor.tipo) }}</span>
-              @if (actor.nivel) { <span class="actor-modal-nivel">{{ actor.nivel }}</span> }
-              @if (actor.sector) { <span class="actor-modal-nivel" style="background:var(--accent-soft);color:var(--accent)">{{ actor.sector }}</span> }
+              @if (actor.nivel) { <span class="text-[11px] capitalize text-ink-soft">{{ actor.nivel }}</span> }
+              @if (actor.sector) { <span class="rounded-full bg-accent-soft px-2.5 py-0.5 text-[11px] capitalize text-accent">{{ actor.sector }}</span> }
             </div>
           </div>
         </div>
-        <button class="actor-modal-close" (click)="closeDetail()">✕</button>
+        <button class="actor-modal-close" (click)="closeDetail()"><fa-icon [icon]="faXmark" /></button>
       </div>
 
       <!-- Competencias de la tabla puente -->
       @if (actor.competencias.length) {
-        <div class="actor-modal-competencias">
-          <div class="actor-modal-col-title" style="padding:12px 20px 6px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2)">
-            🎯 Competencias asignadas ({{ actor.competencias.length }})
+        <div class="border-b border-border bg-surface2">
+          <div class="px-5 pb-1.5 pt-3 text-[10px] font-bold uppercase tracking-wide text-ink-soft">
+            <fa-icon [icon]="faBullseye" /> Competencias asignadas ({{ actor.competencias.length }})
           </div>
-          <div class="actor-comp-list">
+          <div class="flex flex-wrap gap-1.5 px-5 pb-3.5">
             @for (c of actor.competencias; track c) {
-              <div class="actor-comp-item">{{ c }}</div>
+              <div class="rounded-full bg-surface px-2.5 py-1 text-[11px] leading-snug text-ink-soft">{{ c }}</div>
             }
           </div>
         </div>
@@ -569,7 +579,7 @@
 
       <div class="actor-modal-body">
         <div class="actor-modal-col">
-          <div class="actor-modal-col-title">📋 Responsabilidades que ejecuta</div>
+          <div class="actor-modal-col-title"><fa-icon [icon]="faClipboardList" /> Responsabilidades que ejecuta</div>
           @if (actor.responsabilidades.length) {
             <ul class="actor-modal-list">
               @for (r of actor.responsabilidades; track r) { <li>{{ r }}</li> }
@@ -577,7 +587,7 @@
           } @else { <p class="actor-modal-empty">Sin responsabilidades mapeadas</p> }
         </div>
         <div class="actor-modal-col">
-          <div class="actor-modal-col-title">⚖️ Leyes que lo habilitan</div>
+          <div class="actor-modal-col-title"><fa-icon [icon]="faScaleBalanced" /> Leyes que lo habilitan</div>
           @if (actor.leyes.length) {
             <ul class="actor-modal-list">
               @for (l of actor.leyes; track l) { <li>{{ l }}</li> }

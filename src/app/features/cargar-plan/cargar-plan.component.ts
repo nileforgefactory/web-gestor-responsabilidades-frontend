@@ -1,5 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faStop, faCheck } from '@fortawesome/free-solid-svg-icons';
 import { AgentLogComponent, LogLine } from '../../shared/components/agent-log/agent-log.component';
 import { SidebarComponent, SidebarItem, SidebarSection, SidebarUser } from '../../shared/components/sidebar/sidebar.component';
 import { UploadZoneComponent } from '../../shared/components/upload-zone/upload-zone.component';
@@ -9,17 +11,21 @@ import { PlanService } from '../../core/services/plan.service';
 import { AuthService } from '../../core/services/auth.service';
 import { environment } from '../../../environments/environment';
 import type { BadgeVariant } from '../../shared/components/badge/badge.component';
+import { IconComponent } from '../../shared/components/icon/icon.component';
 
 type PageState = 'idle' | 'file-loaded' | 'processing' | 'done';
 
 @Component({
   selector: 'app-cargar-plan',
   standalone: true,
-  imports: [SidebarComponent, UploadZoneComponent, OrchestratorCardComponent, AgentLogComponent, ResultTabsComponent],
+  imports: [SidebarComponent, UploadZoneComponent, OrchestratorCardComponent, AgentLogComponent, ResultTabsComponent, IconComponent, FaIconComponent],
   templateUrl: './cargar-plan.component.html',
   styleUrl: './cargar-plan.component.css',
 })
 export class CargarPlanComponent {
+  readonly faStop = faStop;
+  readonly faCheck = faCheck;
+
   private planService = inject(PlanService);
   private auth        = inject(AuthService);
   private router      = inject(Router);
@@ -226,9 +232,11 @@ export class CargarPlanComponent {
       Nacional: 'nacional',   Sectorial: 'sectorial',
     };
 
+    const collectionId = this.auth.user()?.territorio.coleccion_id ?? environment.planCollection;
+
     const form = new FormData();
     form.append('file', file);
-    form.append('collection_id', environment.planCollection);
+    form.append('collection_id', collectionId);
     form.append('normativa_collection_ids', environment.ragCollection);
     form.append('nivel', nivelMap[params.nivel] ?? 'municipal');
     form.append('profundidad', params.depth);

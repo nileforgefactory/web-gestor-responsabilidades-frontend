@@ -1,33 +1,34 @@
-<div class="result-tabs-wrapper">
+<div class="flex flex-col gap-0">
   <!-- Tab bar -->
-  <div class="tabs-bar">
+  <div class="flex gap-0.5 border-b-2 border-border px-1">
     @for (tab of tabs(); track tab.id) {
       <button
-        class="tab-btn"
-        [class.tab-btn--active]="isActive(tab.id)"
+        class="-mb-0.5 flex items-center gap-1.5 whitespace-nowrap border-b-2 border-transparent px-3.5 py-2.5 text-[13px] font-semibold text-ink-soft transition-all hover:text-ink"
+        [class.text-accent]="isActive(tab.id)"
+        [class.border-accent]="isActive(tab.id)"
         (click)="setTab(tab.id)"
       >
-        <span>{{ tab.icon }} {{ tab.label }}</span>
+        <span><app-icon [emoji]="tab.icon" /> {{ tab.label }}</span>
         <span
-          class="tab-count"
-          [class.tab-count--red]="tab.countVariant === 'red'"
+          class="rounded-full bg-accent px-1.5 py-px text-[10px] font-bold text-white"
+          [class.bg-danger]="tab.countVariant === 'red'"
         >{{ tab.count }}</span>
       </button>
     }
   </div>
 
   <!-- Panel -->
-  <div class="tab-panel">
+  <div class="py-4">
     @if (activeTab(); as tab) {
-      <div class="items-grid">
+      <div class="grid grid-cols-2 gap-2 max-[700px]:grid-cols-1">
         @for (item of tab.items; track item.title) {
-          <div class="result-item">
-            <div class="result-icon">{{ item.icon }}</div>
-            <div class="result-body">
-              <div class="result-title">{{ item.title }}</div>
-              <div class="result-sub">{{ item.body }}</div>
+          <div class="flex items-start gap-2.5 rounded-[9px] border border-border bg-surface p-3 transition-colors hover:border-accent">
+            <div class="mt-px shrink-0 text-lg"><app-icon [emoji]="item.icon" /></div>
+            <div>
+              <div class="text-[13px] font-semibold text-ink">{{ item.title }}</div>
+              <div class="mt-[3px] text-xs leading-relaxed text-ink-soft">{{ item.body }}</div>
               @if (item.badges?.length) {
-                <div class="result-badges">
+                <div class="mt-1.5 flex flex-wrap gap-1.5">
                   @for (badge of item.badges!; track badge.label) {
                     <app-badge [variant]="badge.variant">{{ badge.label }}</app-badge>
                   }
@@ -41,14 +42,14 @@
   </div>
 
   <!-- Actions -->
-  <div class="tabs-footer">
-    <button class="action-btn">📥 Exportar PDF</button>
+  <div class="flex gap-2 border-t border-border pt-1">
+    <button class="rounded-lg border border-border bg-surface px-3.5 py-2 text-xs font-semibold text-ink transition-colors hover:bg-surface2"><fa-icon [icon]="faDownload" /> Exportar PDF</button>
     <button
-      class="action-btn action-btn--primary"
+      class="rounded-lg border border-accent bg-accent px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#2563EB]"
       [disabled]="saving()"
       (click)="saving.set(true); addToPlan.emit()"
     >
-      {{ saving() ? '⏳ Guardando…' : '📋 Agregar a mi plan' }}
+      @if (saving()) { <fa-icon [icon]="faHourglassHalf" /> Guardando… } @else { <fa-icon [icon]="faClipboardList" /> Agregar a mi plan }
     </button>
   </div>
 </div>
