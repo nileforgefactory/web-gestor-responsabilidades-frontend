@@ -9,10 +9,10 @@ import { LoginComponent } from './features/login/login.component';
 import { authGuard } from './core/guards/auth.guard';
 import { adminGuard } from './core/guards/admin.guard';
 import { onboardingGuard } from './core/guards/onboarding.guard';
+import { homeRedirectGuard } from './core/guards/home-redirect.guard';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
-  { path: '',      redirectTo: 'cargar-plan', pathMatch: 'full' },
 
   // ── Onboarding — rutas públicas (solo requieren auth) ────────────────────
   {
@@ -39,6 +39,7 @@ export const routes: Routes = [
     path: '',
     canActivate: [authGuard, onboardingGuard],
     children: [
+      { path: '',                  pathMatch: 'full', canActivate: [homeRedirectGuard], children: [] },
       { path: 'cargar-plan',       component: CargarPlanComponent },
       { path: 'biblioteca',        component: BibliotecaPlanes },
       { path: 'plan/:id',          component: PlanDetailPageComponent },
