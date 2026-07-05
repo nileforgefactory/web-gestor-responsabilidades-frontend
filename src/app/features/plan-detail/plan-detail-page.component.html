@@ -1,4 +1,4 @@
-<div class="app-layout">
+<div class="flex min-h-[calc(100vh-var(--h-nav))]">
 
   <!-- ── Sidebar ── -->
   <app-sidebar
@@ -7,86 +7,104 @@
   />
 
   <!-- ── Main content ── -->
-  <main class="main-content">
+  <main class="min-w-0 flex-1 overflow-y-auto px-8 py-6 max-[1100px]:px-5 max-[1100px]:py-5">
 
     @if (plan(); as p) {
 
       <!-- Back row -->
-      <div class="back-row">
-        <button class="back-btn" (click)="back()">← Volver</button>
-        <span class="breadcrumb">Biblioteca de Planes → {{ p.shortName }}</span>
+      <div class="mb-5 flex items-center gap-3">
+        <button
+          class="inline-flex items-center gap-1.5 rounded-lg border border-primary/[.18] bg-primary/10 px-3.5 py-[7px] text-xs font-semibold text-primary transition-colors hover:bg-primary/[.18]"
+          (click)="back()"
+        >← Volver</button>
+        <span class="text-xs text-ink-faint">Biblioteca de Planes → {{ p.shortName }}</span>
       </div>
 
       <!-- ── Hero ── -->
-      <div class="detail-hero" [style.--plan-color]="p.nivelColor">
-        <div class="hero-decoration"></div>
+      <div
+        class="relative mb-5 overflow-hidden rounded-xl p-7 px-8 text-white max-[900px]:p-5 max-[900px]:px-[22px]"
+        [style.--plan-color]="p.nivelColor"
+        style="background: linear-gradient(135deg, #0D1F42 0%, #1A3A6B 55%, var(--plan-color, #1E5CA3) 100%)"
+      >
+        <div class="pointer-events-none absolute -right-[60px] -top-[60px] h-[260px] w-[260px] rounded-full bg-white/5"></div>
 
-        <div class="hero-badges">
-          <span class="hero-badge">{{ p.nivelLabel }}</span>
-          <span class="hero-badge hero-badge--entity">{{ p.entity }}</span>
-          <span class="hero-badge hero-badge--status">{{ p.statusLabel }}</span>
+        <div class="relative z-10 mb-2.5 flex flex-wrap items-center gap-1.5">
+          <span class="inline-flex items-center rounded-full border border-white/25 bg-white/15 px-2.5 py-[3px] text-[11px] font-bold text-white">{{ p.nivelLabel }}</span>
+          <span class="inline-flex items-center rounded-full border border-gold/40 bg-gold/[.22] px-2.5 py-[3px] text-[11px] font-bold text-[#FCD34D]">{{ p.entity }}</span>
+          <span class="inline-flex items-center rounded-full border border-success/40 bg-success/[.22] px-2.5 py-[3px] text-[11px] font-bold text-[#6EE7B7]">{{ p.statusLabel }}</span>
+          @if (esActivo()) {
+            <span class="inline-flex items-center gap-1 rounded-full border border-success/40 bg-success/[.22] px-2.5 py-[3px] text-[11px] font-bold text-[#6EE7B7]">
+              <fa-icon [icon]="faCheckCircle" /> Plan activo
+            </span>
+          } @else {
+            <button
+              class="inline-flex items-center gap-1 rounded-full border border-white/25 bg-white/15 px-2.5 py-[3px] text-[11px] font-bold text-white transition-colors hover:bg-white/25"
+              (click)="marcarActivo()"
+              title="Marcar como plan activo"
+            ><fa-icon [icon]="faCheckCircle" /> Marcar como activo</button>
+          }
         </div>
 
-        <h1 class="hero-title">{{ p.title }}</h1>
+        <h1 class="relative z-10 mb-2.5 max-w-[780px] text-xl font-extrabold leading-snug text-white max-[900px]:text-[17px]">{{ p.title }}</h1>
 
-        <div class="hero-meta">
+        <div class="relative z-10 mb-3.5 flex flex-wrap gap-4 text-sm text-white/75">
           <span>{{ p.entityIcon }} {{ p.entity }}</span>
-          <span>📅 {{ p.periodo }}</span>
-          <span>🤖 Analizado · {{ formatDate(p.addedAt) }}</span>
+          <span><fa-icon [icon]="faCalendarDays" /> {{ p.periodo }}</span>
+          <span><fa-icon [icon]="faRobot" /> Analizado · {{ formatDate(p.addedAt) }}</span>
         </div>
 
         @if (p.description) {
-          <div class="hero-desc">
-            <span class="hero-desc-label">🤖 Síntesis del orquestador</span>
+          <div class="relative z-10 mb-5 max-w-[780px] rounded-r-lg border-l-[3px] border-white/30 bg-white/[.08] p-3 px-4 text-[13px] leading-relaxed text-white/90">
+            <span class="mb-1 block text-[10px] font-bold uppercase tracking-wide opacity-60"><fa-icon [icon]="faRobot" /> Síntesis del orquestador</span>
             {{ p.description }}
           </div>
         }
 
         <!-- Stats bar -->
-        <div class="hero-stats">
-          <div class="dhs">
-            <div class="dhs-val">{{ p.responsabilidades }}</div>
-            <div class="dhs-label">Responsabilidades</div>
+        <div class="relative z-10 flex flex-wrap items-center gap-0">
+          <div class="px-5 text-center first:pl-0">
+            <div class="text-[26px] font-extrabold leading-none text-white">{{ p.responsabilidades }}</div>
+            <div class="mt-1 text-[11px] opacity-70">Responsabilidades</div>
           </div>
-          <div class="dhs-sep"></div>
-          <div class="dhs">
-            <div class="dhs-val">{{ p.leyes }}</div>
-            <div class="dhs-label">Leyes</div>
+          <div class="h-10 w-px shrink-0 bg-white/[.18]"></div>
+          <div class="px-5 text-center">
+            <div class="text-[26px] font-extrabold leading-none text-white">{{ p.leyes }}</div>
+            <div class="mt-1 text-[11px] opacity-70">Leyes</div>
           </div>
-          <div class="dhs-sep"></div>
-          <div class="dhs">
-            <div class="dhs-val">{{ p.actores }}</div>
-            <div class="dhs-label">Actores</div>
+          <div class="h-10 w-px shrink-0 bg-white/[.18]"></div>
+          <div class="px-5 text-center">
+            <div class="text-[26px] font-extrabold leading-none text-white">{{ p.actores }}</div>
+            <div class="mt-1 text-[11px] opacity-70">Actores</div>
           </div>
-          <div class="dhs-sep"></div>
-          <div class="dhs">
-            <div class="dhs-val dhs-val--red">{{ p.brechas }}</div>
-            <div class="dhs-label">Brechas</div>
+          <div class="h-10 w-px shrink-0 bg-white/[.18]"></div>
+          <div class="px-5 text-center">
+            <div class="text-[26px] font-extrabold leading-none text-[#FCA5A5]">{{ p.brechas }}</div>
+            <div class="mt-1 text-[11px] opacity-70">Brechas</div>
           </div>
         </div>
       </div>
 
       <!-- ── Coverage row ── -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-icon" style="background: var(--accent-soft)">📈</div>
+      <div class="mb-5 overflow-hidden rounded-xl border border-border bg-surface shadow-card">
+        <div class="flex items-center gap-2.5 border-b border-border px-5 py-4">
+          <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-lg"><fa-icon [icon]="faChartLine" /></div>
           <div>
-            <div class="card-title">Cobertura por sector</div>
-            <div class="card-sub">Responsabilidades asignadas vs. esperadas</div>
+            <div class="text-sm font-bold text-ink">Cobertura por sector</div>
+            <div class="mt-0.5 text-xs text-ink-soft">Responsabilidades asignadas vs. esperadas</div>
           </div>
         </div>
-        <div class="card-body">
+        <div class="px-5 py-[18px]">
           @if (p.sectorCoverage?.length) {
-            <div class="coverage-list">
+            <div class="flex flex-col gap-3">
               @for (cov of p.sectorCoverage!; track cov.sector) {
-                <div class="coverage-item">
-                  <div class="coverage-header">
-                    <span class="coverage-label">{{ cov.icon }} {{ cov.sector }}</span>
-                    <span class="coverage-pct" [style.color]="coverageColor(cov.pct)">{{ cov.pct }}%</span>
+                <div>
+                  <div class="mb-[5px] flex items-center justify-between">
+                    <span class="text-xs text-ink-soft">{{ cov.icon }} {{ cov.sector }}</span>
+                    <span class="text-xs font-bold" [style.color]="coverageColor(cov.pct)">{{ cov.pct }}%</span>
                   </div>
-                  <div class="coverage-track">
+                  <div class="h-1.5 overflow-hidden rounded-[3px] bg-border">
                     <div
-                      class="coverage-fill"
+                      class="h-full rounded-[3px] transition-[width] duration-400 ease-out"
                       [style.width.%]="cov.pct"
                       [style.background]="coverageColor(cov.pct)"
                     ></div>
@@ -95,18 +113,18 @@
               }
             </div>
           } @else {
-            <div class="coverage-empty">
-              <div class="sectors-chips">
+            <div class="flex flex-col gap-3">
+              <div class="flex flex-wrap gap-1.5">
                 @for (sector of p.sectors; track sector) {
-                  <span class="sector-tag">{{ sector }}</span>
+                  <span class="rounded-md border border-border bg-surface2 px-2.5 py-1 text-[11px] font-semibold text-ink-soft">{{ sector }}</span>
                 }
               </div>
-              <div class="avance-row">
+              <div class="flex justify-between text-xs text-ink-soft">
                 <span>Avance global</span>
                 <span [style.color]="p.avanceColor">{{ p.avance }}%</span>
               </div>
-              <div class="avance-track-full">
-                <div class="avance-fill-full" [style.width.%]="p.avance" [style.background]="p.avanceColor"></div>
+              <div class="h-1.5 overflow-hidden rounded-[3px] bg-border">
+                <div class="h-full rounded-[3px]" [style.width.%]="p.avance" [style.background]="p.avanceColor"></div>
               </div>
             </div>
           }
@@ -115,22 +133,31 @@
 
       <!-- ── Analysis tabs ── -->
       @if (p.resultTabs?.length) {
-        <div class="card" id="analysis-section">
-          <div class="card-header">
-            <div class="card-icon" style="background: var(--gold-soft)">📊</div>
+        <div class="mb-5 overflow-hidden rounded-xl border border-border bg-surface shadow-card" id="analysis-section">
+          <div class="flex items-center gap-2.5 border-b border-border px-5 py-4">
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gold-soft text-lg"><fa-icon [icon]="faChartSimple" /></div>
             <div>
-              <div class="card-title">Análisis detallado</div>
-              <div class="card-sub">Resultados del Agente IA · {{ p.shortName }}</div>
+              <div class="text-sm font-bold text-ink">Análisis detallado</div>
+              <div class="mt-0.5 text-xs text-ink-soft">Resultados del Agente IA · {{ p.shortName }}</div>
             </div>
-            <div class="card-actions">
-              <button class="btn-sm btn-sgr" (click)="irSGR()">💰 Evaluar SGR</button>
-              <button class="btn-sm" (click)="exportPdf()" [disabled]="exportingPdf()">
-                {{ exportingPdf() ? '⏳ Generando PDF…' : '📥 Exportar PDF' }}
+            <div class="ml-auto flex shrink-0 gap-2">
+              <button
+                class="rounded-lg border border-[#166534] bg-[#166534] px-3.5 py-[7px] text-xs font-semibold text-white transition-all hover:bg-[#15803d] hover:border-[#15803d]"
+                (click)="irSGR()"
+              ><fa-icon [icon]="faSackDollar" /> Evaluar SGR</button>
+              <button
+                class="rounded-lg border border-border bg-surface2 px-3.5 py-[7px] text-xs font-semibold text-ink transition-all hover:bg-border disabled:cursor-not-allowed"
+                (click)="exportPdf()" [disabled]="exportingPdf()"
+              >
+                @if (exportingPdf()) { <fa-icon [icon]="faHourglassHalf" /> Generando PDF… } @else { <fa-icon [icon]="faDownload" /> Exportar PDF }
               </button>
-              <button class="btn-sm btn-primary" (click)="reanalyze()">🔄 Reanalizar</button>
+              <button
+                class="rounded-lg border border-primary bg-primary px-3.5 py-[7px] text-xs font-semibold text-white transition-all hover:bg-primary-light hover:border-primary-light"
+                (click)="reanalyze()"
+              ><fa-icon [icon]="faRotate" /> Reanalizar</button>
             </div>
           </div>
-          <div class="card-body card-body--tabs">
+          <div class="px-5 pb-5">
             <app-result-tabs
               [tabs]="p.resultTabs!"
               [showActions]="false"
@@ -140,21 +167,27 @@
           </div>
         </div>
       } @else {
-        <div class="card no-analysis">
-          <div class="no-analysis-icon">📊</div>
-          <div class="no-analysis-title">Análisis detallado no disponible</div>
-          <div class="no-analysis-sub">Este plan aún no ha sido procesado por el agente IA.</div>
-          <button class="btn-sm btn-primary" (click)="reanalyze()">🔄 Procesar ahora</button>
+        <div class="mb-5 flex flex-col items-center gap-2 rounded-xl border border-border bg-surface p-14 text-center shadow-card">
+          <div class="mb-2 text-4xl opacity-25"><fa-icon [icon]="faChartSimple" /></div>
+          <div class="text-base font-bold text-ink-soft">Análisis detallado no disponible</div>
+          <div class="mb-2 text-[13px] text-ink-faint">Este plan aún no ha sido procesado por el agente IA.</div>
+          <button
+            class="rounded-lg border border-primary bg-primary px-3.5 py-[7px] text-xs font-semibold text-white transition-all hover:bg-primary-light hover:border-primary-light"
+            (click)="reanalyze()"
+          ><fa-icon [icon]="faRotate" /> Procesar ahora</button>
         </div>
       }
 
     } @else {
       <!-- Not found -->
-      <div class="not-found">
-        <div class="not-found-icon">📂</div>
-        <h2 class="not-found-title">Plan no encontrado</h2>
-        <p class="not-found-sub">El plan solicitado no existe en la biblioteca.</p>
-        <button class="btn-sm btn-primary" (click)="back()">← Volver a la biblioteca</button>
+      <div class="flex flex-col items-center gap-2 px-6 py-20 text-center">
+        <div class="mb-3 text-5xl opacity-20"><fa-icon [icon]="faFolderOpen" /></div>
+        <h2 class="text-[22px] font-bold text-ink-soft">Plan no encontrado</h2>
+        <p class="mb-3 text-sm text-ink-faint">El plan solicitado no existe en la biblioteca.</p>
+        <button
+          class="rounded-lg border border-primary bg-primary px-3.5 py-[7px] text-xs font-semibold text-white transition-all hover:bg-primary-light hover:border-primary-light"
+          (click)="back()"
+        ><fa-icon [icon]="faArrowLeft" /> Volver a la biblioteca</button>
       </div>
     }
 

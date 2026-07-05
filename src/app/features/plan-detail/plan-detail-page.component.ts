@@ -2,15 +2,18 @@ import { Component, computed, inject, signal, effect } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faCalendarDays, faRobot, faChartLine, faChartSimple, faSackDollar, faDownload, faRotate, faFolderOpen, faHourglassHalf, faArrowLeft, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { PlanService } from '../../core/services/plan.service';
 import { PlanApiService } from '../../core/services/plan-api.service';
+import { PlanContextService } from '../../core/services/plan-context.service';
 import { SidebarComponent, SidebarItem, SidebarSection } from '../../shared/components/sidebar/sidebar.component';
 import { ResultTabsComponent } from '../../shared/components/result-tabs/result-tabs.component';
 
 @Component({
   selector: 'app-plan-detail-page',
   standalone: true,
-  imports: [SidebarComponent, ResultTabsComponent],
+  imports: [SidebarComponent, ResultTabsComponent, FaIconComponent],
   templateUrl: './plan-detail-page.component.html',
   styleUrl: './plan-detail-page.component.css',
 })
@@ -19,10 +22,30 @@ export class PlanDetailPageComponent {
   private planApiService = inject(PlanApiService);
   private route          = inject(ActivatedRoute);
   private router         = inject(Router);
+  readonly planContext    = inject(PlanContextService);
+
+  readonly faCalendarDays = faCalendarDays;
+  readonly faRobot = faRobot;
+  readonly faChartLine = faChartLine;
+  readonly faChartSimple = faChartSimple;
+  readonly faSackDollar = faSackDollar;
+  readonly faDownload = faDownload;
+  readonly faRotate = faRotate;
+  readonly faFolderOpen = faFolderOpen;
+  readonly faHourglassHalf = faHourglassHalf;
+  readonly faArrowLeft = faArrowLeft;
+  readonly faCheckCircle = faCheckCircle;
 
   exportingPdf = signal<boolean>(false);
 
   private planId = toSignal(this.route.paramMap.pipe(map(p => p.get('id') ?? '')));
+
+  readonly esActivo = computed(() => !!this.planId() && this.planContext.planActivoId() === this.planId());
+
+  marcarActivo(): void {
+    const id = this.planId();
+    if (id) this.planContext.seleccionar(id);
+  }
 
   plan = computed(() => {
     const id = this.planId();
@@ -146,9 +169,9 @@ export class PlanDetailPageComponent {
   }
 
   coverageColor(pct: number): string {
-    if (pct >= 70) return 'var(--green)';
-    if (pct >= 50) return 'var(--gold)';
-    return 'var(--red)';
+    if (pct >= 70) return 'var(--color-success)';
+    if (pct >= 50) return 'var(--color-gold)';
+    return 'var(--color-danger)';
   }
 
   formatDate(date: Date): string {

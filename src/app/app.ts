@@ -4,6 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map } from 'rxjs';
 import { NavbarComponent, NavItem } from './shared/components/navbar/navbar.component';
 import { AuthService } from './core/services/auth.service';
+import { PlanContextService } from './core/services/plan-context.service';
 
 @Component({
   selector: 'app-root',
@@ -13,8 +14,9 @@ import { AuthService } from './core/services/auth.service';
   styleUrl: './app.css',
 })
 export class App {
-  readonly auth   = inject(AuthService);
-  private  router = inject(Router);
+  readonly auth        = inject(AuthService);
+  readonly planContext = inject(PlanContextService);
+  private  router      = inject(Router);
 
   constructor() {
     // Si la sesión inicializó pero el usuario sigue nulo (fetchMe falló), reintenta.
@@ -37,10 +39,12 @@ export class App {
 
   readonly navItems = computed<NavItem[]>(() => {
     const rol = this.auth.rol();
+    const planActivoId = this.planContext.planActivoId();
+    const rutaSgr = planActivoId ? `/sgr/oportunidades/${planActivoId}` : '/sgr/evaluar-proyecto';
     const items: NavItem[] = [
       { label: 'Cargar Plan',          route: '/cargar-plan',          icon: '📂', highlighted: true },
       { label: 'Biblioteca',           route: '/biblioteca',           icon: '📚' },
-      { label: 'SGR',                  route: '/sgr/evaluar-proyecto', icon: '💰' },
+      { label: 'SGR',                  route: rutaSgr,                 icon: '💰' },
       { label: 'Búsqueda RAG',         route: '/busqueda-raag',        icon: '🔍' },
       { label: 'Base de Conocimiento', route: '/base-conocimiento',    icon: '⚡' },
     ];
