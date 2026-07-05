@@ -1,27 +1,74 @@
-import { Component, OnInit, inject, signal, input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, signal, input, effect } from '@angular/core';
+import { CommonModule, Location } from '@angular/common';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faDownload, faCheck, faComment } from '@fortawesome/free-solid-svg-icons';
 import { SgrApiService } from '../../../core/services/sgr-api.service';
 import { FichaMGAOut } from '../../../core/models/sgr.model';
+import { IconComponent } from '../../../shared/components/icon/icon.component';
+
+type SeccionKey = 'identificacion' | 'preparacion' | 'evaluacion' | 'programacion';
 
 @Component({
   selector: 'app-ficha-proyecto',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ReactiveFormsModule, FaIconComponent, IconComponent],
   templateUrl: './ficha-proyecto.component.html',
   styleUrl: './ficha-proyecto.component.css',
 })
 export class FichaProyectoComponent implements OnInit {
-  private sgr = inject(SgrApiService);
+  private sgr      = inject(SgrApiService);
+  private location = inject(Location);
+  private fb        = inject(FormBuilder);
+
+  readonly faDownload = faDownload;
+  readonly faCheck = faCheck;
+  readonly faComment = faComment;
 
   proyectoId = input.required<string>();
 
   loading   = signal(false);
   errorMsg  = signal<string | null>(null);
   ficha     = signal<FichaMGAOut | null>(null);
-  tabActiva = signal<'identificacion' | 'preparacion' | 'evaluacion' | 'programacion'>('identificacion');
+  tabActiva = signal<SeccionKey>('identificacion');
+
+  // Edición manual de secciones
+  form = this.fb.group({
+    identificacion: [''],
+    preparacion: [''],
+    evaluacion: [''],
+    programacion: [''],
+  });
+
+  guardando = signal<SeccionKey | null>(null);
+  guardadoOk = signal<SeccionKey | null>(null);
+
+  // Chat con IA
+  chatMensaje  = signal('');
+  chatEnviando = signal(false);
+
+  // Exportar Word
+  exportandoDocx = signal(false);
+
+  constructor() {
+    effect(() => {
+      const f = this.ficha();
+      if (!f) return;
+      this.form.patchValue({
+        identificacion: f.identificacion ?? '',
+        preparacion: f.preparacion ?? '',
+        evaluacion: f.evaluacion ?? '',
+        programacion: f.programacion ?? '',
+      }, { emitEvent: false });
+    });
+  }
 
   ngOnInit(): void {
     this.cargarFicha(false);
+  }
+
+  volver(): void {
+    this.location.back();
   }
 
   cargarFicha(forzar: boolean): void {
@@ -60,5 +107,66 @@ export class FichaProyectoComponent implements OnInit {
     if (c === 4) return 'completo';
     if (c >= 2)  return 'parcial';
     return 'minimo';
+  }
+
+  guardarSeccion(campo: SeccionKey): void {
+    if (this.guardando()) return;
+    const valor = this.form.get(campo)?.value ?? '';
+    this.guardando.set(campo);
+    this.guardadoOk.set(null);
+
+    this.sgr.actualizarFichaMGA(this.proyectoId(), { [campo]: valor }).subscribe({
+      next: resultado => {
+        this.ficha.set(resultado);
+        this.guardando.set(null);
+        this.guardadoOk.set(campo);
+        setTimeout(() => {
+          if (this.guardadoOk() === campo) this.guardadoOk.set(null);
+        }, 2500);
+      },
+      error: err => {
+        this.errorMsg.set(err.error?.detail ?? 'Error al guardar la sección');
+        this.guardando.set(null);
+      },
+    });
+  }
+
+  enviarChat(): void {
+    const mensaje = this.chatMensaje().trim();
+    if (!mensaje || this.chatEnviando()) return;
+
+    this.chatEnviando.set(true);
+    this.sgr.chatFichaMGA(this.proyectoId(), mensaje).subscribe({
+      next: resultado => {
+        this.ficha.set(resultado.ficha);
+        this.chatMensaje.set('');
+        this.chatEnviando.set(false);
+      },
+      error: err => {
+        this.errorMsg.set(err.error?.detail ?? 'Error al procesar el mensaje de chat');
+        this.chatEnviando.set(false);
+      },
+    });
+  }
+
+  descargarDocx(): void {
+    if (this.exportandoDocx()) return;
+    this.exportandoDocx.set(true);
+    this.sgr.exportarFichaMGADocx(this.proyectoId()).subscribe({
+      next: blob => {
+        const filename = `ficha_mga_${this.proyectoId()}.docx`;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exportandoDocx.set(false);
+      },
+      error: err => {
+        this.errorMsg.set(err.error?.detail ?? 'Error al descargar el documento Word');
+        this.exportandoDocx.set(false);
+      },
+    });
   }
 }
