@@ -1,20 +1,40 @@
-import { Component, inject, signal, computed, input } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Component, OnInit, inject, signal, computed, input } from '@angular/core';
+import { CommonModule, Location } from '@angular/common';
+import { Router, RouterLink } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faClipboardList, faRocket, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { SgrApiService } from '../../../core/services/sgr-api.service';
 import { EvaluarPlanResponse, ProyectoCandidato } from '../../../core/models/sgr.model';
 
 @Component({
   selector: 'app-oportunidades',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, FaIconComponent],
   templateUrl: './oportunidades.component.html',
   styleUrl: './oportunidades.component.css',
 })
-export class OportunidadesComponent {
-  private sgr = inject(SgrApiService);
+export class OportunidadesComponent implements OnInit {
+  private sgr      = inject(SgrApiService);
+  private location = inject(Location);
+  private router   = inject(Router);
+
+  readonly faClipboardList = faClipboardList;
+  readonly faRocket = faRocket;
+  readonly faTriangleExclamation = faTriangleExclamation;
 
   planId = input.required<string>();
+
+  ngOnInit(): void {
+    this.evaluar();
+  }
+
+  volver(): void {
+    this.location.back();
+  }
+
+  crearProyecto(): void {
+    this.router.navigate(['/sgr/evaluar-proyecto'], { queryParams: { crear: '1' } });
+  }
 
   loading  = signal(false);
   errorMsg = signal<string | null>(null);
