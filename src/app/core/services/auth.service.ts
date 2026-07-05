@@ -23,6 +23,11 @@ export class AuthService {
   readonly initialized = this._initialized.asReadonly();
   readonly isLoggedIn  = computed(() => this._user() !== null);
   readonly rol         = computed(() => this._user()?.rol ?? null);
+  readonly planActivoId = computed(() => this._user()?.plan_activo_id ?? null);
+  readonly isAdmin     = computed(() => {
+    const r = this.rol();
+    return r === 'administrador' || r === 'superadmin';
+  });
 
   constructor() {
     if (this.isBrowser && this.getToken()) {
@@ -71,6 +76,12 @@ export class AuthService {
 
   getToken(): string | null {
     return this.isBrowser ? localStorage.getItem(TOKEN_KEY) : null;
+  }
+
+  setPlanActivo(planId: string): Observable<MeResponse> {
+    return this.http
+      .patch<MeResponse>(`${this.base}/api/v1/me/plan-activo`, { plan_id: planId })
+      .pipe(tap(me => this._user.set(me)));
   }
 
   private fetchMe(): Observable<MeResponse> {

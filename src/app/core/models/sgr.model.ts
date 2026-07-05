@@ -102,11 +102,34 @@ export interface FichaMGAOut {
   modelo_usado: string | null;
   generado_en: string;
   actualizado_en: string;
+  chat_historial: ChatMensaje[];
 }
 
 export interface GenerarFichaMGARequest {
   forzar_regeneracion?: boolean;
   top_chunks_plan?: number;
+}
+
+export interface ChatMensaje {
+  role: 'usuario' | 'asistente';
+  texto: string;
+  timestamp: string;
+}
+
+export interface ActualizarFichaMGARequest {
+  identificacion?: string;
+  preparacion?: string;
+  evaluacion?: string;
+  programacion?: string;
+}
+
+export interface ChatFichaMGARequest {
+  mensaje: string;
+}
+
+export interface ChatFichaMGAResponse {
+  respuesta_ia: string;
+  ficha: FichaMGAOut;
 }
 
 // ── Duplicidad ────────────────────────────────────────────────────────────────

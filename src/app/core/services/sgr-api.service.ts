@@ -3,6 +3,8 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
+  ActualizarFichaMGARequest,
+  ChatFichaMGAResponse,
   EvaluarPlanResponse,
   EvaluarProyectoRequest,
   EvaluarProyectoResponse,
@@ -59,6 +61,18 @@ export class SgrApiService {
     return this.http.post<FichaMGAOut>(`${this.base}/sgr/generar-ficha-mga/${proyectoId}`, req);
   }
 
+  actualizarFichaMGA(proyectoId: string, payload: ActualizarFichaMGARequest): Observable<FichaMGAOut> {
+    return this.http.patch<FichaMGAOut>(`${this.base}/sgr/ficha-mga/${proyectoId}`, payload);
+  }
+
+  chatFichaMGA(proyectoId: string, mensaje: string): Observable<ChatFichaMGAResponse> {
+    return this.http.post<ChatFichaMGAResponse>(`${this.base}/sgr/ficha-mga/${proyectoId}/chat`, { mensaje });
+  }
+
+  exportarFichaMGADocx(proyectoId: string): Observable<Blob> {
+    return this.http.get(`${this.base}/sgr/ficha-mga/${proyectoId}/export-docx`, { responseType: 'blob' });
+  }
+
   // ── M3: Duplicidad ───────────────────────────────────────────────────────────
 
   verificarDuplicidad(proyectoId: string): Observable<VerificarDuplicidadResponse> {
@@ -72,5 +86,16 @@ export class SgrApiService {
 
   evaluarProyecto(req: EvaluarProyectoRequest): Observable<EvaluarProyectoResponse> {
     return this.http.post<EvaluarProyectoResponse>(`${this.base}/sgr/evaluar-proyecto`, req);
+  }
+
+  // ── Extracción de texto de un archivo adjunto ───────────────────────────────
+
+  extraerTextoDocumento(file: File): Observable<{ texto: string; nombre_archivo: string }> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<{ texto: string; nombre_archivo: string }>(
+      `${this.base}/documents/extract`,
+      form,
+    );
   }
 }
