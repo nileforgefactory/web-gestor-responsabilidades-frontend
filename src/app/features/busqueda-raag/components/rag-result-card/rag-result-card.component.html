@@ -1,8 +1,8 @@
-<div class="rag-card">
-  <div class="rag-card-body">
+<div class="animate-fade-in-up rounded-xl border border-border bg-surface shadow-card transition-[border-color,box-shadow] duration-150 hover:border-accent hover:shadow-card-md">
+  <div class="flex flex-col gap-2.5 p-5">
 
     <!-- Badges row -->
-    <div class="badges-row">
+    <div class="flex flex-wrap gap-1.5">
       <app-badge [variant]="result().typeBadgeVariant">{{ result().typeLabel }}</app-badge>
       @if (result().vigente) {
         <app-badge variant="green">Vigente</app-badge>
@@ -13,29 +13,28 @@
     </div>
 
     <!-- Title -->
-    <h4 class="rag-title">
+    <h4 class="text-sm leading-snug font-bold text-ink">
       {{ result().title }}
-      <span class="rag-articles">· {{ result().articles }}</span>
+      <span class="text-[13px] font-normal text-ink-soft">· {{ result().articles }}</span>
     </h4>
 
     <!-- Excerpt -->
-    <p class="rag-excerpt">{{ result().excerpt }}</p>
+    <p class="text-[13px] leading-relaxed text-ink-soft">{{ result().excerpt }}</p>
 
     <!-- Meta row -->
-    <div class="rag-meta">
+    <div class="flex flex-wrap items-center gap-2.5">
 
       @if (result().applicablePlans?.length) {
         <app-badge variant="gray">
-          📋 {{ result().applicablePlans!.join(' · ') }}
+          <fa-icon [icon]="faClipboardList" class="mr-1" />{{ result().applicablePlans!.join(' · ') }}
         </app-badge>
       }
 
-      <span class="relevance-label">Relevancia:</span>
-      <div class="relevance-track">
-        <div class="relevance-fill" [style.width.%]="result().relevance" [style.background]="relevanceColor"></div>
+      <span class="text-[11px] whitespace-nowrap text-ink-soft">Relevancia:</span>
+      <div class="h-1 w-20 shrink-0 rounded-full bg-border">
+        <div class="h-full rounded-full transition-[width] duration-500" [style.width.%]="result().relevance" [style.background]="relevanceColor"></div>
       </div>
-      <span class="relevance-pct" [style.color]="relevanceColor">{{ result().relevance }}%</span>
-
+      <span class="text-[11px] font-bold whitespace-nowrap" [style.color]="relevanceColor">{{ result().relevance }}%</span>
 
     </div>
 

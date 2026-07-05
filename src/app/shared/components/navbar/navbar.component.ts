@@ -1,7 +1,10 @@
 import { Component, EventEmitter, Output, input, inject, effect, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faScaleBalanced, faBolt, faStop, faRightFromBracket, faCircleCheck, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { MeResponse, RolCodigo } from '../../../core/models/auth.model';
 import { BackgroundScraperService } from '../../../core/services/background-scraper.service';
+import { PlanContextService } from '../../../core/services/plan-context.service';
 
 export interface NavItem {
   label: string;
@@ -17,19 +20,26 @@ const ROL_LABEL: Record<RolCodigo, string> = {
 };
 
 const ROL_COLOR: Record<RolCodigo, string> = {
-  superadmin:    'var(--purple)',
-  administrador: 'var(--accent)',
-  usuario:       'var(--green)',
+  superadmin:    'var(--color-purple)',
+  administrador: 'var(--color-accent)',
+  usuario:       'var(--color-success)',
 };
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive, FaIconComponent],
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.css',
 })
 export class NavbarComponent {
+  readonly faScaleBalanced = faScaleBalanced;
+  readonly faBolt = faBolt;
+  readonly faStop = faStop;
+  readonly faRightFromBracket = faRightFromBracket;
+  readonly faCircleCheck = faCircleCheck;
+  readonly faXmark = faXmark;
+
   appName = input<string>('Gestor de Leyes');
   appIcon = input<string>('⚖️');
   items   = input<NavItem[]>([]);
@@ -38,6 +48,7 @@ export class NavbarComponent {
   @Output() logoutClick = new EventEmitter<void>();
 
   readonly scraper = inject(BackgroundScraperService);
+  readonly planContext = inject(PlanContextService);
   readonly showCompletedAlert = signal(false);
   private prevEstado = '';
 
@@ -50,6 +61,8 @@ export class NavbarComponent {
       }
       this.prevEstado = estado;
     });
+
+    this.planContext.cargarPlanes();
   }
 
   initials(nombre: string): string {
@@ -57,7 +70,7 @@ export class NavbarComponent {
   }
 
   rolLabel(rol: RolCodigo): string { return ROL_LABEL[rol] ?? rol; }
-  rolColor(rol: RolCodigo): string { return ROL_COLOR[rol] ?? 'var(--accent)'; }
+  rolColor(rol: RolCodigo): string { return ROL_COLOR[rol] ?? 'var(--color-accent)'; }
 
   onLogout(): void { this.logoutClick.emit(); }
 

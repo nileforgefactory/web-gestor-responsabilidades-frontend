@@ -1,6 +1,13 @@
 import { Component, effect, input, output, signal } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import {
+  faBullseye, faChartSimple, faCheck, faClipboardList, faCity,
+  faDownload, faLandmark, faLocationDot, faMap, faRobot, faScaleBalanced, faScroll,
+  faTemperatureHalf, faTriangleExclamation, faXmark,
+} from '@fortawesome/free-solid-svg-icons';
 import { BadgeComponent, BadgeVariant } from '../badge/badge.component';
+import { IconComponent } from '../icon/icon.component';
 
 export interface ResultBadge  { label: string; variant: BadgeVariant; }
 export interface ResultItem   { icon: string; title: string; body: string; badges?: ResultBadge[]; rawData?: Record<string, any>; }
@@ -84,11 +91,27 @@ export interface ActorMatrixRow {
 @Component({
   selector: 'app-result-tabs',
   standalone: true,
-  imports: [BadgeComponent, TitleCasePipe],
+  imports: [BadgeComponent, TitleCasePipe, FaIconComponent, IconComponent],
   templateUrl: './result-tabs.component.html',
   styleUrl:    './result-tabs.component.css',
 })
 export class ResultTabsComponent {
+  readonly faBullseye = faBullseye;
+  readonly faChartSimple = faChartSimple;
+  readonly faCheck = faCheck;
+  readonly faClipboardList = faClipboardList;
+  readonly faCity = faCity;
+  readonly faDownload = faDownload;
+  readonly faLandmark = faLandmark;
+  readonly faLocationDot = faLocationDot;
+  readonly faMap = faMap;
+  readonly faRobot = faRobot;
+  readonly faScaleBalanced = faScaleBalanced;
+  readonly faScroll = faScroll;
+  readonly faTemperatureHalf = faTemperatureHalf;
+  readonly faTriangleExclamation = faTriangleExclamation;
+  readonly faXmark = faXmark;
+
   tabs        = input<ResultTab[]>([]);
   showActions = input<boolean>(true);
   activateTab = input<string>('');
@@ -393,12 +416,12 @@ export class ResultTabsComponent {
   }
 
   resumenSeveridadColor(sev: string): string {
-    return ({ alta: 'var(--red)', media: 'var(--gold)', baja: 'var(--green)' } as Record<string,string>)[sev] ?? 'var(--text3)';
+    return ({ alta: 'var(--color-danger)', media: 'var(--color-gold)', baja: 'var(--color-success)' } as Record<string,string>)[sev] ?? 'var(--color-ink-faint)';
   }
 
   coverageColor(pct: number): string {
-    if (pct >= 70) return 'var(--green)';
-    if (pct >= 50) return 'var(--gold)';
-    return 'var(--red)';
+    if (pct >= 70) return 'var(--color-success)';
+    if (pct >= 50) return 'var(--color-gold)';
+    return 'var(--color-danger)';
   }
 }

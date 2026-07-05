@@ -1,0 +1,304 @@
+<div class="mx-auto max-w-[900px] p-6">
+
+  <button class="mb-4 inline-flex items-center gap-1.5 rounded-lg border border-purple/20 bg-purple-soft px-3.5 py-1.5 text-xs font-semibold text-purple transition-colors hover:bg-purple/15" (click)="volver()">← Volver</button>
+
+  <div class="mb-7">
+    <h1 class="m-0 mb-1 text-2xl font-bold text-ink">Evaluación Inversa de Proyecto</h1>
+    <p class="m-0 text-sm text-ink-soft">Modo 2 — Diagnostica un proyecto ya formulado: estructura MGA, alineación con el Plan de Desarrollo y elegibilidad SGR</p>
+  </div>
+
+  <!-- Contexto del plan activo (solo lectura) -->
+  @if (planContext.planActivo(); as pa) {
+    <div class="mb-5 flex flex-wrap items-center gap-3 rounded-xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm text-primary">
+      <fa-icon [icon]="faFileLines" />
+      Evaluando contra tu plan activo: <strong>{{ pa.shortName }}</strong>
+    </div>
+  } @else {
+    <div class="mb-5 flex flex-wrap items-center gap-3 rounded-xl border border-gold/40 bg-gold-soft px-4 py-3 text-sm text-gold">
+      <fa-icon [icon]="faTriangleExclamation" />
+      No tienes un plan de desarrollo seleccionado. Elige uno en el menú superior para que la evaluación
+      pueda verificar alineación con tu Plan de Desarrollo.
+    </div>
+  }
+
+  <!-- CTA inicial: crear proyecto -->
+  @if (!resultado() && !mostrarFormulario()) {
+    <div class="rounded-2xl border-2 border-dashed border-border bg-surface2 px-8 py-12 text-center text-ink-soft">
+      <div class="mb-4 text-5xl"><fa-icon [icon]="faFileLines" /></div>
+      <h3 class="m-0 mb-3 text-[1.1rem] font-bold text-ink">Evalúa un proyecto que ya tienes formulado</h3>
+      <p class="m-0 mb-5 text-sm">Pega la descripción de un proyecto (borrador, ficha técnica o resumen ejecutivo)
+      y la IA lo diagnostica contra tu Plan de Desarrollo y los criterios de elegibilidad SGR.</p>
+      <button class="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-light" (click)="crearProyecto()">
+        + Crear proyecto
+      </button>
+    </div>
+  }
+
+  <!-- Formulario de entrada (estilo chat: adjuntar archivo o escribir) -->
+  @if (!resultado() && mostrarFormulario()) {
+    <div class="rounded-2xl border border-border bg-surface p-4 shadow-card">
+      <form [formGroup]="form" (ngSubmit)="evaluar()" novalidate>
+
+        <div class="mb-2">
+          <textarea
+            formControlName="texto_proyecto"
+            rows="8"
+            class="box-border w-full resize-y rounded-lg border border-border bg-surface2 px-3.5 py-2.5 font-sans text-sm leading-relaxed outline-none transition-colors focus:border-accent focus:shadow-[0_0_0_3px_rgba(47,111,237,0.12)]"
+            placeholder="Escribe la descripción del proyecto o adjunta un archivo (📎) con la ficha/borrador.
+Incluye: nombre, objeto, sector, justificación, valor estimado, fuente SGR propuesta, municipio.
+Mínimo 50 caracteres."
+          ></textarea>
+        </div>
+
+        @if (archivoNombre()) {
+          <div class="mb-2 flex w-fit items-center gap-2 rounded-lg bg-accent-soft px-3 py-1.5 text-xs font-semibold text-accent">
+            <fa-icon [icon]="faFileLines" /> {{ archivoNombre() }}
+            <button type="button" class="ml-1 text-accent hover:text-danger" (click)="quitarArchivo()"><fa-icon [icon]="faXmark" /></button>
+          </div>
+        }
+
+        @if (errorMsg()) {
+          <div class="mb-3 rounded-lg border border-danger/40 bg-danger-soft px-4 py-3 text-sm text-danger">{{ errorMsg() }}</div>
+        }
+
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <label
+              class="flex cursor-pointer items-center gap-2 rounded-lg border border-border px-3.5 py-2 text-sm font-semibold text-ink-soft transition-colors hover:bg-surface2"
+              [class.opacity-60]="extrayendoArchivo()"
+              [class.pointer-events-none]="extrayendoArchivo()"
+            >
+              @if (extrayendoArchivo()) {
+                <span class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-ink-soft/30 border-t-ink-soft"></span> Leyendo archivo…
+              } @else {
+                <fa-icon [icon]="faPaperclip" /> Adjuntar archivo
+              }
+              <input type="file" class="hidden" accept=".pdf,.txt,.md,.png,.jpg,.jpeg,.tiff,.webp" (change)="onArchivoSeleccionado($event)" [disabled]="extrayendoArchivo()" />
+            </label>
+            <span class="text-xs text-ink-faint" [class.text-danger]="charCount < 50 && form.get('texto_proyecto')?.touched">
+              {{ charCount }} caracteres (mínimo 50)
+            </span>
+          </div>
+
+          <div class="flex gap-2">
+            <button type="button" class="rounded-lg border border-border px-4 py-2 text-sm font-semibold text-ink hover:bg-surface2" (click)="cancelarCreacion()">
+              Cancelar
+            </button>
+            <button type="submit" class="flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-light disabled:cursor-not-allowed disabled:opacity-60" [disabled]="form.invalid || loading()">
+              @if (loading()) { <span class="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"></span> Evaluando… }
+              @else { Evaluar proyecto }
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  }
+
+  <!-- Resultado -->
+  @if (resultado(); as r) {
+    <div class="animate-fade-in-up">
+
+      <!-- Resumen top -->
+      <div
+        class="mb-5 flex flex-wrap items-center justify-between gap-4 rounded-2xl border-2 p-6 px-8"
+        [class.border-success]="r.semaforo === 'verde'" [class.bg-success-soft]="r.semaforo === 'verde'"
+        [class.border-gold]="r.semaforo === 'amarillo'" [class.bg-gold-soft]="r.semaforo === 'amarillo'"
+        [class.border-danger]="r.semaforo === 'rojo'" [class.bg-danger-soft]="r.semaforo === 'rojo'"
+      >
+        <div class="flex flex-col gap-3">
+          <div
+            class="inline-block w-fit rounded-lg px-4 py-1.5 text-[0.85rem] font-bold text-white"
+            [class.bg-success]="cuadranteClass(r.cuadrante) === 'verde'"
+            [class.bg-accent]="cuadranteClass(r.cuadrante) === 'azul'"
+            [class.bg-gold]="cuadranteClass(r.cuadrante) === 'amarillo'"
+            [class.bg-danger]="cuadranteClass(r.cuadrante) === 'rojo'"
+          >
+            {{ cuadranteIcon(r.cuadrante) }} {{ r.cuadrante_label }}
+          </div>
+          <div class="flex flex-col">
+            <span class="text-4xl font-extrabold text-ink">{{ (r.score_total * 100) | number:'1.0-0' }}%</span>
+            <span class="text-[0.8rem] text-ink-soft">Viabilidad global</span>
+          </div>
+        </div>
+        <div class="flex flex-col items-end gap-3">
+          <div
+            class="flex items-center gap-1.5 text-sm font-semibold"
+            [class.text-success]="r.semaforo === 'verde'"
+            [class.text-gold]="r.semaforo === 'amarillo'"
+            [class.text-danger]="r.semaforo === 'rojo'"
+          >
+            <span class="inline-block h-2.5 w-2.5 rounded-full" [class.bg-success]="r.semaforo === 'verde'" [class.bg-gold]="r.semaforo === 'amarillo'" [class.bg-danger]="r.semaforo === 'rojo'"></span>
+            {{ r.semaforo_label }}
+          </div>
+          <div class="w-fit rounded-full px-3.5 py-1 text-[0.82rem] font-semibold" [class.bg-success-soft]="r.en_plan" [class.text-success]="r.en_plan" [class.bg-gold-soft]="!r.en_plan" [class.text-gold]="!r.en_plan">
+            @if (r.en_plan) { <fa-icon [icon]="faCircleCheck" /> Incluido en el Plan } @else { <fa-icon [icon]="faTriangleExclamation" /> No está en el Plan }
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs de navegación -->
+      <div class="mb-5 flex flex-wrap gap-1 border-b-2 border-border">
+        <button
+          class="-mb-0.5 border-b-[3px] border-transparent px-5 py-2.5 text-sm font-medium text-ink-soft transition-colors hover:text-accent"
+          [class.text-accent]="tabActiva() === 'resumen'" [class.border-accent]="tabActiva() === 'resumen'" [class.font-bold]="tabActiva() === 'resumen'"
+          (click)="tabActiva.set('resumen')"
+        >Resumen</button>
+        <button
+          class="-mb-0.5 border-b-[3px] border-transparent px-5 py-2.5 text-sm font-medium text-ink-soft transition-colors hover:text-accent"
+          [class.text-accent]="tabActiva() === 'dimensiones'" [class.border-accent]="tabActiva() === 'dimensiones'" [class.font-bold]="tabActiva() === 'dimensiones'"
+          (click)="tabActiva.set('dimensiones')"
+        >4 Dimensiones</button>
+        <button
+          class="-mb-0.5 border-b-[3px] border-transparent px-5 py-2.5 text-sm font-medium text-ink-soft transition-colors hover:text-accent"
+          [class.text-accent]="tabActiva() === 'plan'" [class.border-accent]="tabActiva() === 'plan'" [class.font-bold]="tabActiva() === 'plan'"
+          (click)="tabActiva.set('plan')"
+        >
+          Evidencia Plan @if (r.en_plan) { <fa-icon [icon]="faCircleCheck" /> } @else { <fa-icon [icon]="faTriangleExclamation" /> }
+        </button>
+        @if (!r.en_plan) {
+          <button
+            class="-mb-0.5 border-b-[3px] border-transparent px-5 py-2.5 text-sm font-medium text-purple transition-colors"
+            [class.border-purple]="tabActiva() === 'concejo'" [class.font-bold]="tabActiva() === 'concejo'"
+            (click)="tabActiva.set('concejo')"
+          >
+            Acuerdo Concejo <fa-icon [icon]="faScroll" />
+          </button>
+        }
+      </div>
+
+      <!-- Tab: Resumen -->
+      @if (tabActiva() === 'resumen') {
+        <div class="py-2 pb-6">
+          <div class="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4">
+            @for (dim of dimensiones; track dim.key) {
+              @if (getDimension(dim.key); as d) {
+                <div
+                  class="rounded-2xl border-2 p-5 text-center"
+                  [class.border-success/50]="d.nivel === 'alto'" [class.bg-success-soft]="d.nivel === 'alto'"
+                  [class.border-gold/50]="d.nivel === 'medio'" [class.bg-gold-soft]="d.nivel === 'medio'"
+                  [class.border-danger/50]="d.nivel === 'bajo'" [class.bg-danger-soft]="d.nivel === 'bajo'"
+                >
+                  <div class="mb-2 text-2xl text-ink-soft"><app-icon [emoji]="dim.icon" /></div>
+                  <div class="mb-2 text-[0.78rem] font-semibold text-ink-soft">{{ dim.label }}</div>
+                  <div class="mb-2 text-2xl font-extrabold text-ink">{{ scorePercent(d) }}%</div>
+                  <div class="mb-2 h-1.5 overflow-hidden rounded-full bg-border">
+                    <div
+                      class="h-full rounded-full transition-[width] duration-500 ease-out"
+                      [style.width.%]="scorePercent(d)"
+                      [class.bg-success]="d.nivel === 'alto'" [class.bg-gold]="d.nivel === 'medio'" [class.bg-danger]="d.nivel === 'bajo'"
+                    ></div>
+                  </div>
+                  <div
+                    class="text-[0.72rem] font-bold uppercase tracking-wide"
+                    [class.text-success]="d.nivel === 'alto'" [class.text-gold]="d.nivel === 'medio'" [class.text-danger]="d.nivel === 'bajo'"
+                  >{{ d.nivel | titlecase }}</div>
+                </div>
+              }
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Tab: 4 Dimensiones detalle -->
+      @if (tabActiva() === 'dimensiones') {
+        <div class="py-2 pb-6">
+          @for (dim of dimensiones; track dim.key) {
+            @if (getDimension(dim.key); as d) {
+              <div
+                class="mb-4 rounded-2xl border border-border border-l-4 p-5"
+                [class.border-l-success]="d.nivel === 'alto'" [class.border-l-gold]="d.nivel === 'medio'" [class.border-l-danger]="d.nivel === 'bajo'"
+              >
+                <div class="mb-4 flex items-center gap-3">
+                  <span class="text-xl text-ink-soft"><app-icon [emoji]="dim.icon" /></span>
+                  <h3 class="m-0 flex-1 text-base font-bold text-ink">{{ dim.label }}</h3>
+                  <div
+                    class="rounded-full px-3 py-1 text-[0.85rem] font-bold"
+                    [class.bg-success-soft]="d.nivel === 'alto'" [class.text-success]="d.nivel === 'alto'"
+                    [class.bg-gold-soft]="d.nivel === 'medio'" [class.text-gold]="d.nivel === 'medio'"
+                    [class.bg-danger-soft]="d.nivel === 'bajo'" [class.text-danger]="d.nivel === 'bajo'"
+                  >{{ scorePercent(d) }}%</div>
+                </div>
+                @if (d.hallazgos.length > 0) {
+                  <div class="mb-3.5">
+                    <h4 class="m-0 mb-2 text-xs font-bold uppercase tracking-wide text-ink-soft">Hallazgos</h4>
+                    <ul class="m-0 pl-5">
+                      @for (h of d.hallazgos; track h) { <li class="mb-1 text-[0.85rem] leading-relaxed text-ink">{{ h }}</li> }
+                    </ul>
+                  </div>
+                }
+                @if (d.recomendaciones.length > 0) {
+                  <div class="mb-3.5">
+                    <h4 class="m-0 mb-2 text-xs font-bold uppercase tracking-wide text-ink-soft">Recomendaciones</h4>
+                    <ul class="m-0 pl-5">
+                      @for (rec of d.recomendaciones; track rec) { <li class="mb-1 text-[0.85rem] leading-relaxed text-ink">{{ rec }}</li> }
+                    </ul>
+                  </div>
+                }
+              </div>
+            }
+          }
+        </div>
+      }
+
+      <!-- Tab: Evidencia en el Plan -->
+      @if (tabActiva() === 'plan') {
+        <div class="py-2 pb-6">
+          @if (r.en_plan) {
+            <div class="rounded-2xl border border-success/40 bg-success-soft p-6">
+              <h3 class="m-0 mb-4 text-base text-success"><fa-icon [icon]="faCircleCheck" /> El proyecto está respaldado en el Plan de Desarrollo</h3>
+              <blockquote class="m-0 rounded-r-lg border-l-[3px] border-ink-soft bg-black/[.04] px-4 py-3 text-sm italic leading-relaxed text-ink-soft">{{ r.evidencia_plan }}</blockquote>
+            </div>
+          } @else {
+            <div class="rounded-2xl border border-gold/40 bg-gold-soft p-6">
+              <h3 class="m-0 mb-3 text-base text-gold"><fa-icon [icon]="faTriangleExclamation" /> El proyecto no fue encontrado en el Plan de Desarrollo</h3>
+              <p class="m-0 mb-4 text-sm text-gold">Antes de radicar en el DNP/SGR, el proyecto debe estar incluido explícitamente
+              en el Plan de Desarrollo Municipal. Para eso se requiere un Acuerdo del Concejo.</p>
+              @if (r.evidencia_plan) {
+                <blockquote class="m-0 mb-4 rounded-r-lg border-l-[3px] border-ink-soft bg-black/[.04] px-4 py-3 text-sm italic leading-relaxed text-ink-soft">{{ r.evidencia_plan }}</blockquote>
+              }
+              <button class="rounded-lg bg-purple px-5 py-2.5 text-sm font-semibold text-white" (click)="tabActiva.set('concejo')">
+                Ver texto del Acuerdo sugerido →
+              </button>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Tab: Acuerdo del Concejo -->
+      @if (tabActiva() === 'concejo' && !r.en_plan) {
+        <div class="py-2 pb-6">
+          <h3 class="mb-4 text-base font-bold text-ink">Checklist para inclusión en el Plan de Desarrollo</h3>
+          <div class="mb-6">
+            @for (item of r.subflujo_inclusion.checklist_concejo; track item; let i = $index) {
+              <div class="flex items-start gap-3 border-b border-border/60 py-2.5">
+                <input type="checkbox" [id]="'chk-' + i" class="mt-1 shrink-0 cursor-pointer" />
+                <label [for]="'chk-' + i" class="cursor-pointer text-sm leading-relaxed text-ink">{{ item }}</label>
+              </div>
+            }
+          </div>
+
+          @if (r.subflujo_inclusion.texto_acuerdo_sugerido) {
+            <div class="rounded-2xl border border-border bg-surface2 p-5">
+              <div class="mb-4 flex items-center justify-between">
+                <h3 class="m-0 text-[0.95rem] font-bold text-ink">Texto sugerido para el Acuerdo Municipal</h3>
+                <button class="rounded-md bg-primary px-3.5 py-1.5 text-xs font-semibold text-white" (click)="copiarAcuerdo(r.subflujo_inclusion.texto_acuerdo_sugerido)">
+                  Copiar texto
+                </button>
+              </div>
+              <pre class="m-0 whitespace-pre-wrap font-serif text-sm leading-loose text-ink">{{ r.subflujo_inclusion.texto_acuerdo_sugerido }}</pre>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Nueva evaluación -->
+      <div class="pt-4">
+        <button class="rounded-lg border border-border px-5 py-2.5 text-sm font-semibold text-ink hover:bg-surface2" (click)="resultado.set(null); cancelarCreacion()">
+          ← Nueva evaluación
+        </button>
+      </div>
+
+    </div>
+  }
+
+</div>

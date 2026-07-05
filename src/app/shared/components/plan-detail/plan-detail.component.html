@@ -1,101 +1,107 @@
 @if (plan(); as p) {
 
   <!-- Backdrop + centering container -->
-  <div class="overlay" (click)="close.emit()">
+  <div class="fixed inset-0 z-[500] flex animate-fade-in items-center justify-center bg-black/50 p-6 backdrop-blur-sm" (click)="close.emit()">
 
     <!-- Modal dialog — click inside stops propagation -->
-    <aside class="detail-panel" (click)="$event.stopPropagation()">
+    <aside class="relative flex max-h-[88vh] w-[min(820px,100%)] animate-fade-in-up flex-col overflow-hidden rounded-2xl bg-surface shadow-card-md" (click)="$event.stopPropagation()">
 
       <!-- Hero section -->
-      <div class="hero" [style.--plan-color]="p.nivelColor">
-        <div class="hero-topbar">
-          <span class="hero-breadcrumb">Biblioteca → Detalle del plan</span>
-          <button class="close-btn" (click)="close.emit()" aria-label="Cerrar">✕</button>
+      <div class="shrink-0 p-6 pb-7" [style.background]="'linear-gradient(135deg, var(--color-primary) 0%, ' + (p.nivelColor ?? 'var(--color-accent)') + ' 100%)'">
+        <div class="mb-3.5 flex items-center justify-between">
+          <span class="text-[11px] tracking-wide text-white/60">Biblioteca → Detalle del plan</span>
+          <button class="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full border border-white/30 bg-white/10 text-[13px] text-white transition-colors duration-150 hover:bg-white/25" (click)="close.emit()" aria-label="Cerrar">
+            <fa-icon [icon]="faXmark" />
+          </button>
         </div>
 
-        <div class="hero-badges">
-          <span class="hero-badge">{{ p.nivelLabel }}</span>
-          <span class="hero-badge hero-badge--status">{{ p.statusLabel }}</span>
+        <div class="mb-2.5 flex flex-wrap gap-1.5">
+          <span class="inline-flex items-center rounded-full border border-white/25 bg-white/15 px-2.5 py-0.5 text-[11px] font-bold text-white">{{ p.nivelLabel }}</span>
+          <span class="inline-flex items-center rounded-full border border-success/40 bg-success/25 px-2.5 py-0.5 text-[11px] font-bold text-[#6EE7B7]">{{ p.statusLabel }}</span>
         </div>
 
-        <h2 class="hero-title">{{ p.title }}</h2>
+        <h2 class="mb-2.5 text-[17px] font-bold leading-snug text-white">{{ p.title }}</h2>
 
-        <div class="hero-meta">
-          <span>{{ p.entityIcon }} {{ p.entity }}</span>
-          <span>📅 {{ p.periodo }}</span>
+        <div class="mb-3 flex flex-wrap gap-3 text-xs text-white/75">
+          <span class="inline-flex items-center gap-1"><app-icon [emoji]="p.entityIcon" />{{ p.entity }}</span>
+          <span class="inline-flex items-center gap-1"><fa-icon [icon]="faCalendarDays" />{{ p.periodo }}</span>
         </div>
 
         @if (p.description) {
-          <div class="hero-desc">
-            <span class="hero-desc-label">🤖 Síntesis</span>
+          <div class="mb-4 rounded-r-lg border-l-[3px] border-white/30 bg-white/10 px-3.5 py-2.5 text-[12.5px] leading-relaxed text-white/90">
+            <span class="mb-1 block text-[10px] font-bold uppercase tracking-wide opacity-60"><fa-icon [icon]="faRobot" /> Síntesis</span>
             {{ p.description }}
           </div>
         }
 
         <!-- Stats bar -->
-        <div class="hero-stats">
-          <div class="hstat">
-            <div class="hstat-val">{{ p.responsabilidades }}</div>
-            <div class="hstat-label">Responsabilidades</div>
+        <div class="flex items-center rounded-lg bg-black/25 px-4 py-3">
+          <div class="flex flex-1 flex-col items-center gap-0.5">
+            <div class="text-lg font-extrabold leading-none text-white">{{ p.responsabilidades }}</div>
+            <div class="text-center text-[10px] text-white/55">Responsabilidades</div>
           </div>
-          <div class="hstat-divider"></div>
-          <div class="hstat">
-            <div class="hstat-val">{{ p.leyes }}</div>
-            <div class="hstat-label">Leyes</div>
+          <div class="h-8 w-px shrink-0 bg-white/15"></div>
+          <div class="flex flex-1 flex-col items-center gap-0.5">
+            <div class="text-lg font-extrabold leading-none text-white">{{ p.leyes }}</div>
+            <div class="text-center text-[10px] text-white/55">Leyes</div>
           </div>
-          <div class="hstat-divider"></div>
-          <div class="hstat">
-            <div class="hstat-val">{{ p.actores }}</div>
-            <div class="hstat-label">Actores</div>
+          <div class="h-8 w-px shrink-0 bg-white/15"></div>
+          <div class="flex flex-1 flex-col items-center gap-0.5">
+            <div class="text-lg font-extrabold leading-none text-white">{{ p.actores }}</div>
+            <div class="text-center text-[10px] text-white/55">Actores</div>
           </div>
-          <div class="hstat-divider"></div>
-          <div class="hstat">
-            <div class="hstat-val hstat-val--red">{{ p.brechas }}</div>
-            <div class="hstat-label">Brechas</div>
+          <div class="h-8 w-px shrink-0 bg-white/15"></div>
+          <div class="flex flex-1 flex-col items-center gap-0.5">
+            <div class="text-lg font-extrabold leading-none text-[#FCA5A5]">{{ p.brechas }}</div>
+            <div class="text-center text-[10px] text-white/55">Brechas</div>
           </div>
-          <div class="hstat-divider"></div>
-          <div class="hstat">
-            <div class="hstat-val" [style.color]="p.avanceColor">{{ p.avance }}%</div>
-            <div class="hstat-label">Avance</div>
+          <div class="h-8 w-px shrink-0 bg-white/15"></div>
+          <div class="flex flex-1 flex-col items-center gap-0.5">
+            <div class="text-lg font-extrabold leading-none" [style.color]="p.avanceColor">{{ p.avance }}%</div>
+            <div class="text-center text-[10px] text-white/55">Avance</div>
           </div>
         </div>
       </div>
 
       <!-- Sectors row -->
-      <div class="sectors-row">
+      <div class="flex shrink-0 flex-wrap gap-1.5 border-b border-border bg-surface2 px-6 py-3.5">
         @for (sector of p.sectors; track sector) {
-          <span class="sector-tag">{{ sector }}</span>
+          <span class="rounded-md border border-border bg-surface px-2.5 py-1 text-[11px] font-semibold text-ink-soft">{{ sector }}</span>
         }
       </div>
 
       <!-- Scrollable body -->
-      <div class="modal-body">
+      <div class="min-h-0 flex-1 overflow-y-auto">
 
         @if (hasTabs()) {
-          <div class="tabs-wrapper">
-            <div class="tabs-heading">
-              <span class="tabs-icon" style="background:var(--gold-soft)">📊</span>
+          <div class="px-6 pb-2 pt-5">
+            <div class="mb-3.5 flex items-center gap-2.5">
+              <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] bg-gold-soft text-[17px]"><fa-icon [icon]="faChartSimple" class="text-gold" /></span>
               <div>
-                <div class="tabs-title">Análisis detallado</div>
-                <div class="tabs-sub">Resultados del Agente IA</div>
+                <div class="text-sm font-bold text-ink">Análisis detallado</div>
+                <div class="mt-px text-xs text-ink-soft">Resultados del Agente IA</div>
               </div>
             </div>
             <app-result-tabs [tabs]="p.resultTabs!" [showActions]="false" />
           </div>
         } @else {
-          <div class="no-tabs">
-            <div class="no-tabs-icon">📊</div>
-            <div class="no-tabs-msg">Análisis detallado no disponible</div>
-            <div class="no-tabs-sub">Este plan aún no ha sido procesado por el agente IA.</div>
+          <div class="flex flex-col items-center gap-2 px-6 py-14">
+            <div class="mb-2 text-4xl text-ink-faint opacity-25"><fa-icon [icon]="faChartSimple" /></div>
+            <div class="text-[15px] font-bold text-ink-soft">Análisis detallado no disponible</div>
+            <div class="text-center text-[13px] text-ink-faint">Este plan aún no ha sido procesado por el agente IA.</div>
           </div>
         }
 
       </div>
 
       <!-- Footer actions -->
-      <div class="panel-footer">
-        <button class="footer-btn">📥 Exportar PDF</button>
-        <button class="footer-btn footer-btn--ghost" (click)="close.emit()">← Cerrar</button>
+      <div class="flex shrink-0 flex-wrap gap-2 border-t border-border bg-surface px-6 py-3.5">
+        <button class="rounded-lg border border-border bg-surface2 px-4 py-2.5 text-[13px] font-semibold text-ink transition-colors duration-150 hover:bg-border">
+          <fa-icon [icon]="faDownload" /> Exportar PDF
+        </button>
+        <button class="rounded-lg border border-transparent bg-transparent px-4 py-2.5 text-[13px] font-semibold text-ink-soft transition-colors duration-150 hover:bg-surface2 hover:text-ink" (click)="close.emit()">
+          <fa-icon [icon]="faArrowLeft" /> Cerrar
+        </button>
       </div>
 
     </aside>

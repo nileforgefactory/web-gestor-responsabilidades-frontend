@@ -1,21 +1,35 @@
-<div class="pipeline">
+<div class="flex flex-col">
   @for (step of steps(); track step.id; let last = $last) {
-    <div class="pipe-step" [class]="'pipe-step--' + step.status">
-      <span class="pipe-icon">
+    <div
+      class="flex items-center gap-2.5 rounded-lg border px-3.5 py-2.5 text-[13px] transition-all duration-200"
+      [class.border-success]="step.status === 'done'"
+      [class.bg-success-soft]="step.status === 'done'"
+      [class.text-success]="step.status === 'done'"
+      [class.border-accent]="step.status === 'running'"
+      [class.bg-accent-soft]="step.status === 'running'"
+      [class.text-accent]="step.status === 'running'"
+      [class.border-border]="step.status === 'waiting'"
+      [class.bg-surface2]="step.status === 'waiting'"
+      [class.text-ink-faint]="step.status === 'waiting'"
+      [class.border-danger]="step.status === 'error'"
+      [class.bg-danger-soft]="step.status === 'error'"
+      [class.text-danger]="step.status === 'error'"
+    >
+      <span class="flex w-5.5 shrink-0 items-center justify-center text-base">
         @switch (step.status) {
-          @case ('done')    { ✅ }
-          @case ('running') { <span class="spin">⚙️</span> }
-          @case ('error')   { ❌ }
-          @default          { {{ step.icon }} }
+          @case ('done')    { <fa-icon [icon]="faCircleCheck" /> }
+          @case ('running') { <fa-icon [icon]="faGear" class="animate-spin" /> }
+          @case ('error')   { <fa-icon [icon]="faCircleXmark" /> }
+          @default          { <app-icon [emoji]="step.icon" /> }
         }
       </span>
-      <div class="pipe-body">
-        <span class="pipe-label">{{ step.label }}</span>
+      <div class="flex flex-1 flex-col gap-0.5">
+        <span class="font-semibold">{{ step.label }}</span>
         @if (step.detail) {
-          <span class="pipe-detail">{{ step.detail }}</span>
+          <span class="text-[11px] opacity-75">{{ step.detail }}</span>
         }
       </div>
-      <span class="pipe-status-tag">
+      <span class="text-[10px] font-bold tracking-wide opacity-60">
         @switch (step.status) {
           @case ('done')    { LISTO }
           @case ('running') { PROCESANDO… }
@@ -25,7 +39,7 @@
       </span>
     </div>
     @if (!last) {
-      <div class="pipe-arrow">↓</div>
+      <div class="py-0.5 pl-5.5 text-center text-[11px] leading-none text-ink-faint">↓</div>
     }
   }
 </div>

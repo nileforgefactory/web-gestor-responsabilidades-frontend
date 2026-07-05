@@ -58,9 +58,9 @@ export function nivelMeta(nivel: NivelTerritorial): Pick<Plan, 'nivelLabel' | 'n
 }
 
 export function avanceColor(pct: number): string {
-  if (pct >= 70) return 'var(--green)';
-  if (pct >= 50) return 'var(--gold)';
-  return 'var(--red)';
+  if (pct >= 70) return 'var(--color-success)';
+  if (pct >= 50) return 'var(--color-gold)';
+  return 'var(--color-danger)';
 }
 
 export function statusMeta(status: PlanStatus): Pick<Plan, 'statusLabel' | 'statusVariant'> {

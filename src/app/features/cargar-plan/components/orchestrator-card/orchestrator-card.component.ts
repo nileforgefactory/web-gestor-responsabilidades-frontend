@@ -1,4 +1,7 @@
 import { Component, input, output, signal } from '@angular/core';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faBrain, faCircleCheck, faRocket, faCircle } from '@fortawesome/free-solid-svg-icons';
+import { IconComponent } from '../../../../shared/components/icon/icon.component';
 
 export type AnalysisDepth = 'basico' | 'estandar' | 'profundo';
 
@@ -17,11 +20,16 @@ const DEFAULT_SECTORS = ['Salud', 'Educación', 'Ambiente', 'Agua', 'Vías', 'Vi
 @Component({
   selector: 'app-orchestrator-card',
   standalone: true,
-  imports: [],
+  imports: [IconComponent, FaIconComponent],
   templateUrl: './orchestrator-card.component.html',
   styleUrl: './orchestrator-card.component.css',
 })
 export class OrchestratorCardComponent {
+  readonly faBrain = faBrain;
+  readonly faCircleCheck = faCircleCheck;
+  readonly faRocket = faRocket;
+  readonly faCircle = faCircle;
+
   /** null = sin archivo; undefined = detectando; object = listo */
   params     = input<OrchestratorParams | null | undefined>(undefined);
   hasFile    = input<boolean>(false);

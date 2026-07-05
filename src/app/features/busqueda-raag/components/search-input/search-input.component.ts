@@ -1,12 +1,18 @@
 import { Component, effect, input, output, signal } from '@angular/core';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faMagnifyingGlass, faXmark } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
   selector: 'app-search-input',
   standalone: true,
+  imports: [FaIconComponent],
   templateUrl: './search-input.component.html',
   styleUrl: './search-input.component.css',
 })
 export class SearchInputComponent {
+  readonly faMagnifyingGlass = faMagnifyingGlass;
+  readonly faXmark = faXmark;
+
   initialValue = input<string>('');
   disabled     = input<boolean>(false);
   suggestions  = input<string[]>([]);
