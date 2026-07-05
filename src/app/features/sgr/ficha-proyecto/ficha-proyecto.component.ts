@@ -35,6 +35,7 @@ export class FichaProyectoComponent implements OnInit {
   errorMsg  = signal<string | null>(null);
   ficha     = signal<FichaMGAOut | null>(null);
   tabActiva = signal<SeccionKey>('identificacion');
+  proyectoNombre = signal<string | null>(null);
 
   // --- UI-only state (rediseño visual, sin lógica de negocio) ---
   modoEdicion   = signal<SeccionKey | null>(null);
@@ -73,6 +74,10 @@ export class FichaProyectoComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargarFicha(false);
+    this.sgr.detalleProyecto(this.proyectoId()).subscribe({
+      next: p => this.proyectoNombre.set(p.nombre),
+      error: () => {},
+    });
   }
 
   volver(): void {
