@@ -5,10 +5,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: gestor-frontend:latest
-    container_name: gestor-frontend
-    ports:
-      - "80:80"
+    expose:
+      - "80"
     environment:
       # URL that the *browser* uses to reach the backend — must be reachable from the user's machine
       BACKEND_URL: ${BACKEND_URL:-http://localhost:8000}
