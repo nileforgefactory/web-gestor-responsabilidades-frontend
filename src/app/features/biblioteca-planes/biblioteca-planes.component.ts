@@ -1,5 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faMagnifyingGlass, faXmark, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { PlanService } from '../../core/services/plan.service';
 import { Plan, NivelTerritorial, PlanStatus } from '../../core/models/plan.model';
 import { SidebarComponent, SidebarItem, SidebarSection } from '../../shared/components/sidebar/sidebar.component';
@@ -8,11 +10,15 @@ import { PlanCardComponent } from '../../shared/components/plan-card/plan-card.c
 @Component({
   selector: 'app-biblioteca-planes',
   standalone: true,
-  imports: [SidebarComponent, PlanCardComponent],
+  imports: [SidebarComponent, PlanCardComponent, FaIconComponent],
   templateUrl: './biblioteca-planes.component.html',
   styleUrl: './biblioteca-planes.component.css',
 })
 export class BibliotecaPlanes implements OnInit {
+  readonly faMagnifyingGlass = faMagnifyingGlass;
+  readonly faXmark = faXmark;
+  readonly faFolderOpen = faFolderOpen;
+
   private planService = inject(PlanService);
   private router      = inject(Router);
 

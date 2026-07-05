@@ -1,34 +1,40 @@
-<div class="synthesis-card">
-  <div class="card-header">
-    <div class="card-icon">🤖</div>
-    <div class="card-header-text">
-      <div class="card-title">Síntesis del Agente IA</div>
+<div class="animate-fade-in-up overflow-hidden rounded-xl border border-border bg-surface shadow-card" style="animation-delay:.15s">
+  <div class="flex items-center gap-3 border-b border-border bg-purple-soft px-5 py-4">
+    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-purple/10 text-lg text-purple">
+      <fa-icon [icon]="faRobot" />
+    </div>
+    <div>
+      <div class="text-sm font-bold text-ink">Síntesis del Agente IA</div>
       @if (synthesis()) {
-        <div class="card-sub">
+        <div class="mt-0.5 text-xs text-ink-soft">
           Generada automáticamente basada en {{ synthesis()!.sourceCount }} documentos más relevantes
         </div>
       } @else {
-        <div class="card-sub">Generando síntesis…</div>
+        <div class="mt-0.5 text-xs text-ink-soft">Generando síntesis…</div>
       }
     </div>
   </div>
 
-  <div class="card-body">
+  <div class="p-5">
     @if (loading()) {
-      <div class="skeleton-lines">
-        <div class="skeleton-line" style="width: 95%"></div>
-        <div class="skeleton-line" style="width: 88%"></div>
-        <div class="skeleton-line" style="width: 92%"></div>
-        <div class="skeleton-line" style="width: 76%"></div>
-        <div class="skeleton-line" style="width: 84%"></div>
+      <div class="flex flex-col gap-2.5">
+        <div class="h-3.5 w-[95%] animate-pulse rounded bg-surface2"></div>
+        <div class="h-3.5 w-[88%] animate-pulse rounded bg-surface2"></div>
+        <div class="h-3.5 w-[92%] animate-pulse rounded bg-surface2"></div>
+        <div class="h-3.5 w-[76%] animate-pulse rounded bg-surface2"></div>
+        <div class="h-3.5 w-[84%] animate-pulse rounded bg-surface2"></div>
       </div>
     } @else if (synthesis()) {
-      <p class="synthesis-text">{{ synthesis()!.text }}</p>
+      <p class="text-sm leading-relaxed text-ink">{{ synthesis()!.text }}</p>
       @if (showActions()) {
-        <div class="synthesis-actions">
-          <button class="btn-primary" (click)="addToPlan.emit()">+ Agregar a mi plan</button>
-          <button class="btn-secondary" (click)="exportAnalysis.emit()">📥 Exportar análisis</button>
-          <button class="btn-secondary" (click)="viewMatrix.emit()">🗃️ Ver en matriz</button>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <button class="rounded-lg bg-accent px-4.5 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-[#2563EB]" (click)="addToPlan.emit()">+ Agregar a mi plan</button>
+          <button class="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-4.5 py-2.5 text-[13px] font-semibold text-ink transition-colors hover:bg-surface2" (click)="exportAnalysis.emit()">
+            <fa-icon [icon]="faDownload" />Exportar análisis
+          </button>
+          <button class="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-4.5 py-2.5 text-[13px] font-semibold text-ink transition-colors hover:bg-surface2" (click)="viewMatrix.emit()">
+            <fa-icon [icon]="faTableCells" />Ver en matriz
+          </button>
         </div>
       }
     }

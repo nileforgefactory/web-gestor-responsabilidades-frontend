@@ -1,6 +1,8 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faMagnifyingGlass, faBook, faRotate, faChevronRight, faTriangleExclamation, faCheck, faXmark } from '@fortawesome/free-solid-svg-icons';
 import {
   SidebarComponent,
   SidebarItem,
@@ -33,11 +35,20 @@ import { AiSynthesisCardComponent } from './components/ai-synthesis-card/ai-synt
     SearchInputComponent,
     RagResultCardComponent,
     AiSynthesisCardComponent,
+    FaIconComponent,
   ],
   templateUrl: './busqueda-raag.component.html',
   styleUrl: './busqueda-raag.component.css',
 })
 export class BusquedaRaagComponent implements OnInit {
+  readonly faMagnifyingGlass = faMagnifyingGlass;
+  readonly faBook = faBook;
+  readonly faRotate = faRotate;
+  readonly faChevronRight = faChevronRight;
+  readonly faTriangleExclamation = faTriangleExclamation;
+  readonly faCheck = faCheck;
+  readonly faXmark = faXmark;
+
   private planService = inject(PlanService);
   private ragApi      = inject(RagApiService);
   private planApi     = inject(PlanApiService);
@@ -100,7 +111,7 @@ export class BusquedaRaagComponent implements OnInit {
 
     const icon  = (ok: boolean | undefined) => ok ? '✅' : ok === false ? '❌' : '🔄';
     const label = (ok: boolean | undefined) => ok ? 'Online' : ok === false ? 'Offline' : 'Verificando…';
-    const color = (ok: boolean | undefined) => ok ? 'var(--green)' : h ? 'var(--red)' : 'var(--gold)';
+    const color = (ok: boolean | undefined) => ok ? 'var(--color-success)' : h ? 'var(--color-danger)' : 'var(--color-gold)';
 
     const indexados      = docs.filter(d => d.estado === 'indexado').length;
     const deshabilitados = docs.filter(d => d.estado === 'deshabilitado').length;

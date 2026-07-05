@@ -27,6 +27,7 @@ export interface MeResponse {
   territorio: TerritorioOut;
   activo: boolean;
   creado_en: string;
+  plan_activo_id: string | null;
 }
 
 export interface UserSummary {

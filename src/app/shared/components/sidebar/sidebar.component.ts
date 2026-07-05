@@ -1,5 +1,8 @@
 import { Component, input, output } from '@angular/core';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import { BadgeComponent, BadgeVariant } from '../badge/badge.component';
+import { IconComponent } from '../icon/icon.component';
 
 export type SidebarItemStatus = 'active' | 'done' | 'pending' | 'default';
 
@@ -29,11 +32,13 @@ export interface SidebarUser {
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [BadgeComponent],
+  imports: [BadgeComponent, IconComponent, FaIconComponent],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.css',
 })
 export class SidebarComponent {
+  readonly faCheck = faCheck;
+
   sections  = input<SidebarSection[]>([]);
   user      = input<SidebarUser | null>(null);
 

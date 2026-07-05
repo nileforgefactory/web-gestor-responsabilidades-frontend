@@ -1,70 +1,91 @@
-<article class="plan-card" (click)="viewDetail.emit(plan())">
+<article
+  class="group relative flex cursor-pointer flex-col overflow-hidden rounded-xl border bg-surface shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:border-accent hover:shadow-card-md"
+  [class.border-border]="!esActivo()"
+  [class.border-success]="esActivo()"
+  [class.ring-2]="esActivo()"
+  [class.ring-success/30]="esActivo()"
+  (click)="viewDetail.emit(plan())"
+>
 
   <!-- Colored accent bar based on nivel -->
-  <div class="card-accent" [style.background]="plan().nivelColor"></div>
+  <div class="h-1 w-full shrink-0" [style.background]="plan().nivelColor"></div>
 
-  <div class="card-body">
+  <div class="flex flex-1 flex-col gap-2.5 p-4 pb-3">
     <!-- Badges -->
-    <div class="card-badges">
+    <div class="flex flex-wrap items-center gap-1.5">
       <app-badge [variant]="plan().nivelVariant">{{ plan().nivelLabel }}</app-badge>
       <app-badge [variant]="plan().statusVariant">{{ plan().statusLabel }}</app-badge>
+      @if (esActivo()) {
+        <span class="inline-flex items-center gap-1 rounded-full bg-success-soft px-2 py-0.5 text-[11px] font-bold text-success">
+          <fa-icon [icon]="faCheckCircle" /> Plan activo
+        </span>
+      }
     </div>
 
     <!-- Title -->
-    <div class="card-title">{{ plan().title }}</div>
+    <div class="line-clamp-2 text-sm font-bold leading-snug text-ink">{{ plan().title }}</div>
 
     <!-- Meta -->
-    <div class="card-meta">
-      <span>{{ plan().entityIcon }} {{ plan().entity }}</span>
-      <span>📅 {{ plan().periodo }}</span>
+    <div class="flex flex-wrap gap-2.5 text-xs text-ink-soft">
+      <span class="inline-flex items-center gap-1"><app-icon [emoji]="plan().entityIcon" />{{ plan().entity }}</span>
+      <span class="inline-flex items-center gap-1"><fa-icon [icon]="faCalendarDays" />{{ plan().periodo }}</span>
     </div>
 
     <!-- Sector chips -->
-    <div class="card-sectors">
+    <div class="flex flex-wrap gap-1.5">
       @for (sector of plan().sectors.slice(0, 3); track sector) {
-        <span class="sector-chip">{{ sector }}</span>
+        <span class="rounded-md border border-border bg-surface2 px-2 py-0.5 text-[11px] font-medium text-ink-soft">{{ sector }}</span>
       }
       @if (plan().sectors.length > 3) {
-        <span class="sector-chip sector-chip--more">+{{ plan().sectors.length - 3 }}</span>
+        <span class="rounded-md border border-transparent bg-accent-soft px-2 py-0.5 text-[11px] font-medium text-accent">+{{ plan().sectors.length - 3 }}</span>
       }
     </div>
 
     <!-- Stats row -->
-    <div class="card-stats">
-      <div class="stat">
-        <span class="stat-val">{{ plan().responsabilidades }}</span>
-        <span class="stat-label">Resp.</span>
+    <div class="mt-auto flex items-center gap-0 rounded-lg bg-surface2 px-3 py-2.5">
+      <div class="flex flex-1 flex-col items-center gap-px">
+        <span class="text-base font-bold leading-none text-ink">{{ plan().responsabilidades }}</span>
+        <span class="text-[10px] font-medium text-ink-faint">Resp.</span>
       </div>
-      <div class="stat-divider"></div>
-      <div class="stat">
-        <span class="stat-val">{{ plan().leyes }}</span>
-        <span class="stat-label">Leyes</span>
+      <div class="h-7 w-px shrink-0 bg-border"></div>
+      <div class="flex flex-1 flex-col items-center gap-px">
+        <span class="text-base font-bold leading-none text-ink">{{ plan().leyes }}</span>
+        <span class="text-[10px] font-medium text-ink-faint">Leyes</span>
       </div>
-      <div class="stat-divider"></div>
-      <div class="stat">
-        <span class="stat-val">{{ plan().actores }}</span>
-        <span class="stat-label">Actores</span>
+      <div class="h-7 w-px shrink-0 bg-border"></div>
+      <div class="flex flex-1 flex-col items-center gap-px">
+        <span class="text-base font-bold leading-none text-ink">{{ plan().actores }}</span>
+        <span class="text-[10px] font-medium text-ink-faint">Actores</span>
       </div>
-      <div class="stat-divider"></div>
-      <div class="stat stat--alert">
-        <span class="stat-val">{{ plan().brechas }}</span>
-        <span class="stat-label">Brechas</span>
+      <div class="h-7 w-px shrink-0 bg-border"></div>
+      <div class="flex flex-1 flex-col items-center gap-px">
+        <span class="text-base font-bold leading-none text-danger">{{ plan().brechas }}</span>
+        <span class="text-[10px] font-medium text-ink-faint">Brechas</span>
       </div>
     </div>
   </div>
 
   <!-- Footer: acciones -->
-  <div class="card-footer">
+  <div class="flex items-center justify-end gap-2 border-t border-border px-4 py-2.5">
+    @if (!esActivo()) {
+      <button
+        class="mr-auto flex items-center gap-1.5 rounded-lg border border-success/40 bg-success-soft px-2.5 py-1.5 text-[12px] font-semibold text-success transition-colors duration-150 hover:bg-success/20"
+        (click)="marcarActivo($event)"
+        title="Marcar como plan activo"
+      ><fa-icon [icon]="faCheckCircle" /> Marcar activo</button>
+    }
+    @if (puedeEliminar()) {
+      <button
+        class="rounded-lg border border-danger/40 bg-danger-soft px-2.5 py-1.5 text-[13px] leading-none text-danger transition-colors duration-150 hover:bg-danger/20"
+        (click)="deletePlan.emit(plan()); $event.stopPropagation()"
+        title="Eliminar plan"
+      ><fa-icon [icon]="faTrash" /></button>
+    }
     <button
-      class="delete-btn"
-      (click)="deletePlan.emit(plan()); $event.stopPropagation()"
-      title="Eliminar plan"
-    >🗑️</button>
-    <button
-      class="detail-btn"
+      class="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-accent bg-accent-soft px-3.5 py-1.5 text-xs font-bold text-accent transition-colors duration-150 hover:bg-accent hover:text-white"
       (click)="viewDetail.emit(plan()); $event.stopPropagation()"
     >
-      Ver detalle →
+      Ver detalle <fa-icon [icon]="faArrowRight" />
     </button>
   </div>
 
