@@ -14,7 +14,9 @@ export const onboardingGuard: CanActivateFn = () => {
   const auth   = inject(AuthService);
   const router = inject(Router);
 
-  if (!auth.isLoggedIn()) return router.createUrlTree(['/login']);
+  // Igual que authGuard: tolera que fetchMe() haya fallado por red transitoria
+  // en el arranque (F5) — si el token sigue ahí, no expulsamos al usuario a /login.
+  if (!auth.isLoggedIn() && !auth.getToken()) return router.createUrlTree(['/login']);
 
   return sgr.getOnboardingStatus().pipe(
     map(status => {
