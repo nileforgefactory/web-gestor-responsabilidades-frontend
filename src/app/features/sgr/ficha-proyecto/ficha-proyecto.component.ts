@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal, input, effect } from '@angular/core'
 import { CommonModule, Location } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faDownload, faCheck, faComment } from '@fortawesome/free-solid-svg-icons';
+import { faDownload, faCheck, faComment, faRotate, faXmark, faBars, faPenToSquare } from '@fortawesome/free-solid-svg-icons';
 import { SgrApiService } from '../../../core/services/sgr-api.service';
 import { FichaMGAOut } from '../../../core/models/sgr.model';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
@@ -24,6 +24,10 @@ export class FichaProyectoComponent implements OnInit {
   readonly faDownload = faDownload;
   readonly faCheck = faCheck;
   readonly faComment = faComment;
+  readonly faRotate = faRotate;
+  readonly faXmark = faXmark;
+  readonly faBars = faBars;
+  readonly faPenToSquare = faPenToSquare;
 
   proyectoId = input.required<string>();
 
@@ -31,6 +35,10 @@ export class FichaProyectoComponent implements OnInit {
   errorMsg  = signal<string | null>(null);
   ficha     = signal<FichaMGAOut | null>(null);
   tabActiva = signal<SeccionKey>('identificacion');
+
+  // --- UI-only state (rediseño visual, sin lógica de negocio) ---
+  modoEdicion   = signal<SeccionKey | null>(null);
+  chatColapsado = signal(false);
 
   // Edición manual de secciones
   form = this.fb.group({
@@ -102,6 +110,19 @@ export class FichaProyectoComponent implements OnInit {
     return (f as any)[key] ?? null;
   }
 
+  toggleEdicion(key: SeccionKey): void {
+    this.modoEdicion.set(this.modoEdicion() === key ? null : key);
+  }
+
+  toggleChatMobile(): void {
+    this.chatColapsado.update(v => !v);
+  }
+
+  irASeccion(key: SeccionKey): void {
+    this.tabActiva.set(key);
+    document.getElementById('seccion-' + key)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   completadoClass(): string {
     const c = this.ficha()?.campos_completos ?? 0;
     if (c === 4) return 'completo';
@@ -120,6 +141,7 @@ export class FichaProyectoComponent implements OnInit {
         this.ficha.set(resultado);
         this.guardando.set(null);
         this.guardadoOk.set(campo);
+        this.modoEdicion.set(null);
         setTimeout(() => {
           if (this.guardadoOk() === campo) this.guardadoOk.set(null);
         }, 2500);
