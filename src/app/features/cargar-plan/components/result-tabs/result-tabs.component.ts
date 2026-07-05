@@ -1,5 +1,8 @@
 import { Component, input, output, signal } from '@angular/core';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faDownload, faHourglassHalf, faClipboardList } from '@fortawesome/free-solid-svg-icons';
 import { BadgeComponent, BadgeVariant } from '../../../../shared/components/badge/badge.component';
+import { IconComponent } from '../../../../shared/components/icon/icon.component';
 
 export interface ResultBadge {
   label: string;
@@ -26,11 +29,15 @@ export interface ResultTab {
 @Component({
   selector: 'app-result-tabs',
   standalone: true,
-  imports: [BadgeComponent],
+  imports: [BadgeComponent, IconComponent, FaIconComponent],
   templateUrl: './result-tabs.component.html',
   styleUrl: './result-tabs.component.css',
 })
 export class ResultTabsComponent {
+  readonly faDownload = faDownload;
+  readonly faHourglassHalf = faHourglassHalf;
+  readonly faClipboardList = faClipboardList;
+
   tabs      = input<ResultTab[]>([]);
   addToPlan = output<void>();
 

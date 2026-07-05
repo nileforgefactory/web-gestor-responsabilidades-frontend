@@ -1,50 +1,50 @@
-<div class="ocard">
-  <div class="ocard-header">
-    <div class="ocard-icon">🧠</div>
-    <div class="ocard-title-group">
-      <div class="ocard-title">Orquestador IA</div>
-      <div class="ocard-sub">Configura los parámetros del análisis</div>
+<div class="overflow-hidden rounded-xl border border-border bg-surface shadow-card">
+  <div class="flex items-center gap-2.5 border-b border-border px-[18px] py-4">
+    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-purple-soft text-lg text-purple"><fa-icon [icon]="faBrain" /></div>
+    <div>
+      <div class="text-sm font-semibold text-ink">Orquestador IA</div>
+      <div class="mt-px text-xs text-ink-soft">Configura los parámetros del análisis</div>
     </div>
   </div>
 
   <!-- ── Estado: sin archivo ── -->
   @if (!hasFile()) {
-    <div class="ocard-empty">
-      <div class="empty-icon">📂</div>
-      <div class="empty-title">Sube un documento para comenzar</div>
-      <div class="empty-sub">Configura el nivel territorial, entidad y sectores antes de ejecutar.</div>
+    <div class="flex flex-col items-center gap-2 px-5 py-7 text-center text-ink-faint">
+      <div class="text-3xl"><app-icon emoji="📂" /></div>
+      <div class="text-[13px] font-semibold text-ink-soft">Sube un documento para comenzar</div>
+      <div class="max-w-[28ch] text-xs leading-relaxed">Configura el nivel territorial, entidad y sectores antes de ejecutar.</div>
     </div>
   }
 
   <!-- ── Estado: params listos ── -->
   @else if (params()) {
-    <div class="ocard-body">
+    <div class="flex flex-col gap-3.5 px-[18px] py-4">
 
       <!-- Nivel territorial -->
-      <div class="field">
-        <span class="field-label">Nivel territorial</span>
-        <select class="field-select" [disabled]="disabled()">
-          <option>🏙️ Municipal</option>
-          <option>🗺️ Departamental</option>
-          <option>🏛️ Nacional</option>
+      <div class="flex flex-col gap-1.5">
+        <span class="text-[11px] font-bold uppercase tracking-wide text-ink-soft">Nivel territorial</span>
+        <select class="w-full rounded-lg border border-border px-3 py-2.5 text-[13px] font-semibold outline-none transition-colors focus:border-accent" [disabled]="disabled()">
+          <option>Municipal</option>
+          <option>Departamental</option>
+          <option>Nacional</option>
         </select>
       </div>
 
       <!-- Entidad -->
-      <div class="field">
-        <span class="field-label">Entidad</span>
+      <div class="flex flex-col gap-1.5">
+        <span class="text-[11px] font-bold uppercase tracking-wide text-ink-soft">Entidad</span>
         <input
-          class="field-input"
+          class="w-full rounded-lg border border-border px-3 py-2.5 text-[13px] font-semibold outline-none transition-colors focus:border-accent"
           [value]="params()!.entidad"
           [disabled]="disabled()"
         />
       </div>
 
       <!-- Periodo -->
-      <div class="field">
-        <span class="field-label">Periodo del plan</span>
+      <div class="flex flex-col gap-1.5">
+        <span class="text-[11px] font-bold uppercase tracking-wide text-ink-soft">Periodo del plan</span>
         <input
-          class="field-input"
+          class="w-full rounded-lg border border-border px-3 py-2.5 text-[13px] font-semibold outline-none transition-colors focus:border-accent"
           [value]="params()!.periodo"
           [disabled]="disabled()"
           placeholder="Ej: 2024-2027"
@@ -52,65 +52,78 @@
       </div>
 
       <!-- Sectores -->
-      <div class="field">
-        <span class="field-label">Sectores</span>
-        <div class="sector-chips">
+      <div class="flex flex-col gap-1.5">
+        <span class="text-[11px] font-bold uppercase tracking-wide text-ink-soft">Sectores</span>
+        <div class="flex flex-wrap gap-1.5">
           @for (sector of allSectors; track sector) {
             <span
-              class="sector-chip"
-              [class.sector-chip--on]="isSectorOn(sector, params()!)"
-              [class.sector-chip--off]="!isSectorOn(sector, params()!)"
+              class="cursor-pointer select-none rounded-full px-2.5 py-1 text-[11px] font-semibold transition-all"
+              [class.bg-success-soft]="isSectorOn(sector, params()!)"
+              [class.text-success]="isSectorOn(sector, params()!)"
+              [class.border]="true"
+              [class.border-success/40]="isSectorOn(sector, params()!)"
+              [class.bg-surface2]="!isSectorOn(sector, params()!)"
+              [class.text-ink-soft]="!isSectorOn(sector, params()!)"
+              [class.border-border]="!isSectorOn(sector, params()!)"
               (click)="!disabled() && toggleSector(sector, params()!)"
             >
-              {{ isSectorOn(sector, params()!) ? '✅' : '○' }} {{ sector }}
+              @if (isSectorOn(sector, params()!)) { <fa-icon [icon]="faCircleCheck" /> } @else { <fa-icon [icon]="faCircle" class="text-[8px]" /> } {{ sector }}
             </span>
           }
         </div>
       </div>
 
       <!-- Profundidad -->
-      <div class="field">
-        <span class="field-label">Profundidad del análisis</span>
-        <div class="depth-options">
+      <div class="flex flex-col gap-1.5">
+        <span class="text-[11px] font-bold uppercase tracking-wide text-ink-soft">Profundidad del análisis</span>
+        <div class="flex gap-1.5">
           @for (d of depths; track d.key) {
             <button
-              class="depth-opt"
-              [class.depth-opt--selected]="selectedDepth() === d.key"
+              class="flex flex-1 flex-col items-center rounded-lg border-2 border-border bg-surface px-1.5 py-2.5 transition-all hover:enabled:border-accent hover:enabled:bg-accent-soft"
+              [class.border-accent]="selectedDepth() === d.key"
+              [class.bg-accent-soft]="selectedDepth() === d.key"
+              [class.text-accent]="selectedDepth() === d.key"
               [disabled]="disabled()"
               (click)="selectedDepth.set(d.key)"
             >
-              <span class="depth-label">{{ d.label }}</span>
+              <span class="text-[11px] font-bold">{{ d.label }}</span>
             </button>
           }
         </div>
       </div>
 
       <!-- Iteraciones máximas -->
-      <div class="field">
-        <span class="field-label">Iteraciones máximas del coordinador</span>
-        <div class="depth-options">
+      <div class="flex flex-col gap-1.5">
+        <span class="text-[11px] font-bold uppercase tracking-wide text-ink-soft">Iteraciones máximas del coordinador</span>
+        <div class="flex gap-1.5">
           @for (n of maxIterOptions; track n) {
             <button
-              class="depth-opt"
-              [class.depth-opt--selected]="selectedMaxIter() === n"
+              class="flex flex-1 flex-col items-center rounded-lg border-2 border-border bg-surface px-1.5 py-2.5 transition-all hover:enabled:border-accent hover:enabled:bg-accent-soft"
+              [class.border-accent]="selectedMaxIter() === n"
+              [class.bg-accent-soft]="selectedMaxIter() === n"
+              [class.text-accent]="selectedMaxIter() === n"
               [disabled]="disabled() || selectedDepth() === 'basico'"
               (click)="selectedMaxIter.set(n)"
             >
-              <span class="depth-label">{{ n === 0 ? 'Sin coordinador' : n }}</span>
+              <span class="text-[11px] font-bold">{{ n === 0 ? 'Sin coordinador' : n }}</span>
             </button>
           }
         </div>
         @if (selectedDepth() === 'basico') {
-          <span class="field-hint">No disponible en modo básico</span>
+          <span class="text-xs text-ink-faint">No disponible en modo básico</span>
         }
       </div>
 
       <!-- CTA -->
-      <button class="execute-btn" [disabled]="disabled()" (click)="onExecute()">
+      <button
+        class="flex w-full items-center justify-center gap-2 rounded-[10px] bg-primary py-3 text-[13px] font-bold text-white transition-colors hover:enabled:bg-primary-light disabled:opacity-60"
+        [disabled]="disabled()"
+        (click)="onExecute()"
+      >
         @if (disabled()) {
-          <span class="btn-spinner"></span> Procesando…
+          <span class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white"></span> Procesando…
         } @else {
-          🚀 Ejecutar orquestador
+          <fa-icon [icon]="faRocket" /> Ejecutar orquestador
         }
       </button>
 

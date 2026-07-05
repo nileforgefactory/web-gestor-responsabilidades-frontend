@@ -1,6 +1,8 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import { SgrApiService } from '../../../core/services/sgr-api.service';
 
 function passwordsMatch(control: AbstractControl): ValidationErrors | null {
@@ -12,7 +14,7 @@ function passwordsMatch(control: AbstractControl): ValidationErrors | null {
 @Component({
   selector: 'app-cambiar-contrasena',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, FaIconComponent],
   templateUrl: './cambiar-contrasena.component.html',
   styleUrl: './cambiar-contrasena.component.css',
 })
@@ -20,6 +22,9 @@ export class CambiarContrasenaComponent {
   private sgr    = inject(SgrApiService);
   private router = inject(Router);
   private fb     = inject(FormBuilder);
+
+  readonly faEye = faEye;
+  readonly faEyeSlash = faEyeSlash;
 
   loading  = signal(false);
   errorMsg = signal<string | null>(null);

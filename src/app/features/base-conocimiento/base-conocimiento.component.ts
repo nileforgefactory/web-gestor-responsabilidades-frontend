@@ -3,6 +3,20 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import {
+  faBolt,
+  faFolderOpen,
+  faInbox,
+  faDownload,
+  faCircleCheck,
+  faTriangleExclamation,
+  faLink,
+  faMagnifyingGlass,
+  faRotate,
+  faLightbulb,
+  faPenNib,
+} from '@fortawesome/free-solid-svg-icons';
 import {
   SidebarComponent,
   SidebarItem,
@@ -31,7 +45,7 @@ export interface KnowledgeDoc {
 @Component({
   selector: 'app-base-conocimiento',
   standalone: true,
-  imports: [SidebarComponent, FormsModule, DatePipe, DecimalPipe],
+  imports: [SidebarComponent, FormsModule, DatePipe, DecimalPipe, FaIconComponent],
   templateUrl: './base-conocimiento.component.html',
   styleUrl: './base-conocimiento.component.css',
 })
@@ -39,6 +53,18 @@ export class BaseConocimientoComponent implements OnInit {
   private ragApi  = inject(RagApiService);
   private planApi = inject(PlanApiService);
   private router  = inject(Router);
+
+  readonly faBolt = faBolt;
+  readonly faFolderOpen = faFolderOpen;
+  readonly faInbox = faInbox;
+  readonly faDownload = faDownload;
+  readonly faCircleCheck = faCircleCheck;
+  readonly faTriangleExclamation = faTriangleExclamation;
+  readonly faLink = faLink;
+  readonly faMagnifyingGlass = faMagnifyingGlass;
+  readonly faRotate = faRotate;
+  readonly faLightbulb = faLightbulb;
+  readonly faPenNib = faPenNib;
 
   // ── Upload state ─────────────────────────────────────────────────
   activeTab      = signal<UploadTab>('file');

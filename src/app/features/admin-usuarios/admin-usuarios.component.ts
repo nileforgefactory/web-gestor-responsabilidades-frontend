@@ -1,6 +1,23 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import {
+  faUsers,
+  faShieldHalved,
+  faUser,
+  faKey,
+  faMagnifyingGlass,
+  faXmark,
+  faTriangleExclamation,
+  faRotate,
+  faPlus,
+  faArrowLeft,
+  faArrowUp,
+  faArrowDown,
+  faTrash,
+  faSpinner,
+} from '@fortawesome/free-solid-svg-icons';
 import { AuthService } from '../../core/services/auth.service';
 import { UsersApiService } from '../../core/services/users-api.service';
 import { RolAsignable, RolCodigo, UserSummary } from '../../core/models/auth.model';
@@ -27,7 +44,7 @@ const ROL_BADGE: Record<RolCodigo, BadgeVariant> = {
 @Component({
   selector: 'app-admin-usuarios',
   standalone: true,
-  imports: [SidebarComponent, BadgeComponent, ReactiveFormsModule],
+  imports: [SidebarComponent, BadgeComponent, ReactiveFormsModule, FaIconComponent],
   templateUrl: './admin-usuarios.component.html',
   styleUrl:    './admin-usuarios.component.css',
 })
@@ -36,6 +53,21 @@ export class AdminUsuariosComponent implements OnInit {
   readonly auth  = inject(AuthService);
   private router = inject(Router);
   private fb     = inject(FormBuilder);
+
+  readonly faUsers = faUsers;
+  readonly faShieldHalved = faShieldHalved;
+  readonly faUser = faUser;
+  readonly faKey = faKey;
+  readonly faMagnifyingGlass = faMagnifyingGlass;
+  readonly faXmark = faXmark;
+  readonly faTriangleExclamation = faTriangleExclamation;
+  readonly faRotate = faRotate;
+  readonly faPlus = faPlus;
+  readonly faArrowLeft = faArrowLeft;
+  readonly faArrowUp = faArrowUp;
+  readonly faArrowDown = faArrowDown;
+  readonly faTrash = faTrash;
+  readonly faSpinner = faSpinner;
 
   // ── State ──────────────────────────────────────────────────────────────────
   users        = signal<UserSummary[]>([]);
