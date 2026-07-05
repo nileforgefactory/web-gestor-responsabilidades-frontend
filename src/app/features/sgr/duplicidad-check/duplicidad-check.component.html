@@ -1,54 +1,69 @@
-<div class="dup-wrapper">
+<div class="mx-auto max-w-[760px] p-6">
 
-  <div class="dup-header">
-    <h2>Verificación de Duplicidad</h2>
-    <p class="subtitle">Compara el proyecto contra el Mapa de Inversiones SGR (datos.gov.co + base local)</p>
+  <button class="mb-4 inline-flex items-center gap-1.5 rounded-lg border border-purple/20 bg-purple-soft px-3.5 py-1.5 text-xs font-semibold text-purple transition-colors hover:bg-purple/15" (click)="volver()"><fa-icon [icon]="faArrowLeft" /> Volver</button>
+
+  <div class="mb-6">
+    <h2 class="m-0 mb-1 text-[1.4rem] font-bold text-ink">Verificación de Duplicidad</h2>
+    <p class="m-0 text-sm text-ink-soft">Compara el proyecto contra el Mapa de Inversiones SGR (datos.gov.co + base local)</p>
   </div>
 
   @if (errorMsg()) {
-    <div class="alert alert-error">{{ errorMsg() }}</div>
+    <div class="mb-5 rounded-lg border border-danger/40 bg-danger-soft px-4 py-3.5 text-sm text-danger">{{ errorMsg() }}</div>
   }
 
   @if (loading() && !resultado()) {
-    <div class="loading-state">
-      <div class="spinner-lg"></div>
-      <p>Buscando proyectos similares en el Mapa de Inversiones…</p>
-      <p class="loading-hint">Consultando base local (Qdrant) y datos.gov.co</p>
+    <div class="px-8 py-12 text-center text-ink-soft">
+      <div class="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-border border-t-purple"></div>
+      <p class="m-0">Buscando proyectos similares en el Mapa de Inversiones…</p>
+      <p class="m-0 text-[0.8rem] text-ink-faint">Consultando base local (Qdrant) y datos.gov.co</p>
     </div>
   }
 
   @if (resultado(); as r) {
     <!-- Banner principal -->
-    <div class="resultado-banner" [class]="nivelClass(r.nivel)" [class.bloqueado]="r.bloqueado">
-      <div class="banner-left">
-        <span class="nivel-icon">{{ nivelIcon(r.nivel) }}</span>
+    <div
+      class="mb-5 flex flex-wrap items-center justify-between gap-4 rounded-2xl border-2 p-5 px-6"
+      [class.border-success]="r.nivel === 'BAJO'" [class.bg-success-soft]="r.nivel === 'BAJO'"
+      [class.border-gold]="r.nivel === 'MEDIO'" [class.bg-gold-soft]="r.nivel === 'MEDIO'"
+      [class.border-danger]="r.nivel === 'ALTO'" [class.bg-danger-soft]="r.nivel === 'ALTO'"
+      [class.animate-pulse-ring]="r.bloqueado"
+    >
+      <div class="flex items-center gap-4">
+        <span class="text-3xl">{{ nivelIcon(r.nivel) }}</span>
         <div>
-          <div class="nivel-label">Duplicidad {{ r.nivel }}</div>
+          <div class="text-[1.1rem] font-extrabold text-ink">Duplicidad {{ r.nivel }}</div>
           @if (r.bloqueado) {
-            <div class="bloqueado-tag">⛔ BLOQUEADO — No puede avanzar en la formulación</div>
+            <div class="mt-1 text-[0.82rem] font-bold text-danger"><fa-icon [icon]="faBan" /> BLOQUEADO — No puede avanzar en la formulación</div>
+          } @else if (r.puede_continuar) {
+            <div class="mt-1 text-[0.82rem] text-ink-soft"><fa-icon [icon]="faCircleCheck" /> Puede continuar con la formulación</div>
           } @else {
-            <div class="puede-tag">{{ r.puede_continuar ? '✅ Puede continuar con la formulación' : '⚠️ Revisar antes de continuar' }}</div>
+            <div class="mt-1 text-[0.82rem] text-ink-soft"><fa-icon [icon]="faTriangleExclamation" /> Revisar antes de continuar</div>
           }
         </div>
       </div>
-      <div class="score-circle" [class]="nivelClass(r.nivel)">
-        <span>{{ (r.score_similitud * 100) | number:'1.0-0' }}%</span>
-        <small>similitud</small>
+      <div
+        class="flex h-[72px] w-[72px] shrink-0 flex-col items-center justify-center rounded-full border-[3px]"
+        [class.border-success]="r.nivel === 'BAJO'" [class.text-success]="r.nivel === 'BAJO'"
+        [class.border-gold]="r.nivel === 'MEDIO'" [class.text-gold]="r.nivel === 'MEDIO'"
+        [class.border-danger]="r.nivel === 'ALTO'" [class.text-danger]="r.nivel === 'ALTO'"
+      >
+        <span class="text-[1.2rem] font-extrabold leading-none">{{ (r.score_similitud * 100) | number:'1.0-0' }}%</span>
+        <small class="text-[0.65rem] text-ink-soft">similitud</small>
       </div>
     </div>
 
     <!-- Proyecto similar encontrado -->
     @if (r.proyecto_similar) {
-      <div class="similar-card">
-        <h3>Proyecto similar detectado</h3>
-        <div class="similar-info">
-          <div><span class="info-label">Nombre:</span> {{ r.proyecto_similar }}</div>
+      <div class="mb-4 rounded-2xl border border-border bg-surface p-5 shadow-card">
+        <h3 class="m-0 mb-3.5 text-[0.95rem] font-bold text-ink">Proyecto similar detectado</h3>
+        <div class="flex flex-col gap-1.5">
+          <div class="text-sm text-ink"><span class="font-semibold text-ink-soft">Nombre:</span> {{ r.proyecto_similar }}</div>
           @if (r.codigo_bpin) {
-            <div><span class="info-label">BPIN:</span> <code>{{ r.codigo_bpin }}</code></div>
+            <div class="text-sm text-ink"><span class="font-semibold text-ink-soft">BPIN:</span> <code class="rounded bg-surface2 px-1.5 py-0.5 font-mono">{{ r.codigo_bpin }}</code></div>
           }
           @if (r.estado_similar) {
-            <div><span class="info-label">Estado:</span>
-              <span class="estado-badge">{{ r.estado_similar }}</span>
+            <div class="text-sm text-ink"><span class="font-semibold text-ink-soft">Estado:</span>
+              <span class="rounded bg-accent-soft px-2 py-0.5 text-[0.78rem] font-semibold text-accent">{{ r.estado_similar }}</span>
             </div>
           }
         </div>
@@ -56,24 +71,29 @@
     }
 
     <!-- Recomendación -->
-    <div class="recomendacion-card" [class]="nivelClass(r.nivel)">
-      <h4>Recomendación</h4>
-      <p>{{ r.recomendacion }}</p>
+    <div
+      class="mb-5 rounded-2xl p-5 px-6"
+      [class.bg-success-soft]="r.nivel === 'BAJO'" [class.border]="true" [class.border-success/40]="r.nivel === 'BAJO'"
+      [class.bg-gold-soft]="r.nivel === 'MEDIO'" [class.border-gold/40]="r.nivel === 'MEDIO'"
+      [class.bg-danger-soft]="r.nivel === 'ALTO'" [class.border-danger/40]="r.nivel === 'ALTO'"
+    >
+      <h4 class="m-0 mb-2 text-xs font-bold uppercase tracking-wide text-ink-soft">Recomendación</h4>
+      <p class="m-0 text-sm leading-relaxed text-ink">{{ r.recomendacion }}</p>
     </div>
 
     <!-- Similares RAG -->
     @if (r.similares_rag.length > 0) {
-      <div class="similares-section">
-        <h3>Proyectos similares en la base de datos</h3>
-        <div class="similares-list">
+      <div class="mb-5">
+        <h3 class="m-0 mb-3 text-[0.95rem] font-bold text-ink">Proyectos similares en la base de datos</h3>
+        <div class="flex flex-col gap-2">
           @for (s of r.similares_rag; track s.nombre_proyecto) {
-            <div class="similar-item">
-              <div class="similar-nombre">{{ s.nombre_proyecto || s.texto }}</div>
-              <div class="similar-meta">
-                @if (s.codigo_bpin) { <span class="meta-pill">BPIN: {{ s.codigo_bpin }}</span> }
-                @if (s.municipio) { <span class="meta-pill">{{ s.municipio }}</span> }
+            <div class="rounded-xl border border-border bg-surface2 px-4 py-3">
+              <div class="mb-1.5 text-sm font-medium text-ink">{{ s.nombre_proyecto || s.texto }}</div>
+              <div class="flex flex-wrap gap-1.5">
+                @if (s.codigo_bpin) { <span class="rounded bg-border px-2 py-0.5 text-[0.72rem] text-ink-soft">BPIN: {{ s.codigo_bpin }}</span> }
+                @if (s.municipio) { <span class="rounded bg-border px-2 py-0.5 text-[0.72rem] text-ink-soft">{{ s.municipio }}</span> }
                 @if (s.score_qdrant > 0) {
-                  <span class="meta-pill score-pill">{{ (s.score_qdrant * 100) | number:'1.0-0' }}% sim.</span>
+                  <span class="rounded bg-purple-soft px-2 py-0.5 text-[0.72rem] text-purple">{{ (s.score_qdrant * 100) | number:'1.0-0' }}% sim.</span>
                 }
               </div>
             </div>
@@ -83,12 +103,12 @@
     }
 
     <!-- Fecha -->
-    <div class="verificado-en">
+    <div class="mb-4 text-xs text-ink-faint">
       Verificado: {{ r.verificado_en | date:'dd/MM/yyyy HH:mm' }}
     </div>
 
     <!-- Re-verificar -->
-    <button class="btn-reverificar" (click)="verificar()" [disabled]="loading()">
+    <button class="rounded-lg border border-border px-5 py-2.5 text-sm font-semibold text-ink hover:bg-surface2 disabled:cursor-not-allowed disabled:opacity-50" (click)="verificar()" [disabled]="loading()">
       Reverificar
     </button>
   }

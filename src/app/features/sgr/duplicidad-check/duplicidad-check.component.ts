@@ -1,17 +1,25 @@
 import { Component, OnInit, inject, signal, input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faArrowLeft, faBan, faCircleCheck, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { SgrApiService } from '../../../core/services/sgr-api.service';
 import { VerificarDuplicidadResponse } from '../../../core/models/sgr.model';
 
 @Component({
   selector: 'app-duplicidad-check',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FaIconComponent],
   templateUrl: './duplicidad-check.component.html',
   styleUrl: './duplicidad-check.component.css',
 })
 export class DuplicidadCheckComponent implements OnInit {
-  private sgr = inject(SgrApiService);
+  private sgr      = inject(SgrApiService);
+  private location = inject(Location);
+
+  readonly faArrowLeft = faArrowLeft;
+  readonly faBan = faBan;
+  readonly faCircleCheck = faCircleCheck;
+  readonly faTriangleExclamation = faTriangleExclamation;
 
   proyectoId = input.required<string>();
 
@@ -21,6 +29,10 @@ export class DuplicidadCheckComponent implements OnInit {
 
   ngOnInit(): void {
     this.verificar();
+  }
+
+  volver(): void {
+    this.location.back();
   }
 
   verificar(): void {
