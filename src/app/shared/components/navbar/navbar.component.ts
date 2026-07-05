@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Output, input, inject, effect, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faScaleBalanced, faBolt, faStop, faRightFromBracket, faCircleCheck, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faScaleBalanced, faBolt, faStop, faRightFromBracket, faCircleCheck, faXmark, faChevronDown, faFileLines } from '@fortawesome/free-solid-svg-icons';
 import { MeResponse, RolCodigo } from '../../../core/models/auth.model';
 import { BackgroundScraperService } from '../../../core/services/background-scraper.service';
 import { PlanContextService } from '../../../core/services/plan-context.service';
@@ -39,6 +39,8 @@ export class NavbarComponent {
   readonly faRightFromBracket = faRightFromBracket;
   readonly faCircleCheck = faCircleCheck;
   readonly faXmark = faXmark;
+  readonly faChevronDown = faChevronDown;
+  readonly faFileLines = faFileLines;
 
   appName = input<string>('Gestor de Leyes');
   appIcon = input<string>('⚖️');
@@ -51,6 +53,10 @@ export class NavbarComponent {
   readonly planContext = inject(PlanContextService);
   readonly showCompletedAlert = signal(false);
   private prevEstado = '';
+
+  // --- UI-only state (menus del navbar) ---
+  readonly scraperMenuOpen = signal(false);
+  readonly userMenuOpen    = signal(false);
 
   constructor() {
     effect(() => {
@@ -84,5 +90,20 @@ export class NavbarComponent {
 
   dismissAlert(): void {
     this.showCompletedAlert.set(false);
+  }
+
+  toggleScraperMenu(): void {
+    this.userMenuOpen.set(false);
+    this.scraperMenuOpen.update(v => !v);
+  }
+
+  toggleUserMenu(): void {
+    this.scraperMenuOpen.set(false);
+    this.userMenuOpen.update(v => !v);
+  }
+
+  closeMenus(): void {
+    this.scraperMenuOpen.set(false);
+    this.userMenuOpen.set(false);
   }
 }

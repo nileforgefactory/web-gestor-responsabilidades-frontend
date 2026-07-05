@@ -7,7 +7,7 @@
   />
 
   <!-- ── Main content ── -->
-  <main class="min-w-0 flex-1 overflow-y-auto px-8 py-7">
+  <main class="min-w-0 flex-1 overflow-y-auto px-8 py-7 max-[1100px]:px-5 max-[1100px]:py-5">
 
     <!-- Page header -->
     <div class="mb-6">
@@ -87,7 +87,7 @@
                   <span class="h-[7px] w-[7px] shrink-0 animate-pulse-ring rounded-full bg-success"></span> Procesando
                 </div>
                 <button
-                  class="rounded-md border border-red-400 bg-danger-soft px-3 py-1 text-xs text-danger transition-colors hover:bg-red-100"
+                  class="rounded-lg border border-red-400 bg-danger-soft px-3 py-1.5 text-xs text-danger transition-colors hover:bg-red-100"
                   (click)="stopAnalysis()"
                 ><fa-icon [icon]="faStop" /> Detener</button>
               </div>
