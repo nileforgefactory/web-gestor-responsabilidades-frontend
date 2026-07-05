@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  ragApiUrl: 'http://localhost:8000',
+  ragApiUrl: '__BACKEND_URL__',
   ragCollection: 'normas_legales',
   planCollection: 'planes',
 };
