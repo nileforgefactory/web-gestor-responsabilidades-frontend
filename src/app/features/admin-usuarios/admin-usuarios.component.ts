@@ -132,6 +132,11 @@ export class AdminUsuariosComponent implements OnInit {
           status: 'active',
           badge:  this.totalCount(),
         },
+        {
+          id:    'sgr-matriz',
+          icon:  '📊',
+          label: 'Matriz SGR',
+        },
       ],
     },
     {
@@ -169,6 +174,7 @@ export class AdminUsuariosComponent implements OnInit {
   // ── Sidebar ────────────────────────────────────────────────────────────────
   onSidebarClick(item: SidebarItem): void {
     if (item.id === 'volver') this.router.navigate(['/cargar-plan']);
+    if (item.id === 'sgr-matriz') this.router.navigate(['/admin/sgr-matriz']);
   }
 
   // ── Create modal ───────────────────────────────────────────────────────────
