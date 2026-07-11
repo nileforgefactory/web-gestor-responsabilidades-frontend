@@ -50,6 +50,13 @@ export const routes: Routes = [
         component: AdminUsuariosComponent,
         canActivate: [adminGuard],
       },
+      {
+        path: 'admin/sgr-matriz',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/admin-sgr-matriz/admin-sgr-matriz.component')
+            .then(m => m.AdminSgrMatrizComponent),
+      },
 
       // ── SGR — Caja de Herramientas ─────────────────────────────────────
       {
