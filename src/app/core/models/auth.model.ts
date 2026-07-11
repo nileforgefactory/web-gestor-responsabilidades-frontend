@@ -46,8 +46,17 @@ export interface UserCreateRequest {
   password: string;
   rol: RolAsignable;
   territorio?: (string | null)[];
+  divipola?: string | null;
+  categoria_municipio?: '5' | '6' | null;
 }
 
 export interface ChangeRolRequest {
   rol: RolAsignable;
+}
+
+export interface MunicipioResult {
+  departamento: string;
+  municipio: string;
+  divipola: string;
+  categoria: '5' | '6' | null;
 }

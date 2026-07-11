@@ -20,7 +20,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { AuthService } from '../../core/services/auth.service';
 import { UsersApiService } from '../../core/services/users-api.service';
-import { RolAsignable, RolCodigo, UserSummary } from '../../core/models/auth.model';
+import { MunicipioResult, RolAsignable, RolCodigo, UserSummary } from '../../core/models/auth.model';
 import {
   SidebarComponent,
   SidebarItem,
@@ -94,9 +94,15 @@ export class AdminUsuariosComponent implements OnInit {
     email:         ['', [Validators.required, Validators.email]],
     password:      ['', [Validators.required, Validators.minLength(6)]],
     pais:          ['COLOMBIA', Validators.required],
-    departamento:  [''],
-    municipio:     [''],
   });
+
+  // ── Buscador de municipio (en línea, DIVIPOLA + categoría SGR) ─────────────
+  municipioQuery      = signal('');
+  municipioResultados = signal<MunicipioResult[]>([]);
+  municipioBuscando   = signal(false);
+  municipioDropdown   = signal(false);
+  municipioSeleccion  = signal<MunicipioResult | null>(null);
+  private municipioTimer: ReturnType<typeof setTimeout> | null = null;
 
   // ── Computed ───────────────────────────────────────────────────────────────
   isSuperAdmin = computed(() => this.auth.rol() === 'superadmin');
@@ -170,6 +176,10 @@ export class AdminUsuariosComponent implements OnInit {
     this.createForm.reset({ pais: 'COLOMBIA' });
     this.createRole.set('usuario');
     this.createError.set(null);
+    this.municipioQuery.set('');
+    this.municipioResultados.set([]);
+    this.municipioDropdown.set(false);
+    this.municipioSeleccion.set(null);
     this.showCreate.set(true);
   }
 
@@ -177,14 +187,50 @@ export class AdminUsuariosComponent implements OnInit {
 
   setCreateRole(rol: RolAsignable): void { this.createRole.set(rol); }
 
+  // ── Buscador de municipio ──────────────────────────────────────────────────
+  onMunicipioInput(value: string): void {
+    this.municipioQuery.set(value);
+    this.municipioSeleccion.set(null);
+    if (this.municipioTimer) clearTimeout(this.municipioTimer);
+
+    const q = value.trim();
+    if (q.length < 2) {
+      this.municipioResultados.set([]);
+      this.municipioDropdown.set(false);
+      return;
+    }
+
+    this.municipioTimer = setTimeout(() => {
+      this.municipioBuscando.set(true);
+      this.api.buscarMunicipios(q).subscribe({
+        next: resultados => {
+          this.municipioResultados.set(resultados);
+          this.municipioDropdown.set(true);
+          this.municipioBuscando.set(false);
+        },
+        error: () => {
+          this.municipioResultados.set([]);
+          this.municipioBuscando.set(false);
+        },
+      });
+    }, 300);
+  }
+
+  seleccionarMunicipio(m: MunicipioResult): void {
+    this.municipioSeleccion.set(m);
+    this.municipioQuery.set(`${m.municipio} — ${m.departamento}`);
+    this.municipioDropdown.set(false);
+  }
+
   submitCreate(): void {
     if (this.createForm.invalid || this.creating()) return;
     const v = this.createForm.value;
+    const m = this.municipioSeleccion();
 
     const territorio: (string | null)[] = [
       v.pais ?? 'COLOMBIA',
-      v.departamento?.trim() || null,
-      v.municipio?.trim()    || null,
+      m?.departamento ?? null,
+      m?.municipio ?? null,
     ];
 
     this.creating.set(true);
@@ -196,6 +242,8 @@ export class AdminUsuariosComponent implements OnInit {
       password:  v.password!,
       rol:       this.createRole(),
       territorio,
+      divipola: m?.divipola ?? null,
+      categoria_municipio: m?.categoria ?? null,
     }).subscribe({
       next: user => {
         this.users.update(list => [...list, user]);
