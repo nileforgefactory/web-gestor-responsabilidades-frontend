@@ -79,6 +79,7 @@ export class BaseConocimientoComponent implements OnInit {
   textTitle    = '';
   textDocType  = 'ley';
   textContent  = '';
+  readonly maxCharsTexto = 8000;
 
   isSubmittingText = signal(false);
   textError        = signal<string | null>(null);
@@ -261,7 +262,7 @@ export class BaseConocimientoComponent implements OnInit {
 
   // ── Text ingestion ────────────────────────────────────────────────
   onSubmitText(): void {
-    if (!this.textContent.trim()) return;
+    if (!this.textContent.trim() || this.textContent.length > this.maxCharsTexto) return;
     this.isSubmittingText.set(true);
     this.textError.set(null);
     this.textSuccess.set(null);

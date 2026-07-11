@@ -55,6 +55,10 @@ export class SgrApiService {
     return this.http.get<ProyectoSGROut>(`${this.base}/sgr/proyecto/${proyectoId}`);
   }
 
+  guardarProyecto(proyectoId: string): Observable<ProyectoSGROut> {
+    return this.http.post<ProyectoSGROut>(`${this.base}/sgr/proyecto/${proyectoId}/guardar`, {});
+  }
+
   // ── M4: Ficha MGA ────────────────────────────────────────────────────────────
 
   generarFichaMGA(proyectoId: string, req: GenerarFichaMGARequest = {}): Observable<FichaMGAOut> {

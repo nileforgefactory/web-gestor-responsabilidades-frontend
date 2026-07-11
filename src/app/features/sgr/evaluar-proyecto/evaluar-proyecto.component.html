@@ -75,8 +75,8 @@ Mínimo 50 caracteres."
               }
               <input type="file" class="hidden" accept=".pdf,.txt,.md,.png,.jpg,.jpeg,.tiff,.webp" (change)="onArchivoSeleccionado($event)" [disabled]="extrayendoArchivo()" />
             </label>
-            <span class="text-xs text-ink-faint" [class.text-danger]="charCount < 50 && form.get('texto_proyecto')?.touched">
-              {{ charCount }} caracteres (mínimo 50)
+            <span class="text-xs text-ink-faint" [class.text-danger]="(charCount < 50 && form.get('texto_proyecto')?.touched) || charCount > maxChars">
+              {{ charCount }} / {{ maxChars }} caracteres (mínimo 50)
             </span>
           </div>
 
@@ -134,6 +134,24 @@ Mínimo 50 caracteres."
             @if (r.en_plan) { <fa-icon [icon]="faCircleCheck" /> Incluido en el Plan } @else { <fa-icon [icon]="faTriangleExclamation" /> No está en el Plan }
           </div>
         </div>
+      </div>
+
+      <!-- Guardar proyecto -->
+      <div class="mb-5 flex items-center justify-end gap-3">
+        @if (guardado()) {
+          <span class="flex items-center gap-1.5 text-sm font-semibold text-success"><fa-icon [icon]="faCircleCheck" /> Guardado</span>
+        } @else {
+          <button
+            type="button"
+            class="flex items-center gap-2 rounded-lg border border-primary bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-light disabled:cursor-not-allowed disabled:opacity-60"
+            [disabled]="!r.proyecto_id || guardando()"
+            [title]="!r.proyecto_id ? 'Selecciona un plan activo para guardar' : ''"
+            (click)="guardarProyecto()"
+          >
+            @if (guardando()) { <span class="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"></span> Guardando… }
+            @else { <fa-icon [icon]="faFloppyDisk" /> Guardar proyecto }
+          </button>
+        }
       </div>
 
       <!-- Tabs de navegación -->

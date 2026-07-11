@@ -83,7 +83,7 @@ export class BackgroundScraperService implements OnDestroy {
   iniciar(duracionMin?: number): void {
     this.http.post<BackgroundScraperEstado>(`${this.base}/iniciar`, {
       duracion_min: duracionMin ?? null,
-      prioridad_max: 2,
+      prioridad_max: 3,
       pais: 'COLOMBIA',
       solo_faltantes: true,
     }).subscribe({

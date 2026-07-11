@@ -162,6 +162,9 @@
                     placeholder="Pega o escribe el texto completo de la norma…"
                     [(ngModel)]="textContent"
                   ></textarea>
+                  <span class="text-xs text-ink-faint" [class.text-danger]="textContent.length > maxCharsTexto">
+                    {{ textContent.length }} / {{ maxCharsTexto }} caracteres
+                  </span>
                 </div>
 
                 @if (textError())   { <div class="rounded-lg border border-danger/25 bg-danger-soft px-3 py-2 text-xs leading-relaxed text-danger"><fa-icon [icon]="faTriangleExclamation" class="mr-1" />{{ textError() }}</div> }
@@ -169,7 +172,7 @@
 
                 <button
                   class="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-accent px-4.5 py-2 text-[13px] font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45"
-                  [disabled]="isSubmittingText() || !textContent.trim()"
+                  [disabled]="isSubmittingText() || !textContent.trim() || textContent.length > maxCharsTexto"
                   (click)="onSubmitText()"
                 >
                   @if (isSubmittingText()) { <fa-icon [icon]="faRotate" class="animate-spin" /> Indexando… }

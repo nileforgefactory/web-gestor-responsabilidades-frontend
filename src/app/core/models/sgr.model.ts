@@ -85,6 +85,7 @@ export interface ProyectoSGROut {
   modo: ModeSGR;
   creado_en: string;
   actualizado_en: string;
+  guardado_en: string | null;
   resultado_duplicidad: Record<string, unknown> | null;
   diagnostico_mga: Record<string, unknown> | null;
 }

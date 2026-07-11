@@ -3,7 +3,7 @@ import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faFileLines, faTriangleExclamation, faCircleCheck, faScroll, faPaperclip, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faFileLines, faTriangleExclamation, faCircleCheck, faScroll, faPaperclip, faXmark, faFloppyDisk } from '@fortawesome/free-solid-svg-icons';
 import { SgrApiService } from '../../../core/services/sgr-api.service';
 import { EvaluarProyectoResponse, DiagnosticoDimension } from '../../../core/models/sgr.model';
 import { PlanContextService } from '../../../core/services/plan-context.service';
@@ -29,11 +29,15 @@ export class EvaluarProyectoComponent {
   readonly faScroll = faScroll;
   readonly faPaperclip = faPaperclip;
   readonly faXmark = faXmark;
+  readonly faFloppyDisk = faFloppyDisk;
 
   loading   = signal(false);
   errorMsg  = signal<string | null>(null);
   resultado = signal<EvaluarProyectoResponse | null>(null);
   tabActiva = signal<'resumen' | 'dimensiones' | 'plan' | 'concejo'>('resumen');
+
+  guardando = signal(false);
+  guardado  = signal(false);
 
   /** El formulario de texto libre queda oculto hasta que el usuario decide crear un proyecto,
    * salvo que llegue con la intención ya explícita (?crear=1) desde el botón de Oportunidades. */
@@ -43,8 +47,10 @@ export class EvaluarProyectoComponent {
   archivoNombre  = signal<string | null>(null);
   extrayendoArchivo = signal(false);
 
+  readonly maxChars = 8000;
+
   form = this.fb.group({
-    texto_proyecto: ['', [Validators.required, Validators.minLength(50)]],
+    texto_proyecto: ['', [Validators.required, Validators.minLength(50), Validators.maxLength(this.maxChars)]],
   });
 
   constructor() {
@@ -114,10 +120,27 @@ export class EvaluarProyectoComponent {
         this.resultado.set(res);
         this.loading.set(false);
         this.tabActiva.set('resumen');
+        this.guardado.set(false);
       },
       error: err => {
         this.errorMsg.set(err.error?.detail ?? 'Error al evaluar el proyecto');
         this.loading.set(false);
+      },
+    });
+  }
+
+  guardarProyecto(): void {
+    const proyectoId = this.resultado()?.proyecto_id;
+    if (!proyectoId || this.guardando() || this.guardado()) return;
+    this.guardando.set(true);
+    this.sgr.guardarProyecto(proyectoId).subscribe({
+      next: () => {
+        this.guardado.set(true);
+        this.guardando.set(false);
+      },
+      error: err => {
+        this.errorMsg.set(err.error?.detail ?? 'Error al guardar el proyecto');
+        this.guardando.set(false);
       },
     });
   }
