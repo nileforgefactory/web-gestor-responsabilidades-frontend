@@ -12,6 +12,7 @@ import {
   GenerarFichaMGARequest,
   OnboardingStatus,
   ChangePasswordRequest,
+  ProyectoGuardadoOut,
   ProyectoSGROut,
   VerificarDuplicidadResponse,
 } from '../models/sgr.model';
@@ -57,6 +58,10 @@ export class SgrApiService {
 
   guardarProyecto(proyectoId: string): Observable<ProyectoSGROut> {
     return this.http.post<ProyectoSGROut>(`${this.base}/sgr/proyecto/${proyectoId}/guardar`, {});
+  }
+
+  listarProyectosGuardados(): Observable<ProyectoGuardadoOut[]> {
+    return this.http.get<ProyectoGuardadoOut[]>(`${this.base}/sgr/proyectos-guardados`);
   }
 
   // ── M4: Ficha MGA ────────────────────────────────────────────────────────────

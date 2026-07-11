@@ -99,6 +99,13 @@
               <button class="rounded-lg border border-white/30 px-4 py-2 text-[0.825rem] font-semibold text-white/90 transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50" (click)="cargarFicha(true)" [disabled]="loading()">
                 <fa-icon [icon]="faRotate" /> Regenerar con IA
               </button>
+              @if (proyectoGuardado()) {
+                <span class="flex items-center gap-1.5 rounded-lg border border-success/40 bg-success-soft px-4 py-2 text-[0.825rem] font-semibold text-success"><fa-icon [icon]="faCheck" /> Guardado</span>
+              } @else {
+                <button class="rounded-lg border border-white/30 px-4 py-2 text-[0.825rem] font-semibold text-white/90 transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50" (click)="guardarProyecto()" [disabled]="guardandoProyecto()">
+                  @if (guardandoProyecto()) { Guardando… } @else { <fa-icon [icon]="faFloppyDisk" /> Guardar proyecto }
+                </button>
+              }
               <span class="ml-auto text-[0.7rem] text-white/50">
                 Generado: {{ f.generado_en | date:'dd/MM/yyyy HH:mm' }} · Modelo: {{ f.modelo_usado ?? 'N/D' }}
               </span>

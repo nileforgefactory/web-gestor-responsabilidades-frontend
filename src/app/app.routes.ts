@@ -60,6 +60,12 @@ export const routes: Routes = [
 
       // ── SGR — Caja de Herramientas ─────────────────────────────────────
       {
+        path: 'sgr/mis-proyectos',
+        loadComponent: () =>
+          import('./features/sgr/mis-proyectos/mis-proyectos.component')
+            .then(m => m.MisProyectosSgrComponent),
+      },
+      {
         path: 'sgr/oportunidades/:planId',
         loadComponent: () =>
           import('./features/sgr/oportunidades/oportunidades.component')
