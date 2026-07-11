@@ -90,6 +90,12 @@ export interface ProyectoSGROut {
   diagnostico_mga: Record<string, unknown> | null;
 }
 
+export interface ProyectoGuardadoOut extends ProyectoSGROut {
+  plan_titulo: string;
+  plan_nombre_corto: string | null;
+  tiene_ficha_mga: boolean;
+}
+
 // ── Ficha MGA ─────────────────────────────────────────────────────────────────
 
 export interface FichaMGAOut {

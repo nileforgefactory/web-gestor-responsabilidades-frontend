@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal, input, effect } from '@angular/core'
 import { CommonModule, Location } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faDownload, faCheck, faComment, faRotate, faXmark, faBars, faPenToSquare } from '@fortawesome/free-solid-svg-icons';
+import { faDownload, faCheck, faComment, faRotate, faXmark, faBars, faPenToSquare, faFloppyDisk } from '@fortawesome/free-solid-svg-icons';
 import { SgrApiService } from '../../../core/services/sgr-api.service';
 import { FichaMGAOut } from '../../../core/models/sgr.model';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
@@ -28,6 +28,7 @@ export class FichaProyectoComponent implements OnInit {
   readonly faXmark = faXmark;
   readonly faBars = faBars;
   readonly faPenToSquare = faPenToSquare;
+  readonly faFloppyDisk = faFloppyDisk;
 
   proyectoId = input.required<string>();
 
@@ -36,6 +37,8 @@ export class FichaProyectoComponent implements OnInit {
   ficha     = signal<FichaMGAOut | null>(null);
   tabActiva = signal<SeccionKey>('identificacion');
   proyectoNombre = signal<string | null>(null);
+  proyectoGuardado = signal(false);
+  guardandoProyecto = signal(false);
 
   // --- UI-only state (rediseño visual, sin lógica de negocio) ---
   modoEdicion   = signal<SeccionKey | null>(null);
@@ -75,8 +78,26 @@ export class FichaProyectoComponent implements OnInit {
   ngOnInit(): void {
     this.cargarFicha(false);
     this.sgr.detalleProyecto(this.proyectoId()).subscribe({
-      next: p => this.proyectoNombre.set(p.nombre),
+      next: p => {
+        this.proyectoNombre.set(p.nombre);
+        this.proyectoGuardado.set(!!p.guardado_en);
+      },
       error: () => {},
+    });
+  }
+
+  guardarProyecto(): void {
+    if (this.guardandoProyecto() || this.proyectoGuardado()) return;
+    this.guardandoProyecto.set(true);
+    this.sgr.guardarProyecto(this.proyectoId()).subscribe({
+      next: () => {
+        this.proyectoGuardado.set(true);
+        this.guardandoProyecto.set(false);
+      },
+      error: err => {
+        this.errorMsg.set(err.error?.detail ?? 'Error al guardar el proyecto');
+        this.guardandoProyecto.set(false);
+      },
     });
   }
 
@@ -181,7 +202,9 @@ export class FichaProyectoComponent implements OnInit {
     this.exportandoDocx.set(true);
     this.sgr.exportarFichaMGADocx(this.proyectoId()).subscribe({
       next: blob => {
-        const filename = `ficha_mga_${this.proyectoId()}.docx`;
+        const base = this.proyectoNombre() ?? this.proyectoId();
+        const slug = base.normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 80) || this.proyectoId();
+        const filename = `ficha_mga_${slug}.docx`;
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;

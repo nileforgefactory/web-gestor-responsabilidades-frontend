@@ -45,11 +45,13 @@ export class App {
       { label: 'Cargar Plan',          route: '/cargar-plan',          icon: '📂', highlighted: true },
       { label: 'Biblioteca',           route: '/biblioteca',           icon: '📚' },
       { label: 'SGR',                  route: rutaSgr,                 icon: '💰' },
+      { label: 'Mis Proyectos SGR',    route: '/sgr/mis-proyectos',    icon: '📁' },
       { label: 'Búsqueda RAG',         route: '/busqueda-raag',        icon: '🔍' },
       { label: 'Base de Conocimiento', route: '/base-conocimiento',    icon: '⚡' },
     ];
     if (rol === 'superadmin' || rol === 'administrador') {
       items.push({ label: 'Usuarios', route: '/admin/usuarios', icon: '👥' });
+      items.push({ label: 'Matriz SGR', route: '/admin/sgr-matriz', icon: '📊' });
     }
     return items;
   });
