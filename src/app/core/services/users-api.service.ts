@@ -4,6 +4,7 @@ import { Observable, catchError, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   ChangeRolRequest,
+  MunicipioResult,
   UserCreateRequest,
   UserSummary,
 } from '../models/auth.model';
@@ -24,6 +25,12 @@ export class UsersApiService {
   createUser(data: UserCreateRequest): Observable<UserSummary> {
     return this.http
       .post<UserSummary>(`${this.base}/api/v1/users`, data)
+      .pipe(catchError(this.handleError));
+  }
+
+  buscarMunicipios(q: string): Observable<MunicipioResult[]> {
+    return this.http
+      .get<MunicipioResult[]>(`${this.base}/api/v1/territorio/municipios`, { params: { q } })
       .pipe(catchError(this.handleError));
   }
 

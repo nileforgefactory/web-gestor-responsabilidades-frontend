@@ -310,36 +310,57 @@
         <!-- Territory -->
         <div class="mb-4">
           <label class="mb-1.5 block text-xs font-semibold text-ink-soft">Territorio</label>
-          <div class="flex flex-wrap gap-2.5">
-            <div class="mb-0 min-w-[100px] flex-1">
-              <label class="mb-1.5 block text-[11px] font-semibold text-ink-soft">País</label>
-              <input
-                class="w-full rounded-[9px] border-[1.5px] border-border bg-surface2 px-3.5 py-2.5 font-sans text-[13px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-accent focus:bg-white"
-                type="text"
-                placeholder="COLOMBIA"
-                formControlName="pais"
-              />
-            </div>
-            <div class="mb-0 min-w-[100px] flex-1">
-              <label class="mb-1.5 block text-[11px] font-semibold text-ink-soft">Departamento</label>
-              <input
-                class="w-full rounded-[9px] border-[1.5px] border-border bg-surface2 px-3.5 py-2.5 font-sans text-[13px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-accent focus:bg-white"
-                type="text"
-                placeholder="Opcional · ej. CUNDINAMARCA"
-                formControlName="departamento"
-              />
-            </div>
-            <div class="mb-0 min-w-[100px] flex-1">
-              <label class="mb-1.5 block text-[11px] font-semibold text-ink-soft">Municipio</label>
-              <input
-                class="w-full rounded-[9px] border-[1.5px] border-border bg-surface2 px-3.5 py-2.5 font-sans text-[13px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-accent focus:bg-white"
-                type="text"
-                placeholder="Opcional · ej. ZIPAQUIRA"
-                formControlName="municipio"
-              />
-            </div>
+          <div class="mb-2.5 max-w-[140px]">
+            <label class="mb-1.5 block text-[11px] font-semibold text-ink-soft">País</label>
+            <input
+              class="w-full rounded-[9px] border-[1.5px] border-border bg-surface2 px-3.5 py-2.5 font-sans text-[13px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-accent focus:bg-white"
+              type="text"
+              placeholder="COLOMBIA"
+              formControlName="pais"
+            />
           </div>
-          <div class="mt-1.5 text-[11px] leading-relaxed text-ink-faint">Escribe en mayúsculas. Deja vacío para asignar solo el nivel superior.</div>
+
+          <div class="relative">
+            <label class="mb-1.5 block text-[11px] font-semibold text-ink-soft">Departamento / Municipio</label>
+            <input
+              class="w-full rounded-[9px] border-[1.5px] border-border bg-surface2 px-3.5 py-2.5 font-sans text-[13px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-accent focus:bg-white"
+              type="text"
+              placeholder="Buscar municipio en línea, ej. NEIVA"
+              [value]="municipioQuery()"
+              (input)="onMunicipioInput($any($event.target).value)"
+              (focus)="municipioResultados().length && municipioDropdown.set(true)"
+              autocomplete="off"
+            />
+
+            @if (municipioDropdown()) {
+              <div class="absolute left-0 right-0 top-full z-10 mt-1 max-h-[220px] overflow-y-auto rounded-[9px] border border-border bg-surface shadow-card-md">
+                @if (municipioBuscando()) {
+                  <div class="px-3.5 py-3 text-[12px] text-ink-faint">Buscando…</div>
+                } @else if (municipioResultados().length === 0) {
+                  <div class="px-3.5 py-3 text-[12px] text-ink-faint">Sin resultados.</div>
+                } @else {
+                  @for (m of municipioResultados(); track m.divipola) {
+                    <button
+                      type="button"
+                      class="flex w-full items-center justify-between gap-2 px-3.5 py-2.5 text-left text-[12.5px] text-ink transition-colors hover:bg-surface2"
+                      (click)="seleccionarMunicipio(m)"
+                    >
+                      <span>{{ m.municipio }} <span class="text-ink-faint">— {{ m.departamento }}</span></span>
+                      @if (m.categoria) {
+                        <span class="shrink-0 rounded-full bg-accent-soft px-2 py-0.5 text-[10px] font-bold text-accent">Cat. {{ m.categoria }}</span>
+                      }
+                    </button>
+                  }
+                }
+              </div>
+            }
+          </div>
+
+          @if (municipioSeleccion() && !municipioSeleccion()!.categoria) {
+            <div class="mt-1.5 text-[11px] leading-relaxed text-gold">Este sistema está pensado para municipios categoría 5 o 6; el seleccionado no aplica para SGR.</div>
+          } @else {
+            <div class="mt-1.5 text-[11px] leading-relaxed text-ink-faint">Búsqueda en línea contra el DIVIPOLA oficial. Opcional: deja vacío para asignar solo el nivel nacional.</div>
+          }
         </div>
 
         @if (createError()) {
