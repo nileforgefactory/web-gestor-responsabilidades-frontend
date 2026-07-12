@@ -20,9 +20,8 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { AuthService } from '../../core/services/auth.service';
 import { UsersApiService } from '../../core/services/users-api.service';
-import { MunicipioResult, RolAsignable, RolCodigo, UserSummary } from '../../core/models/auth.model';
+import { DepartamentoDivipola, MunicipioDivipola, MunicipioResult, RolAsignable, RolCodigo, UserSummary } from '../../core/models/auth.model';
 import {
-  SidebarComponent,
   SidebarItem,
   SidebarSection,
   SidebarUser,
@@ -44,7 +43,7 @@ const ROL_BADGE: Record<RolCodigo, BadgeVariant> = {
 @Component({
   selector: 'app-admin-usuarios',
   standalone: true,
-  imports: [SidebarComponent, BadgeComponent, ReactiveFormsModule, FaIconComponent],
+  imports: [BadgeComponent, ReactiveFormsModule, FaIconComponent],
   templateUrl: './admin-usuarios.component.html',
   styleUrl:    './admin-usuarios.component.css',
 })
@@ -96,13 +95,16 @@ export class AdminUsuariosComponent implements OnInit {
     pais:          ['COLOMBIA', Validators.required],
   });
 
-  // ── Buscador de municipio (en línea, DIVIPOLA + categoría SGR) ─────────────
-  municipioQuery      = signal('');
-  municipioResultados = signal<MunicipioResult[]>([]);
-  municipioBuscando   = signal(false);
-  municipioDropdown   = signal(false);
-  municipioSeleccion  = signal<MunicipioResult | null>(null);
-  private municipioTimer: ReturnType<typeof setTimeout> | null = null;
+  // ── Selectores dependientes Departamento -> Municipio (DIVIPOLA) ──────────
+  departamentos      = signal<DepartamentoDivipola[]>([]);
+  cargandoDepts      = signal(false);
+  deptSel            = signal<string>('');
+  municipioSeleccion = signal<MunicipioResult | null>(null);
+
+  /** Municipios del departamento seleccionado. */
+  municipiosDelDept = computed<MunicipioDivipola[]>(() =>
+    this.departamentos().find(d => d.departamento === this.deptSel())?.municipios ?? [],
+  );
 
   // ── Computed ───────────────────────────────────────────────────────────────
   isSuperAdmin = computed(() => this.auth.rol() === 'superadmin');
@@ -182,10 +184,9 @@ export class AdminUsuariosComponent implements OnInit {
     this.createForm.reset({ pais: 'COLOMBIA' });
     this.createRole.set('usuario');
     this.createError.set(null);
-    this.municipioQuery.set('');
-    this.municipioResultados.set([]);
-    this.municipioDropdown.set(false);
+    this.deptSel.set('');
     this.municipioSeleccion.set(null);
+    this.cargarDepartamentos();
     this.showCreate.set(true);
   }
 
@@ -193,39 +194,35 @@ export class AdminUsuariosComponent implements OnInit {
 
   setCreateRole(rol: RolAsignable): void { this.createRole.set(rol); }
 
-  // ── Buscador de municipio ──────────────────────────────────────────────────
-  onMunicipioInput(value: string): void {
-    this.municipioQuery.set(value);
-    this.municipioSeleccion.set(null);
-    if (this.municipioTimer) clearTimeout(this.municipioTimer);
-
-    const q = value.trim();
-    if (q.length < 2) {
-      this.municipioResultados.set([]);
-      this.municipioDropdown.set(false);
-      return;
-    }
-
-    this.municipioTimer = setTimeout(() => {
-      this.municipioBuscando.set(true);
-      this.api.buscarMunicipios(q).subscribe({
-        next: resultados => {
-          this.municipioResultados.set(resultados);
-          this.municipioDropdown.set(true);
-          this.municipioBuscando.set(false);
-        },
-        error: () => {
-          this.municipioResultados.set([]);
-          this.municipioBuscando.set(false);
-        },
-      });
-    }, 300);
+  // ── Selectores Departamento -> Municipio ────────────────────────────────────
+  /** Carga (una vez) los departamentos con sus municipios desde DIVIPOLA. */
+  cargarDepartamentos(): void {
+    if (this.departamentos().length || this.cargandoDepts()) return;
+    this.cargandoDepts.set(true);
+    this.api.listarDepartamentos().subscribe({
+      next: deps => { this.departamentos.set(deps); this.cargandoDepts.set(false); },
+      error: () => { this.cargandoDepts.set(false); },
+    });
   }
 
-  seleccionarMunicipio(m: MunicipioResult): void {
-    this.municipioSeleccion.set(m);
-    this.municipioQuery.set(`${m.municipio} — ${m.departamento}`);
-    this.municipioDropdown.set(false);
+  onDeptChange(departamento: string): void {
+    this.deptSel.set(departamento);
+    this.municipioSeleccion.set(null);
+  }
+
+  onMunicipioChange(nombre: string): void {
+    const mun = this.municipiosDelDept().find(m => m.municipio === nombre);
+    if (!nombre || !mun) {
+      this.municipioSeleccion.set(null);
+      return;
+    }
+    const cat = mun.categoria === '5' || mun.categoria === '6' ? mun.categoria : null;
+    this.municipioSeleccion.set({
+      departamento: this.deptSel(),
+      municipio: mun.municipio,
+      divipola: mun.divipola,
+      categoria: cat,
+    });
   }
 
   submitCreate(): void {
