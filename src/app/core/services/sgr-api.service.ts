@@ -5,6 +5,7 @@ import { environment } from '../../../environments/environment';
 import {
   ActualizarFichaMGARequest,
   ChatFichaMGAResponse,
+  ChatSesionesResponse,
   EvaluarPlanResponse,
   EvaluarProyectoRequest,
   EvaluarProyectoResponse,
@@ -74,8 +75,20 @@ export class SgrApiService {
     return this.http.patch<FichaMGAOut>(`${this.base}/sgr/ficha-mga/${proyectoId}`, payload);
   }
 
-  chatFichaMGA(proyectoId: string, mensaje: string): Observable<ChatFichaMGAResponse> {
-    return this.http.post<ChatFichaMGAResponse>(`${this.base}/sgr/ficha-mga/${proyectoId}/chat`, { mensaje });
+  chatFichaMGA(proyectoId: string, mensaje: string, sesionId?: string): Observable<ChatFichaMGAResponse> {
+    const body: { mensaje: string; sesion_id?: string } = { mensaje };
+    if (sesionId) body.sesion_id = sesionId;
+    return this.http.post<ChatFichaMGAResponse>(`${this.base}/sgr/ficha-mga/${proyectoId}/chat`, body);
+  }
+
+  /** Lista las sesiones (hilos) de chat de la Ficha MGA, con sus mensajes. */
+  listarChatSesiones(proyectoId: string): Observable<ChatSesionesResponse> {
+    return this.http.get<ChatSesionesResponse>(`${this.base}/sgr/ficha-mga/${proyectoId}/chat-sesiones`);
+  }
+
+  /** Crea una nueva sesión (hilo) de chat y la deja activa. */
+  crearChatSesion(proyectoId: string): Observable<ChatSesionesResponse> {
+    return this.http.post<ChatSesionesResponse>(`${this.base}/sgr/ficha-mga/${proyectoId}/chat-sesiones`, {});
   }
 
   exportarFichaMGADocx(proyectoId: string): Observable<Blob> {

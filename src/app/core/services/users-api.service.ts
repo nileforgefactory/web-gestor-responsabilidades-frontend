@@ -4,6 +4,7 @@ import { Observable, catchError, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   ChangeRolRequest,
+  DepartamentoDivipola,
   MunicipioResult,
   UserCreateRequest,
   UserSummary,
@@ -31,6 +32,13 @@ export class UsersApiService {
   buscarMunicipios(q: string): Observable<MunicipioResult[]> {
     return this.http
       .get<MunicipioResult[]>(`${this.base}/api/v1/territorio/municipios`, { params: { q } })
+      .pipe(catchError(this.handleError));
+  }
+
+  /** Departamentos con sus municipios (DIVIPOLA) para selectores dependientes. */
+  listarDepartamentos(): Observable<DepartamentoDivipola[]> {
+    return this.http
+      .get<DepartamentoDivipola[]>(`${this.base}/api/v1/territorio/departamentos`)
       .pipe(catchError(this.handleError));
   }
 

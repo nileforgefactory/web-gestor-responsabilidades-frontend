@@ -60,3 +60,14 @@ export interface MunicipioResult {
   divipola: string;
   categoria: '5' | '6' | null;
 }
+
+export interface MunicipioDivipola {
+  municipio: string;
+  divipola: string;
+  categoria: string | null;
+}
+
+export interface DepartamentoDivipola {
+  departamento: string;
+  municipios: MunicipioDivipola[];
+}

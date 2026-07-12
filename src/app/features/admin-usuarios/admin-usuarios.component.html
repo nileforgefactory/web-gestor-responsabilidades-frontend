@@ -1,20 +1,13 @@
-<div class="flex min-h-[calc(100vh-var(--h-nav))]">
-
-  <!-- ── Sidebar ─────────────────────────────────────────────────────────── -->
-  <app-sidebar
-    [sections]="sidebarSections()"
-    [user]="sidebarUser()"
-    (itemClick)="onSidebarClick($event)"
-  />
+<div class="min-h-[calc(100vh-var(--h-nav))]">
 
   <!-- ── Main ───────────────────────────────────────────────────────────── -->
-  <main class="min-w-0 flex-1 overflow-y-auto p-7 max-[900px]:px-4 max-[900px]:py-5">
+  <main class="min-w-0 overflow-y-auto p-7 max-[900px]:px-4 max-[900px]:py-5">
 
     <!-- Page header -->
     <div class="mb-6 flex flex-wrap items-start justify-between gap-4 max-[600px]:flex-col">
       <div>
         <div class="mb-1 text-xs text-ink-faint">Admin / Usuarios y roles</div>
-        <h2 class="text-[22px] font-bold text-ink">Gestión de Usuarios</h2>
+        <h2 class="font-display text-[22px] font-bold text-ink">Gestión de Usuarios</h2>
         <p class="mt-1 text-sm text-ink-soft">Administra cuentas, roles y territorios del sistema</p>
       </div>
       <button class="inline-flex items-center gap-1.5 rounded-[9px] border border-primary bg-primary px-4.5 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-primary-light" (click)="openCreate()">
@@ -320,46 +313,48 @@
             />
           </div>
 
-          <div class="relative">
-            <label class="mb-1.5 block text-[11px] font-semibold text-ink-soft">Departamento / Municipio</label>
-            <input
-              class="w-full rounded-[9px] border-[1.5px] border-border bg-surface2 px-3.5 py-2.5 font-sans text-[13px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-accent focus:bg-white"
-              type="text"
-              placeholder="Buscar municipio en línea, ej. NEIVA"
-              [value]="municipioQuery()"
-              (input)="onMunicipioInput($any($event.target).value)"
-              (focus)="municipioResultados().length && municipioDropdown.set(true)"
-              autocomplete="off"
-            />
-
-            @if (municipioDropdown()) {
-              <div class="absolute left-0 right-0 top-full z-10 mt-1 max-h-[220px] overflow-y-auto rounded-[9px] border border-border bg-surface shadow-card-md">
-                @if (municipioBuscando()) {
-                  <div class="px-3.5 py-3 text-[12px] text-ink-faint">Buscando…</div>
-                } @else if (municipioResultados().length === 0) {
-                  <div class="px-3.5 py-3 text-[12px] text-ink-faint">Sin resultados.</div>
-                } @else {
-                  @for (m of municipioResultados(); track m.divipola) {
-                    <button
-                      type="button"
-                      class="flex w-full items-center justify-between gap-2 px-3.5 py-2.5 text-left text-[12.5px] text-ink transition-colors hover:bg-surface2"
-                      (click)="seleccionarMunicipio(m)"
-                    >
-                      <span>{{ m.municipio }} <span class="text-ink-faint">— {{ m.departamento }}</span></span>
-                      @if (m.categoria) {
-                        <span class="shrink-0 rounded-full bg-accent-soft px-2 py-0.5 text-[10px] font-bold text-accent">Cat. {{ m.categoria }}</span>
-                      }
-                    </button>
-                  }
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <!-- Departamento -->
+            <div>
+              <label class="mb-1.5 block text-[11px] font-semibold text-ink-soft">Departamento</label>
+              <select
+                class="w-full rounded-[9px] border-[1.5px] border-border bg-surface2 px-3 py-2.5 font-sans text-[13px] text-ink outline-none transition-colors focus:border-accent focus:bg-white disabled:opacity-60"
+                [value]="deptSel()"
+                (change)="onDeptChange($any($event.target).value)"
+                [disabled]="cargandoDepts()"
+              >
+                <option value="">{{ cargandoDepts() ? 'Cargando departamentos…' : 'Selecciona un departamento' }}</option>
+                @for (d of departamentos(); track d.departamento) {
+                  <option [value]="d.departamento">{{ d.departamento }}</option>
                 }
-              </div>
-            }
+              </select>
+            </div>
+
+            <!-- Municipio -->
+            <div>
+              <label class="mb-1.5 block text-[11px] font-semibold text-ink-soft">Municipio</label>
+              <select
+                class="w-full rounded-[9px] border-[1.5px] border-border bg-surface2 px-3 py-2.5 font-sans text-[13px] text-ink outline-none transition-colors focus:border-accent focus:bg-white disabled:opacity-60"
+                [value]="municipioSeleccion()?.municipio ?? ''"
+                (change)="onMunicipioChange($any($event.target).value)"
+                [disabled]="!deptSel()"
+              >
+                <option value="">{{ deptSel() ? 'Selecciona un municipio' : 'Elige un departamento primero' }}</option>
+                @for (m of municipiosDelDept(); track m.divipola) {
+                  <option [value]="m.municipio">{{ m.municipio }}{{ m.categoria ? ' · Cat. ' + m.categoria : '' }}</option>
+                }
+              </select>
+            </div>
           </div>
 
-          @if (municipioSeleccion() && !municipioSeleccion()!.categoria) {
-            <div class="mt-1.5 text-[11px] leading-relaxed text-gold">Este sistema está pensado para municipios categoría 5 o 6; el seleccionado no aplica para SGR.</div>
+          @if (municipioSeleccion(); as m) {
+            @if (!m.categoria) {
+              <div class="mt-2 text-[11px] leading-relaxed text-gold">Este sistema está pensado para municipios categoría 5 o 6; el seleccionado no aplica para SGR.</div>
+            } @else {
+              <div class="mt-2 text-[11px] leading-relaxed text-success">Municipio categoría {{ m.categoria }} · DIVIPOLA {{ m.divipola }}</div>
+            }
           } @else {
-            <div class="mt-1.5 text-[11px] leading-relaxed text-ink-faint">Búsqueda en línea contra el DIVIPOLA oficial. Opcional: deja vacío para asignar solo el nivel nacional.</div>
+            <div class="mt-2 text-[11px] leading-relaxed text-ink-faint">Elige departamento y municipio. Opcional: déjalos vacíos para asignar solo el nivel nacional.</div>
           }
         </div>
 

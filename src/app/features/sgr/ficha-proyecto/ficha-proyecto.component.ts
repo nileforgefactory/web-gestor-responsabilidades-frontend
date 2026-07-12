@@ -1,10 +1,10 @@
-import { Component, OnInit, inject, signal, input, effect } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, input, effect } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faDownload, faCheck, faComment, faRotate, faXmark, faBars, faPenToSquare, faFloppyDisk } from '@fortawesome/free-solid-svg-icons';
+import { faDownload, faCheck, faComment, faRotate, faXmark, faBars, faPenToSquare, faFloppyDisk, faArrowLeft, faPlus, faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import { SgrApiService } from '../../../core/services/sgr-api.service';
-import { FichaMGAOut } from '../../../core/models/sgr.model';
+import { FichaMGAOut, SesionChatOut } from '../../../core/models/sgr.model';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 
 type SeccionKey = 'identificacion' | 'preparacion' | 'evaluacion' | 'programacion';
@@ -22,6 +22,7 @@ export class FichaProyectoComponent implements OnInit {
   private fb        = inject(FormBuilder);
 
   readonly faDownload = faDownload;
+  readonly faArrowLeft = faArrowLeft;
   readonly faCheck = faCheck;
   readonly faComment = faComment;
   readonly faRotate = faRotate;
@@ -29,6 +30,8 @@ export class FichaProyectoComponent implements OnInit {
   readonly faBars = faBars;
   readonly faPenToSquare = faPenToSquare;
   readonly faFloppyDisk = faFloppyDisk;
+  readonly faPlus = faPlus;
+  readonly faChevronDown = faChevronDown;
 
   proyectoId = input.required<string>();
 
@@ -55,9 +58,17 @@ export class FichaProyectoComponent implements OnInit {
   guardando = signal<SeccionKey | null>(null);
   guardadoOk = signal<SeccionKey | null>(null);
 
-  // Chat con IA
+  // Chat con IA — historial por sesiones (hilos)
   chatMensaje  = signal('');
   chatEnviando = signal(false);
+  sesiones        = signal<SesionChatOut[]>([]);
+  sesionActivaId  = signal<string | null>(null);
+  menuSesiones    = signal(false);
+
+  readonly sesionActiva = computed(() =>
+    this.sesiones().find(s => s.id === this.sesionActivaId()) ?? null,
+  );
+  readonly mensajesActivos = computed(() => this.sesionActiva()?.mensajes ?? []);
 
   // Exportar Word
   exportandoDocx = signal(false);
@@ -86,6 +97,46 @@ export class FichaProyectoComponent implements OnInit {
     });
   }
 
+  // ── Sesiones (hilos) de chat ────────────────────────────────────────────────
+  cargarSesiones(): void {
+    this.sgr.listarChatSesiones(this.proyectoId()).subscribe({
+      next: res => {
+        this.sesiones.set(res.sesiones);
+        // Conserva la sesión que el usuario esté viendo; si no, usa la activa.
+        const actual = this.sesionActivaId();
+        const sigueExistiendo = actual && res.sesiones.some(s => s.id === actual);
+        this.sesionActivaId.set(sigueExistiendo ? actual : res.activa);
+      },
+      error: () => {},
+    });
+  }
+
+  seleccionarSesion(id: string): void {
+    this.sesionActivaId.set(id);
+    this.menuSesiones.set(false);
+  }
+
+  toggleMenuSesiones(): void {
+    this.menuSesiones.update(v => !v);
+  }
+
+  nuevaSesion(): void {
+    this.menuSesiones.set(false);
+    this.sgr.crearChatSesion(this.proyectoId()).subscribe({
+      next: res => {
+        this.sesiones.set(res.sesiones);
+        this.sesionActivaId.set(res.activa);
+      },
+      error: err => this.errorMsg.set(err.error?.detail ?? 'No se pudo crear la conversación'),
+    });
+  }
+
+  formatoFechaSesion(iso: string): string {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return isNaN(d.getTime()) ? '' : d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
   guardarProyecto(): void {
     if (this.guardandoProyecto() || this.proyectoGuardado()) return;
     this.guardandoProyecto.set(true);
@@ -111,7 +162,7 @@ export class FichaProyectoComponent implements OnInit {
     this.errorMsg.set(null);
 
     this.sgr.generarFichaMGA(this.proyectoId(), { forzar_regeneracion: forzar }).subscribe({
-      next: f => { this.ficha.set(f); this.loading.set(false); },
+      next: f => { this.ficha.set(f); this.loading.set(false); this.cargarSesiones(); },
       error: err => {
         this.errorMsg.set(err.error?.detail ?? 'Error al generar la Ficha MGA');
         this.loading.set(false);
@@ -184,11 +235,13 @@ export class FichaProyectoComponent implements OnInit {
     if (!mensaje || this.chatEnviando()) return;
 
     this.chatEnviando.set(true);
-    this.sgr.chatFichaMGA(this.proyectoId(), mensaje).subscribe({
+    this.sgr.chatFichaMGA(this.proyectoId(), mensaje, this.sesionActivaId() ?? undefined).subscribe({
       next: resultado => {
         this.ficha.set(resultado.ficha);
         this.chatMensaje.set('');
         this.chatEnviando.set(false);
+        // Resincroniza los hilos (mensajes + título autogenerado de la sesión).
+        this.cargarSesiones();
       },
       error: err => {
         this.errorMsg.set(err.error?.detail ?? 'Error al procesar el mensaje de chat');

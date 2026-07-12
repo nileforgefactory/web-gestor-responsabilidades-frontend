@@ -1,16 +1,10 @@
-<div class="flex min-h-[calc(100vh-var(--h-nav))]">
+<div class="min-h-[calc(100vh-var(--h-nav))]">
 
-  <app-sidebar
-    [sections]="sidebarSections()"
-    [user]="sidebarUser()"
-    (itemClick)="onSidebarClick($event)"
-  />
-
-  <main class="min-w-0 flex-1 overflow-y-auto p-7 max-[900px]:px-4 max-[900px]:py-5">
+  <main class="min-w-0 overflow-y-auto p-7 max-[900px]:px-4 max-[900px]:py-5">
 
     <div class="mb-6">
       <div class="mb-1 text-xs text-ink-faint">Admin / Matriz SGR</div>
-      <h2 class="text-[22px] font-bold text-ink">Matriz de proyectos SGR (GESPROY/DNP)</h2>
+      <h2 class="font-display text-[22px] font-bold text-ink">Matriz de proyectos SGR (GESPROY/DNP)</h2>
       <p class="mt-1 max-w-[70ch] text-sm text-ink-soft">
         Sube el Excel "Balance de Seguimiento a las Inversiones del SGR" para (re)indexar los proyectos ya
         aprobados de municipios categoría 5/6 y potenciar la verificación de duplicidad.
