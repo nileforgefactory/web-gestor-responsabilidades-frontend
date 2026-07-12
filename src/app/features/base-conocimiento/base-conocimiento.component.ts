@@ -98,9 +98,19 @@ export class BaseConocimientoComponent implements OnInit {
   // ── Knowledge base documents ─────────────────────────────────────
   documents = signal<KnowledgeDoc[]>([]);
 
+  search       = signal('');
   totalDocs    = computed(() => this.documents().length);
   totalChunks  = computed(() => this.documents().reduce((a, d) => a + d.chunks, 0));
   indexedCount = computed(() => this.documents().filter(d => d.status === 'indexado').length);
+
+  filteredDocs = computed(() => {
+    const q = this.search().toLowerCase().trim();
+    const docs = this.documents();
+    if (!q) return docs;
+    return docs.filter(d =>
+      d.nombre.toLowerCase().includes(q) || (d.tipo ?? '').toLowerCase().includes(q),
+    );
+  });
 
   // ── Sidebar ──────────────────────────────────────────────────────
   readonly sidebarUser: SidebarUser = {
