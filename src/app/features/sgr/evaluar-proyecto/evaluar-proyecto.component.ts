@@ -1,9 +1,8 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faFileLines, faTriangleExclamation, faCircleCheck, faScroll, faPaperclip, faXmark, faFloppyDisk } from '@fortawesome/free-solid-svg-icons';
+import { faFileLines, faTriangleExclamation, faCircleCheck, faScroll, faPaperclip, faXmark, faFloppyDisk, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { SgrApiService } from '../../../core/services/sgr-api.service';
 import { EvaluarProyectoResponse, DiagnosticoDimension } from '../../../core/models/sgr.model';
 import { PlanContextService } from '../../../core/services/plan-context.service';
@@ -19,7 +18,6 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
 export class EvaluarProyectoComponent {
   private sgr      = inject(SgrApiService);
   private fb       = inject(FormBuilder);
-  private route    = inject(ActivatedRoute);
   private location = inject(Location);
   readonly planContext = inject(PlanContextService);
 
@@ -30,6 +28,7 @@ export class EvaluarProyectoComponent {
   readonly faPaperclip = faPaperclip;
   readonly faXmark = faXmark;
   readonly faFloppyDisk = faFloppyDisk;
+  readonly faArrowLeft = faArrowLeft;
 
   loading   = signal(false);
   errorMsg  = signal<string | null>(null);
@@ -38,10 +37,6 @@ export class EvaluarProyectoComponent {
 
   guardando = signal(false);
   guardado  = signal(false);
-
-  /** El formulario de texto libre queda oculto hasta que el usuario decide crear un proyecto,
-   * salvo que llegue con la intención ya explícita (?crear=1) desde el botón de Oportunidades. */
-  mostrarFormulario = signal(this.route.snapshot.queryParamMap.get('crear') === '1');
 
   // Archivo adjunto (opcional) — su texto extraído se agrega al mensaje
   archivoNombre  = signal<string | null>(null);
@@ -63,14 +58,11 @@ export class EvaluarProyectoComponent {
     this.location.back();
   }
 
-  crearProyecto(): void {
-    this.mostrarFormulario.set(true);
-  }
-
+  /** Limpia el formulario para empezar de nuevo. */
   cancelarCreacion(): void {
-    this.mostrarFormulario.set(false);
     this.form.reset();
     this.archivoNombre.set(null);
+    this.errorMsg.set(null);
   }
 
   onArchivoSeleccionado(event: Event): void {

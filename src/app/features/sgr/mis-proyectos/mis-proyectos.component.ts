@@ -1,5 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
   faArrowRight,
@@ -7,6 +7,7 @@ import {
   faFileLines,
   faFolderOpen,
   faMagnifyingGlass,
+  faPlus,
   faTriangleExclamation,
   faXmark,
 } from '@fortawesome/free-solid-svg-icons';
@@ -16,7 +17,7 @@ import { ProyectoGuardadoOut } from '../../../core/models/sgr.model';
 @Component({
   selector: 'app-mis-proyectos-sgr',
   standalone: true,
-  imports: [FaIconComponent],
+  imports: [FaIconComponent, RouterLink],
   templateUrl: './mis-proyectos.component.html',
   styleUrl: './mis-proyectos.component.css',
 })
@@ -29,6 +30,7 @@ export class MisProyectosSgrComponent implements OnInit {
   readonly faFileLines = faFileLines;
   readonly faFolderOpen = faFolderOpen;
   readonly faMagnifyingGlass = faMagnifyingGlass;
+  readonly faPlus = faPlus;
   readonly faTriangleExclamation = faTriangleExclamation;
   readonly faXmark = faXmark;
 

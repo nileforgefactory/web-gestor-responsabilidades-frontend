@@ -1,8 +1,13 @@
-<div class="mx-auto max-w-[1100px] px-6 py-8">
+<div class="mx-auto max-w-[1100px] px-4 py-6 sm:px-6 sm:py-8">
 
-  <div class="mb-6">
-    <h2 class="text-[22px] font-bold text-ink">Mis proyectos SGR</h2>
-    <p class="mt-1 text-sm text-ink-soft">Proyectos SGR guardados explícitamente, con acceso directo a su Ficha MGA.</p>
+  <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
+    <p class="max-w-xl text-sm text-ink-soft">Proyectos SGR guardados explícitamente, con acceso directo a su Ficha MGA.</p>
+    <a
+      routerLink="/sgr/evaluar-proyecto"
+      class="flex shrink-0 items-center gap-2 rounded-full bg-accent px-4 py-2 text-[13px] font-semibold text-white shadow-sm transition-colors hover:bg-primary"
+    >
+      <fa-icon [icon]="faPlus" /> Nueva propuesta
+    </a>
   </div>
 
   <div class="relative mb-5">
@@ -35,9 +40,13 @@
       @for (p of filteredProyectos(); track p.id) {
         <button
           type="button"
-          class="flex w-full items-center justify-between gap-4 rounded-xl border border-border bg-surface px-5 py-4 text-left shadow-card transition-colors hover:border-accent/50 hover:bg-surface2"
+          class="group relative flex w-full items-center justify-between gap-4 overflow-hidden rounded-2xl border border-border bg-surface px-5 py-4 text-left shadow-card transition-all hover:-translate-y-px hover:border-accent/50 hover:shadow-card-md"
           (click)="abrirFicha(p)"
         >
+          <!-- Hilo de regalías: acento dorado en proyectos elegibles a financiación -->
+          @if (p.elegible) {
+            <span class="absolute inset-y-0 left-0 w-1 bg-gold" aria-hidden="true"></span>
+          }
           <div class="min-w-0 flex-1">
             <div class="mb-1 flex flex-wrap items-center gap-2">
               <span class="truncate text-[15px] font-semibold text-ink">{{ p.nombre }}</span>
@@ -53,7 +62,7 @@
               <span class="text-ink-faint">·</span>
               <span>{{ p.plan_nombre_corto ?? p.plan_titulo }}</span>
               <span class="text-ink-faint">·</span>
-              <span>Guardado: {{ formatDate(p.guardado_en!) }}</span>
+              <span>Guardado: <span class="tabular">{{ formatDate(p.guardado_en!) }}</span></span>
             </div>
           </div>
           <fa-icon [icon]="faArrowRight" class="shrink-0 text-ink-faint" />
@@ -61,10 +70,16 @@
       }
     </div>
   } @else {
-    <div class="flex flex-col items-center gap-2 px-6 py-16">
+    <div class="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border bg-surface px-6 py-16">
       <div class="mb-3 text-5xl text-ink-faint opacity-20"><fa-icon [icon]="faFolderOpen" /></div>
-      <div class="text-lg font-bold text-ink-soft">Sin proyectos guardados</div>
-      <div class="text-center text-sm text-ink-faint">Guarda un proyecto desde "Evaluar proyecto" o la Ficha MGA para verlo aquí.</div>
+      <div class="font-display text-lg font-bold text-ink-soft">Sin proyectos guardados</div>
+      <div class="max-w-sm text-center text-sm text-ink-faint">Evalúa una idea de proyecto y guárdala para construir su Ficha MGA. Aparecerá aquí lista para radicar.</div>
+      <a
+        routerLink="/sgr/evaluar-proyecto"
+        class="mt-4 flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-[13px] font-semibold text-white shadow-sm transition-colors hover:bg-primary"
+      >
+        <fa-icon [icon]="faPlus" /> Evaluar un proyecto
+      </a>
     </div>
   }
 
