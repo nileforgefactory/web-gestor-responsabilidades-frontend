@@ -14,7 +14,6 @@ import {
 import { AuthService } from '../../core/services/auth.service';
 import { SgrDuplicidadSeedService } from '../../core/services/sgr-duplicidad-seed.service';
 import {
-  SidebarComponent,
   SidebarItem,
   SidebarSection,
   SidebarUser,
@@ -37,7 +36,7 @@ const ROL_BADGE: Record<RolCodigo, BadgeVariant> = {
 @Component({
   selector: 'app-admin-sgr-matriz',
   standalone: true,
-  imports: [SidebarComponent, FaIconComponent],
+  imports: [FaIconComponent],
   templateUrl: './admin-sgr-matriz.component.html',
   styleUrl: './admin-sgr-matriz.component.css',
 })
