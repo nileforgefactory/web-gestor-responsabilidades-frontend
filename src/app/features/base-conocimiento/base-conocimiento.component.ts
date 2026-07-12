@@ -16,9 +16,10 @@ import {
   faRotate,
   faLightbulb,
   faPenNib,
+  faPlus,
+  faXmark,
 } from '@fortawesome/free-solid-svg-icons';
 import {
-  SidebarComponent,
   SidebarItem,
   SidebarSection,
   SidebarUser,
@@ -45,7 +46,7 @@ export interface KnowledgeDoc {
 @Component({
   selector: 'app-base-conocimiento',
   standalone: true,
-  imports: [SidebarComponent, FormsModule, DatePipe, DecimalPipe, FaIconComponent],
+  imports: [FormsModule, DatePipe, DecimalPipe, FaIconComponent],
   templateUrl: './base-conocimiento.component.html',
   styleUrl: './base-conocimiento.component.css',
 })
@@ -65,6 +66,8 @@ export class BaseConocimientoComponent implements OnInit {
   readonly faRotate = faRotate;
   readonly faLightbulb = faLightbulb;
   readonly faPenNib = faPenNib;
+  readonly faPlus = faPlus;
+  readonly faXmark = faXmark;
 
   // ── Upload state ─────────────────────────────────────────────────
   activeTab      = signal<UploadTab>('file');
@@ -74,6 +77,8 @@ export class BaseConocimientoComponent implements OnInit {
   uploadError    = signal<string | null>(null);
   uploadSuccess  = signal<string | null>(null);
   pendingFile    = signal<File | null>(null);
+  /** Modal de "Agregar documento" (la carga ya no se muestra inline). */
+  uploadModalOpen = signal(false);
 
   // ── Text form (plain properties — compatibles con ngModel) ──────
   textTitle    = '';
@@ -146,7 +151,7 @@ export class BaseConocimientoComponent implements OnInit {
     this.loadDocuments();
   }
 
-  private async loadDocuments(): Promise<void> {
+  async loadDocuments(): Promise<void> {
     try {
       const docs = await firstValueFrom(
         this.planApi.listConocimiento({ coleccion_id: environment.ragCollection, limit: 500 }),
@@ -166,6 +171,28 @@ export class BaseConocimientoComponent implements OnInit {
     } catch {
       // backend unavailable — list stays empty
     }
+  }
+
+  // ── Modal de carga ────────────────────────────────────────────────
+  openUploadModal(): void {
+    this.resetUpload();
+    this.uploadModalOpen.set(true);
+  }
+
+  closeUploadModal(): void {
+    this.uploadModalOpen.set(false);
+    this.resetUpload();
+    this.loadDocuments();
+  }
+
+  /** Origen inferido del tipo: normas del indexer vs documento cargado. */
+  origenEsIndexer(tipo: string): boolean {
+    const t = (tipo || '').toLowerCase();
+    return ['ley', 'decreto', 'resolucion', 'resolución', 'circular'].includes(t);
+  }
+
+  origenLabel(tipo: string): string {
+    return this.origenEsIndexer(tipo) ? 'Indexer de normas' : 'Documento';
   }
 
   // ── Tab ───────────────────────────────────────────────────────────
