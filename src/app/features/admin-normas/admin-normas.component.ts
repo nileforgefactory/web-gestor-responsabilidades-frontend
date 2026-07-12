@@ -10,6 +10,7 @@ import {
   NormaBase,
   NormaTerritorial,
 } from '../../core/services/background-scraper.service';
+import { PaginatorComponent } from '../../shared/components/paginator/paginator.component';
 
 interface FilaNorma {
   id: string | null;        // null = nacional (solo lectura)
@@ -25,7 +26,7 @@ interface FilaNorma {
 @Component({
   selector: 'app-admin-normas',
   standalone: true,
-  imports: [FormsModule, FaIconComponent],
+  imports: [FormsModule, FaIconComponent, PaginatorComponent],
   templateUrl: './admin-normas.component.html',
   styleUrl: './admin-normas.component.css',
 })
@@ -51,6 +52,10 @@ export class AdminNormasComponent implements OnInit {
   errorMsg = signal<string | null>(null);
   okMsg    = signal<string | null>(null);
   search   = signal('');
+
+  // Paginación
+  page = signal(1);
+  readonly pageSize = 12;
 
   // Modales
   showManual   = signal(false);
@@ -83,12 +88,23 @@ export class AdminNormasComponent implements OnInit {
     );
   });
 
+  readonly filasPagina = computed<FilaNorma[]>(() => {
+    const inicio = (this.page() - 1) * this.pageSize;
+    return this.filas().slice(inicio, inicio + this.pageSize);
+  });
+
   readonly totalCatalogo = computed(() =>
     this.normasBase().length + this.normasTerritoriales().filter(n => n.activo).length);
+
+  onSearch(v: string): void {
+    this.search.set(v);
+    this.page.set(1);
+  }
 
   ngOnInit(): void { this.cargar(); }
 
   cargar(): void {
+    this.page.set(1);
     this.loading.set(true);
     this.api.listarNormasBase().subscribe({ next: b => this.normasBase.set(b), error: () => {} });
     this.api.listarNormasTerritoriales().subscribe({
@@ -159,7 +175,11 @@ export class AdminNormasComponent implements OnInit {
   eliminar(f: FilaNorma): void {
     if (!f.id) return;
     this.api.eliminarNormaTerritorial(f.id).subscribe({
-      next: () => this.normasTerritoriales.update(list => list.filter(x => x.id !== f.id)),
+      next: () => {
+        this.normasTerritoriales.update(list => list.filter(x => x.id !== f.id));
+        const totalPag = Math.max(1, Math.ceil(this.filas().length / this.pageSize));
+        if (this.page() > totalPag) this.page.set(totalPag);
+      },
       error: err => this.errorMsg.set(err.error?.detail ?? 'No se pudo eliminar la norma'),
     });
   }

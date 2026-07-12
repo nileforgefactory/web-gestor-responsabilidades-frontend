@@ -27,6 +27,7 @@ import {
 import { RagApiService } from '../../core/services/rag-api.service';
 import { PlanApiService } from '../../core/services/plan-api.service';
 import { environment } from '../../../environments/environment';
+import { PaginatorComponent } from '../../shared/components/paginator/paginator.component';
 
 export type UploadTab  = 'file' | 'text';
 export type DocStatus  = 'indexado' | 'procesando' | 'pendiente' | 'error';
@@ -46,7 +47,7 @@ export interface KnowledgeDoc {
 @Component({
   selector: 'app-base-conocimiento',
   standalone: true,
-  imports: [FormsModule, DatePipe, DecimalPipe, FaIconComponent],
+  imports: [FormsModule, DatePipe, DecimalPipe, FaIconComponent, PaginatorComponent],
   templateUrl: './base-conocimiento.component.html',
   styleUrl: './base-conocimiento.component.css',
 })
@@ -111,6 +112,19 @@ export class BaseConocimientoComponent implements OnInit {
       d.nombre.toLowerCase().includes(q) || (d.tipo ?? '').toLowerCase().includes(q),
     );
   });
+
+  // Paginación
+  page = signal(1);
+  readonly pageSize = 10;
+  docsPagina = computed(() => {
+    const inicio = (this.page() - 1) * this.pageSize;
+    return this.filteredDocs().slice(inicio, inicio + this.pageSize);
+  });
+
+  onSearch(v: string): void {
+    this.search.set(v);
+    this.page.set(1);
+  }
 
   // ── Sidebar ──────────────────────────────────────────────────────
   readonly sidebarUser: SidebarUser = {

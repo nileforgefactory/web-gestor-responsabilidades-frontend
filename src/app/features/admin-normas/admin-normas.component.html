@@ -33,7 +33,7 @@
           type="text"
           placeholder="Buscar por código, tipo, origen o territorio…"
           [value]="search()"
-          (input)="search.set($any($event.target).value)"
+          (input)="onSearch($any($event.target).value)"
         />
       </div>
       <button
@@ -84,7 +84,7 @@
               </tr>
             </thead>
             <tbody>
-              @for (f of filas(); track f.origen + f.codigo) {
+              @for (f of filasPagina(); track f.origen + f.codigo) {
                 <tr class="border-b border-border/70 transition-colors last:border-b-0 hover:bg-accent/[.03]">
                   <td class="px-5 py-3 align-middle">
                     <span
@@ -132,6 +132,8 @@
           </table>
         </div>
       }
+
+      <app-paginator [total]="filas().length" [page]="page()" [pageSize]="pageSize" (pageChange)="page.set($event)" />
     </div>
   </main>
 </div>
