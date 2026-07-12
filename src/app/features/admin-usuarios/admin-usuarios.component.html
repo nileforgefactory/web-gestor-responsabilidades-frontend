@@ -65,10 +65,10 @@
         type="text"
         placeholder="Buscar por nombre, correo o territorio…"
         [value]="search()"
-        (input)="search.set($any($event.target).value)"
+        (input)="onSearch($any($event.target).value)"
       />
       @if (search()) {
-        <button class="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-[13px] text-ink-faint" (click)="search.set('')">
+        <button class="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-[13px] text-ink-faint" (click)="onSearch('')">
           <fa-icon [icon]="faXmark" />
         </button>
       }
@@ -137,7 +137,7 @@
               </tr>
             </thead>
             <tbody>
-              @for (u of filteredUsers(); track u.id) {
+              @for (u of usersPagina(); track u.id) {
                 <tr class="group" [class.bg-gold-soft]="isSelf(u.id)">
                   <!-- Avatar + nombre + email -->
                   <td class="border-t border-border py-3.5 px-4 align-middle transition-colors group-hover:bg-surface2">
@@ -212,6 +212,8 @@
             </tbody>
           </table>
         </div>
+
+        <app-paginator [total]="filteredUsers().length" [page]="page()" [pageSize]="pageSize" (pageChange)="page.set($event)" />
       }
     </div>
 

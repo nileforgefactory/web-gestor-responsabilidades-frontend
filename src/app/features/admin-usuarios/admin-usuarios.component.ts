@@ -26,6 +26,7 @@ import {
   SidebarSection,
   SidebarUser,
 } from '../../shared/components/sidebar/sidebar.component';
+import { PaginatorComponent } from '../../shared/components/paginator/paginator.component';
 import { BadgeComponent, BadgeVariant } from '../../shared/components/badge/badge.component';
 
 const ROL_LABEL: Record<RolCodigo, string> = {
@@ -43,7 +44,7 @@ const ROL_BADGE: Record<RolCodigo, BadgeVariant> = {
 @Component({
   selector: 'app-admin-usuarios',
   standalone: true,
-  imports: [BadgeComponent, ReactiveFormsModule, FaIconComponent],
+  imports: [BadgeComponent, ReactiveFormsModule, FaIconComponent, PaginatorComponent],
   templateUrl: './admin-usuarios.component.html',
   styleUrl:    './admin-usuarios.component.css',
 })
@@ -118,6 +119,19 @@ export class AdminUsuariosComponent implements OnInit {
       u.territorio.coleccion_id.toLowerCase().includes(q),
     );
   });
+
+  // Paginación
+  page = signal(1);
+  readonly pageSize = 10;
+  usersPagina = computed(() => {
+    const inicio = (this.page() - 1) * this.pageSize;
+    return this.filteredUsers().slice(inicio, inicio + this.pageSize);
+  });
+
+  onSearch(v: string): void {
+    this.search.set(v);
+    this.page.set(1);
+  }
 
   totalCount = computed(() => this.users().length);
   adminCount = computed(() => this.users().filter(u => u.rol === 'administrador').length);
