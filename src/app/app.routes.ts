@@ -57,6 +57,13 @@ export const routes: Routes = [
           import('./features/admin-sgr-matriz/admin-sgr-matriz.component')
             .then(m => m.AdminSgrMatrizComponent),
       },
+      {
+        path: 'admin/normas',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/admin-normas/admin-normas.component')
+            .then(m => m.AdminNormasComponent),
+      },
 
       // ── SGR — Caja de Herramientas ─────────────────────────────────────
       {
