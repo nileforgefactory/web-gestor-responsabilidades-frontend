@@ -38,10 +38,12 @@
   } @else if (filteredProyectos().length) {
     <div class="flex flex-col gap-3">
       @for (p of filteredProyectos(); track p.id) {
-        <button
-          type="button"
+        <div
+          role="button"
+          tabindex="0"
           class="group relative flex w-full items-center justify-between gap-4 overflow-hidden rounded-2xl border border-border bg-surface px-5 py-4 text-left shadow-card transition-all hover:-translate-y-px hover:border-accent/50 hover:shadow-card-md"
           (click)="abrirFicha(p)"
+          (keydown.enter)="abrirFicha(p)"
         >
           <!-- Hilo de regalías: acento dorado en proyectos elegibles a financiación -->
           @if (p.elegible) {
@@ -65,8 +67,19 @@
               <span>Guardado: <span class="tabular">{{ formatDate(p.guardado_en!) }}</span></span>
             </div>
           </div>
-          <fa-icon [icon]="faArrowRight" class="shrink-0 text-ink-faint" />
-        </button>
+          <div class="flex shrink-0 items-center gap-1">
+            <button
+              type="button"
+              class="rounded-lg p-2 text-ink-faint transition-colors hover:bg-danger-soft hover:text-danger disabled:opacity-50"
+              [disabled]="eliminando() === p.id"
+              (click)="eliminarProyecto(p, $event)"
+              title="Eliminar proyecto"
+            >
+              <fa-icon [icon]="faTrashCan" />
+            </button>
+            <fa-icon [icon]="faArrowRight" class="text-ink-faint" />
+          </div>
+        </div>
       }
     </div>
   } @else {

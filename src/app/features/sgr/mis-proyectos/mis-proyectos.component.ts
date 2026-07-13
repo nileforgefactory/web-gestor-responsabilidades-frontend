@@ -8,6 +8,7 @@ import {
   faFolderOpen,
   faMagnifyingGlass,
   faPlus,
+  faTrashCan,
   faTriangleExclamation,
   faXmark,
 } from '@fortawesome/free-solid-svg-icons';
@@ -31,13 +32,15 @@ export class MisProyectosSgrComponent implements OnInit {
   readonly faFolderOpen = faFolderOpen;
   readonly faMagnifyingGlass = faMagnifyingGlass;
   readonly faPlus = faPlus;
+  readonly faTrashCan = faTrashCan;
   readonly faTriangleExclamation = faTriangleExclamation;
   readonly faXmark = faXmark;
 
-  loading   = signal(true);
-  errorMsg  = signal<string | null>(null);
-  proyectos = signal<ProyectoGuardadoOut[]>([]);
-  search    = signal('');
+  loading    = signal(true);
+  errorMsg   = signal<string | null>(null);
+  proyectos  = signal<ProyectoGuardadoOut[]>([]);
+  search     = signal('');
+  eliminando = signal<string | null>(null);
 
   filteredProyectos = computed(() => {
     const q = this.search().toLowerCase().trim();
@@ -64,6 +67,23 @@ export class MisProyectosSgrComponent implements OnInit {
 
   abrirFicha(p: ProyectoGuardadoOut): void {
     this.router.navigate(['/sgr/ficha-mga', p.id]);
+  }
+
+  eliminarProyecto(p: ProyectoGuardadoOut, event: Event): void {
+    event.stopPropagation();
+    if (!confirm(`¿Eliminar "${p.nombre}"? Esta acción no se puede deshacer.`)) return;
+
+    this.eliminando.set(p.id);
+    this.sgr.eliminarProyecto(p.id).subscribe({
+      next: () => {
+        this.proyectos.update(ps => ps.filter(x => x.id !== p.id));
+        this.eliminando.set(null);
+      },
+      error: () => {
+        alert('No se pudo eliminar el proyecto. Intenta de nuevo.');
+        this.eliminando.set(null);
+      },
+    });
   }
 
   formatDate(iso: string): string {
