@@ -178,7 +178,7 @@ export class BaseConocimientoComponent implements OnInit {
   async loadDocuments(): Promise<void> {
     try {
       const docs = await firstValueFrom(
-        this.planApi.listConocimiento({ coleccion_id: environment.ragCollection, limit: 500 }),
+        this.planApi.listConocimiento({ limit: 500 }),
       );
       // Always replace mock data when backend responds, even if empty
       this.documents.set(
