@@ -1,13 +1,16 @@
-<div class="flex min-h-[calc(100vh-var(--h-nav))]">
-
-  <!-- ── Sidebar ── -->
-  <app-sidebar
-    [sections]="sidebarSections()"
-    (itemClick)="onSidebarClick($event)"
-  />
+<div class="min-h-[calc(100vh-var(--h-nav))]">
 
   <!-- ── Main content ── -->
-  <main class="min-w-0 flex-1 overflow-y-auto px-8 py-7 max-[1100px]:px-5 max-[1100px]:py-5">
+  <main class="min-w-0 overflow-y-auto px-8 py-7 max-[1100px]:px-5 max-[1100px]:py-5">
+
+    <!-- Índice del plan (overlay) -->
+    <div class="mb-4">
+      <app-sidebar
+        [sections]="sidebarSections()"
+        label="Secciones del plan"
+        (itemClick)="onSidebarClick($event)"
+      />
+    </div>
 
     @if (plan(); as p) {
 
@@ -45,7 +48,7 @@
           }
         </div>
 
-        <h1 class="relative z-10 mb-2.5 max-w-[780px] text-xl font-extrabold leading-snug text-white max-[900px]:text-[17px]">{{ p.title }}</h1>
+        <h1 class="font-display relative z-10 mb-2.5 max-w-[780px] text-xl font-extrabold leading-snug text-white max-[900px]:text-[17px]">{{ p.title }}</h1>
 
         <div class="relative z-10 mb-3.5 flex flex-wrap gap-4 text-sm text-white/75">
           <span>{{ p.entityIcon }} {{ p.entity }}</span>

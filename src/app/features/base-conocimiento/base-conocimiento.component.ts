@@ -16,9 +16,10 @@ import {
   faRotate,
   faLightbulb,
   faPenNib,
+  faPlus,
+  faXmark,
 } from '@fortawesome/free-solid-svg-icons';
 import {
-  SidebarComponent,
   SidebarItem,
   SidebarSection,
   SidebarUser,
@@ -26,6 +27,7 @@ import {
 import { RagApiService } from '../../core/services/rag-api.service';
 import { PlanApiService } from '../../core/services/plan-api.service';
 import { environment } from '../../../environments/environment';
+import { PaginatorComponent } from '../../shared/components/paginator/paginator.component';
 
 export type UploadTab  = 'file' | 'text';
 export type DocStatus  = 'indexado' | 'procesando' | 'pendiente' | 'error';
@@ -45,7 +47,7 @@ export interface KnowledgeDoc {
 @Component({
   selector: 'app-base-conocimiento',
   standalone: true,
-  imports: [SidebarComponent, FormsModule, DatePipe, DecimalPipe, FaIconComponent],
+  imports: [FormsModule, DatePipe, DecimalPipe, FaIconComponent, PaginatorComponent],
   templateUrl: './base-conocimiento.component.html',
   styleUrl: './base-conocimiento.component.css',
 })
@@ -65,6 +67,8 @@ export class BaseConocimientoComponent implements OnInit {
   readonly faRotate = faRotate;
   readonly faLightbulb = faLightbulb;
   readonly faPenNib = faPenNib;
+  readonly faPlus = faPlus;
+  readonly faXmark = faXmark;
 
   // ── Upload state ─────────────────────────────────────────────────
   activeTab      = signal<UploadTab>('file');
@@ -74,11 +78,14 @@ export class BaseConocimientoComponent implements OnInit {
   uploadError    = signal<string | null>(null);
   uploadSuccess  = signal<string | null>(null);
   pendingFile    = signal<File | null>(null);
+  /** Modal de "Agregar documento" (la carga ya no se muestra inline). */
+  uploadModalOpen = signal(false);
 
   // ── Text form (plain properties — compatibles con ngModel) ──────
   textTitle    = '';
   textDocType  = 'ley';
   textContent  = '';
+  readonly maxCharsTexto = 8000;
 
   isSubmittingText = signal(false);
   textError        = signal<string | null>(null);
@@ -92,9 +99,32 @@ export class BaseConocimientoComponent implements OnInit {
   // ── Knowledge base documents ─────────────────────────────────────
   documents = signal<KnowledgeDoc[]>([]);
 
+  search       = signal('');
   totalDocs    = computed(() => this.documents().length);
   totalChunks  = computed(() => this.documents().reduce((a, d) => a + d.chunks, 0));
   indexedCount = computed(() => this.documents().filter(d => d.status === 'indexado').length);
+
+  filteredDocs = computed(() => {
+    const q = this.search().toLowerCase().trim();
+    const docs = this.documents();
+    if (!q) return docs;
+    return docs.filter(d =>
+      d.nombre.toLowerCase().includes(q) || (d.tipo ?? '').toLowerCase().includes(q),
+    );
+  });
+
+  // Paginación
+  page = signal(1);
+  readonly pageSize = 10;
+  docsPagina = computed(() => {
+    const inicio = (this.page() - 1) * this.pageSize;
+    return this.filteredDocs().slice(inicio, inicio + this.pageSize);
+  });
+
+  onSearch(v: string): void {
+    this.search.set(v);
+    this.page.set(1);
+  }
 
   // ── Sidebar ──────────────────────────────────────────────────────
   readonly sidebarUser: SidebarUser = {
@@ -145,10 +175,10 @@ export class BaseConocimientoComponent implements OnInit {
     this.loadDocuments();
   }
 
-  private async loadDocuments(): Promise<void> {
+  async loadDocuments(): Promise<void> {
     try {
       const docs = await firstValueFrom(
-        this.planApi.listConocimiento({ coleccion_id: environment.ragCollection, limit: 500 }),
+        this.planApi.listConocimiento({ limit: 500 }),
       );
       // Always replace mock data when backend responds, even if empty
       this.documents.set(
@@ -165,6 +195,28 @@ export class BaseConocimientoComponent implements OnInit {
     } catch {
       // backend unavailable — list stays empty
     }
+  }
+
+  // ── Modal de carga ────────────────────────────────────────────────
+  openUploadModal(): void {
+    this.resetUpload();
+    this.uploadModalOpen.set(true);
+  }
+
+  closeUploadModal(): void {
+    this.uploadModalOpen.set(false);
+    this.resetUpload();
+    this.loadDocuments();
+  }
+
+  /** Origen inferido del tipo: normas del indexer vs documento cargado. */
+  origenEsIndexer(tipo: string): boolean {
+    const t = (tipo || '').toLowerCase();
+    return ['ley', 'decreto', 'resolucion', 'resolución', 'circular'].includes(t);
+  }
+
+  origenLabel(tipo: string): string {
+    return this.origenEsIndexer(tipo) ? 'Indexer de normas' : 'Documento';
   }
 
   // ── Tab ───────────────────────────────────────────────────────────
@@ -261,7 +313,7 @@ export class BaseConocimientoComponent implements OnInit {
 
   // ── Text ingestion ────────────────────────────────────────────────
   onSubmitText(): void {
-    if (!this.textContent.trim()) return;
+    if (!this.textContent.trim() || this.textContent.length > this.maxCharsTexto) return;
     this.isSubmittingText.set(true);
     this.textError.set(null);
     this.textSuccess.set(null);

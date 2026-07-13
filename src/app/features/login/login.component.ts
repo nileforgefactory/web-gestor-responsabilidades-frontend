@@ -43,7 +43,7 @@ export class LoginComponent {
     this.errorMsg.set(null);
 
     this.auth.login({ email, password }).subscribe({
-      next: () => this.router.navigate(['/cargar-plan']),
+      next: () => this.router.navigateByUrl('/'),
       error: (err: Error) => {
         this.errorMsg.set(err.message ?? 'Credenciales incorrectas.');
         this.loading.set(false);

@@ -1,321 +1,358 @@
-<div class="flex min-h-[calc(100vh-var(--h-nav))]">
+<div class="min-h-[calc(100vh-var(--h-nav))]">
 
-  <app-sidebar
-    [sections]="sidebarSections()"
-    [user]="sidebarUser"
-    (itemClick)="onSidebarItemClick($event)"
-  />
-
-  <main class="min-w-0 flex-1 overflow-y-auto p-7 max-[1100px]:p-5">
+  <main class="min-w-0 overflow-y-auto p-7 max-[1100px]:p-5 max-[640px]:p-4">
 
     <!-- ── Page header ── -->
-    <div class="mb-6">
-      <div class="mb-1.5 text-xs text-ink-faint">RAG / Base de Conocimiento</div>
-      <div class="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h2 class="text-[22px] font-bold text-ink">Base de conocimiento</h2>
-          <p class="mt-1 max-w-[60ch] text-sm text-ink-soft">Indexa leyes, decretos y documentos para alimentar el motor de búsqueda semántica.</p>
+    <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
+      <div>
+        <div class="mb-1.5 text-xs text-ink-faint">RAG / Base de Conocimiento</div>
+        <h2 class="font-display text-[22px] font-bold text-ink">Base de conocimiento</h2>
+        <p class="mt-1 max-w-[60ch] text-sm text-ink-soft">Leyes y documentos indexados que alimentan el motor de búsqueda semántica.</p>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="flex flex-col items-center rounded-[10px] border border-border bg-surface px-3.5 py-2">
+          <span class="text-lg font-bold tabular text-ink">{{ totalDocs() }}</span>
+          <span class="text-[10px] uppercase tracking-wide text-ink-faint">docs</span>
         </div>
-        <div class="flex flex-wrap items-center gap-2">
-          <div class="flex min-w-[72px] flex-col items-center rounded-[10px] border border-border bg-surface px-3.5 py-2">
-            <span class="text-lg font-bold tabular-nums text-ink">{{ totalDocs() }}</span>
-            <span class="text-[10px] uppercase tracking-wide text-ink-faint">docs</span>
-          </div>
-          <div class="flex min-w-[72px] flex-col items-center rounded-[10px] border border-accent/35 bg-accent/5 px-3.5 py-2">
-            <span class="text-lg font-bold tabular-nums text-ink">{{ totalChunks() }}</span>
-            <span class="text-[10px] uppercase tracking-wide text-ink-faint">fragmentos</span>
-          </div>
-          <div class="flex min-w-[72px] flex-col items-center rounded-[10px] border border-success/35 bg-success/5 px-3.5 py-2">
-            <span class="text-lg font-bold tabular-nums text-ink">{{ indexedCount() }}</span>
-            <span class="text-[10px] uppercase tracking-wide text-ink-faint">activos</span>
-          </div>
+        <div class="flex flex-col items-center rounded-[10px] border border-accent/35 bg-accent/5 px-3.5 py-2">
+          <span class="text-lg font-bold tabular text-ink">{{ totalChunks() }}</span>
+          <span class="text-[10px] uppercase tracking-wide text-ink-faint">fragmentos</span>
+        </div>
+        <div class="flex flex-col items-center rounded-[10px] border border-success/35 bg-success/5 px-3.5 py-2">
+          <span class="text-lg font-bold tabular text-ink">{{ indexedCount() }}</span>
+          <span class="text-[10px] uppercase tracking-wide text-ink-faint">activos</span>
         </div>
       </div>
     </div>
 
-    <!-- ── Two-column layout ── -->
-    <div class="flex items-start gap-5 max-[800px]:flex-col">
+    <!-- ── Toolbar: búsqueda + acción ── -->
+    <div class="mb-4 flex flex-wrap items-center gap-2">
+      <div class="relative min-w-[220px] flex-1">
+        <span class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-faint"><fa-icon [icon]="faMagnifyingGlass" /></span>
+        <input
+          class="w-full rounded-full border border-border bg-surface py-2.5 pl-10 pr-4 text-sm text-ink outline-none transition-colors focus:border-accent focus:shadow-[0_0_0_3px_rgba(47,111,237,0.12)] placeholder:text-ink-faint"
+          type="text"
+          placeholder="Buscar documento por nombre o tipo…"
+          [value]="search()"
+          (input)="onSearch($any($event.target).value)"
+        />
+      </div>
+      <button
+        class="flex shrink-0 items-center gap-2 rounded-full bg-accent px-4 py-2.5 text-[13px] font-semibold text-white shadow-sm transition-colors hover:bg-primary"
+        (click)="openUploadModal()"
+      >
+        <fa-icon [icon]="faPlus" /> Agregar documento
+      </button>
+    </div>
 
-      <!-- ═══ LEFT: Upload panel ═══════════════════════════════════ -->
-      <div class="flex w-[360px] shrink-0 flex-col gap-4 max-[1100px]:w-[320px] max-[800px]:w-full">
-        <div class="overflow-hidden rounded-xl border border-border bg-surface shadow-card">
-          <div class="flex items-center gap-2.5 border-b border-border px-4.5 py-4">
-            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent">
-              <fa-icon [icon]="faBolt" />
-            </div>
-            <div>
-              <div class="text-sm font-semibold text-ink">Indexar documento</div>
-              <div class="mt-px text-xs text-ink-soft">Vectoriza y añade a la base RAG</div>
-            </div>
-          </div>
-          <div class="p-4.5">
-
-            <!-- Tabs -->
-            <div class="mb-4 flex gap-0.5 rounded-[10px] bg-surface2 p-1">
-              <button
-                class="flex-1 rounded-[7px] px-3 py-1.5 text-xs font-medium text-ink-soft transition-all"
-                [class.bg-surface]="activeTab() === 'file'"
-                [class.text-ink]="activeTab() === 'file'"
-                [class.shadow-sm]="activeTab() === 'file'"
-                (click)="setTab('file')"
-              >
-                <fa-icon [icon]="faFolderOpen" class="mr-1" /> Subir archivo
-              </button>
-              <button
-                class="flex-1 rounded-[7px] px-3 py-1.5 text-xs font-medium text-ink-soft transition-all"
-                [class.bg-surface]="activeTab() === 'text'"
-                [class.text-ink]="activeTab() === 'text'"
-                [class.shadow-sm]="activeTab() === 'text'"
-                (click)="setTab('text')"
-              >
-                <fa-icon [icon]="faPenNib" class="mr-1" /> Ingresar texto
-              </button>
-            </div>
-
-            <!-- ── FILE TAB ── -->
-            @if (activeTab() === 'file') {
-              <div
-                class="group relative overflow-hidden rounded-2xl border-2 border-dashed border-border bg-bg px-5 py-8 text-center transition-all hover:border-accent hover:bg-accent/[.03]"
-                [class.!border-solid]="isDragging() || uploadSuccess() !== null"
-                [class.!border-accent]="isDragging()"
-                [class.!bg-accent/[.07]]="isDragging()"
-                [class.!shadow-[0_0_0_4px_rgba(59,130,246,.15)]]="isDragging()"
-                [class.!border-success]="uploadSuccess() !== null"
-                [class.!bg-success/5]="uploadSuccess() !== null"
-                [class.cursor-wait]="isUploading()"
-                (dragover)="onDragOver($event)"
-                (dragleave)="onDragLeave()"
-                (drop)="onDrop($event)"
-              >
-                @if (!isUploading()) {
-                  <div class="relative z-[1] flex flex-col items-center gap-1.5">
-                    <div class="mb-0.5 text-4xl text-ink-soft">
-                      @if (uploadSuccess()) { <fa-icon [icon]="faCircleCheck" class="text-success" /> }
-                      @else if (isDragging()) { <fa-icon [icon]="faDownload" class="text-accent" /> }
-                      @else { <fa-icon [icon]="faFolderOpen" /> }
-                    </div>
-                    <div class="text-sm font-semibold text-ink">
-                      @if (isDragging())      { Suelta para indexar }
-                      @else if (uploadSuccess()) { Documento indexado }
-                      @else { Arrastra un archivo aquí }
-                    </div>
-                    <div class="text-xs text-ink-faint">PDF, TXT, Markdown</div>
-
-                    @if (uploadSuccess()) {
-                      <div class="mt-0.5 text-xs text-success">{{ uploadSuccess() }}</div>
-                      <button class="mt-3 inline-flex items-center gap-1.5 rounded-lg border-[1.5px] border-accent bg-transparent px-4.5 py-2 text-[13px] font-semibold text-accent transition hover:opacity-90" (click)="resetUpload()">Subir otro</button>
-                    } @else {
-                      <label class="mt-3 inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent px-4.5 py-2 text-[13px] font-semibold text-white transition hover:opacity-90">
-                        Seleccionar archivo
-                        <input type="file" accept=".pdf,.txt,.md" (change)="onFileChange($event)" hidden />
-                      </label>
-                    }
-                  </div>
-                } @else {
-                  <div class="relative z-[1] flex flex-col items-center gap-1.5">
-                    <div class="mb-1 animate-spin text-3xl text-accent">
-                      <fa-icon [icon]="faRotate" />
-                    </div>
-                    <div class="text-sm font-semibold text-ink">Indexando…</div>
-                    <div class="mt-1.5 h-[5px] w-full overflow-hidden rounded-full bg-border">
-                      <div class="h-full rounded-full bg-gradient-to-r from-accent to-success transition-[width] duration-300 ease-out" [style.width.%]="uploadProgress()"></div>
-                    </div>
-                    <div class="text-xs text-ink-faint">{{ uploadProgress() | number:'1.0-0' }}% completado</div>
-                  </div>
-                }
-              </div>
-
-              @if (uploadError()) {
-                <div class="mt-2.5 rounded-lg border border-danger/25 bg-danger-soft px-3 py-2 text-xs leading-relaxed text-danger">
-                  <fa-icon [icon]="faTriangleExclamation" class="mr-1" />{{ uploadError() }}
-                </div>
-              }
-            }
-
-            <!-- ── TEXT TAB ── -->
-            @if (activeTab() === 'text') {
-              <div class="flex flex-col gap-3">
-                <div class="flex flex-col gap-1.5">
-                  <label class="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">Título</label>
-                  <input
-                    class="w-full rounded-lg border-[1.5px] border-border bg-bg px-3 py-2 text-[13px] text-ink transition-colors focus:border-accent focus:outline-none"
-                    type="text"
-                    placeholder="Ej: Ley 115 de 1994 — Educación"
-                    [(ngModel)]="textTitle"
-                  />
-                </div>
-                <div class="flex flex-col gap-1.5">
-                  <label class="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">Tipo de norma</label>
-                  <select class="w-full rounded-lg border-[1.5px] border-border bg-bg px-3 py-2 text-[13px] text-ink transition-colors focus:border-accent focus:outline-none" [(ngModel)]="textDocType">
-                    <option value="ley">Ley</option>
-                    <option value="decreto">Decreto</option>
-                    <option value="resolucion">Resolución</option>
-                    <option value="circular">Circular</option>
-                    <option value="otro">Otro</option>
-                  </select>
-                </div>
-                <div class="flex flex-col gap-1.5">
-                  <label class="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">Contenido del documento</label>
-                  <textarea
-                    class="w-full resize-y rounded-lg border-[1.5px] border-border bg-bg px-3 py-2 font-mono text-xs leading-relaxed text-ink transition-colors focus:border-accent focus:outline-none"
-                    rows="9"
-                    placeholder="Pega o escribe el texto completo de la norma…"
-                    [(ngModel)]="textContent"
-                  ></textarea>
-                </div>
-
-                @if (textError())   { <div class="rounded-lg border border-danger/25 bg-danger-soft px-3 py-2 text-xs leading-relaxed text-danger"><fa-icon [icon]="faTriangleExclamation" class="mr-1" />{{ textError() }}</div> }
-                @if (textSuccess()) { <div class="rounded-lg border border-success/25 bg-success-soft px-3 py-2 text-xs leading-relaxed text-success"><fa-icon [icon]="faCircleCheck" class="mr-1" />{{ textSuccess() }}</div> }
-
-                <button
-                  class="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-accent px-4.5 py-2 text-[13px] font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45"
-                  [disabled]="isSubmittingText() || !textContent.trim()"
-                  (click)="onSubmitText()"
-                >
-                  @if (isSubmittingText()) { <fa-icon [icon]="faRotate" class="animate-spin" /> Indexando… }
-                  @else { <fa-icon [icon]="faBolt" /> Vectorizar e indexar }
-                </button>
-              </div>
-            }
-
-          </div>
+    <!-- ── Tabla de documentos ── -->
+    <div class="overflow-hidden rounded-xl border border-border bg-surface shadow-card">
+      <div class="flex items-center gap-2.5 border-b border-border px-5 py-4">
+        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-white">
+          <fa-icon [icon]="faFolderOpen" />
         </div>
-
-        <!-- ── Service health card ── -->
-        <div class="overflow-hidden rounded-xl border border-border bg-surface shadow-card">
-          <div class="flex items-center gap-2.5 border-b border-border px-4 py-3">
-            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-success-soft text-success">
-              <fa-icon [icon]="faLink" />
-            </div>
-            <div>
-              <div class="text-sm font-semibold text-ink">Servicios RAG</div>
-              <div class="mt-px text-xs text-ink-soft">Estado de conexión</div>
-            </div>
-            <div
-              class="ml-auto h-2.5 w-2.5 shrink-0 rounded-full"
-              [class.bg-success]="apiStatus() === 'online'"
-              [class.animate-pulse]="apiStatus() === 'online' || apiStatus() === 'checking'"
-              [class.bg-danger]="apiStatus() === 'offline'"
-              [class.bg-gold]="apiStatus() === 'checking'"
-            ></div>
-          </div>
-          <div class="p-4">
-            <div class="mb-3 flex flex-col gap-2">
-              <div class="flex items-center gap-2 text-xs">
-                <span class="min-w-[72px] font-semibold text-ink">API FastAPI</span>
-                <code class="flex-1 font-mono text-[11px] text-ink-faint">:8000</code>
-                <span
-                  class="whitespace-nowrap text-[11px] font-semibold"
-                  [class.text-success]="apiStatus() === 'online'"
-                  [class.text-danger]="apiStatus() === 'offline'"
-                  [class.text-gold]="apiStatus() === 'checking'"
-                >{{ apiStatusLabel(apiStatus()) }}</span>
-              </div>
-              <div class="flex items-center gap-2 text-xs">
-                <span class="min-w-[72px] font-semibold text-ink">Qdrant</span>
-                <code class="flex-1 font-mono text-[11px] text-ink-faint">Vector DB</code>
-                <span
-                  class="whitespace-nowrap text-[11px] font-semibold"
-                  [class.text-success]="qdrantStatus() === 'online'"
-                  [class.text-danger]="qdrantStatus() === 'offline'"
-                  [class.text-gold]="qdrantStatus() === 'checking'"
-                >{{ apiStatusLabel(qdrantStatus()) }}</span>
-              </div>
-              <div class="flex items-center gap-2 text-xs">
-                <span class="min-w-[72px] font-semibold text-ink">Ollama</span>
-                <code class="flex-1 font-mono text-[11px] text-ink-faint">LLM local</code>
-                <span
-                  class="whitespace-nowrap text-[11px] font-semibold"
-                  [class.text-success]="ollamaStatus() === 'online'"
-                  [class.text-danger]="ollamaStatus() === 'offline'"
-                  [class.text-gold]="ollamaStatus() === 'checking'"
-                >{{ apiStatusLabel(ollamaStatus()) }}</span>
-              </div>
-            </div>
-            <button class="w-full rounded-lg border-[1.5px] border-border bg-transparent py-1.5 text-xs font-semibold text-accent transition-colors hover:border-accent hover:bg-accent/5" (click)="checkApiHealth()">
-              <fa-icon [icon]="faMagnifyingGlass" class="mr-1" /> Verificar conexión
-            </button>
-          </div>
+        <div class="min-w-0">
+          <div class="font-display text-sm font-bold text-ink">Documentos indexados</div>
+          <div class="mt-px truncate text-xs text-ink-soft">{{ totalChunks() }} fragmentos vectoriales · colección <code class="rounded border border-border bg-surface2 px-1.5 py-px font-mono text-[11px] text-accent">normas_legales</code></div>
         </div>
+        <button
+          class="ml-auto grid h-8 w-8 shrink-0 place-items-center rounded-lg text-ink-faint transition-colors hover:bg-surface3 hover:text-ink"
+          (click)="loadDocuments()"
+          title="Actualizar lista"
+          aria-label="Actualizar"
+        >
+          <fa-icon [icon]="faRotate" />
+        </button>
       </div>
 
-      <!-- ═══ RIGHT: Document inventory ══════════════════════════════ -->
-      <div class="flex min-w-0 flex-1 flex-col gap-4">
-        <div class="overflow-hidden rounded-xl border border-border bg-surface shadow-card">
-          <div class="flex items-center gap-2.5 border-b border-border px-4.5 py-4">
-            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-white">
-              <fa-icon [icon]="faFolderOpen" />
-            </div>
-            <div>
-              <div class="text-sm font-semibold text-ink">Documentos indexados</div>
-              <div class="mt-px text-xs text-ink-soft">{{ totalChunks() }} fragmentos vectoriales · colección <code class="rounded border border-border bg-surface2 px-1.5 py-px font-mono text-[11px] text-accent">normas_legales</code></div>
-            </div>
-            <div class="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary text-xs font-bold text-white">{{ totalDocs() }}</div>
-          </div>
-
-          @if (documents().length === 0) {
-            <div class="px-5 py-12 text-center">
-              <div class="mb-2 text-4xl text-ink-faint"><fa-icon [icon]="faInbox" /></div>
-              <div class="mb-1 text-sm font-semibold text-ink">Base de conocimiento vacía</div>
-              <div class="text-xs text-ink-faint">Sube tu primer documento para comenzar.</div>
-            </div>
-          } @else {
-            <div class="flex flex-col">
-              @for (doc of documents(); track doc.id) {
-                <div class="flex items-center gap-2.5 border-b border-border px-4.5 py-3 transition-colors last:border-b-0 hover:bg-accent/[.03]" [class.opacity-65]="doc.status === 'procesando'">
-                  <span
-                    class="min-w-16 shrink-0 rounded px-1.5 py-1 text-center text-[10px] font-bold uppercase tracking-wide whitespace-nowrap"
-                    [class.bg-accent/10]="doc.tipo === 'ley'" [class.text-accent]="doc.tipo === 'ley'"
-                    [class.bg-purple/10]="doc.tipo === 'decreto'" [class.text-purple]="doc.tipo === 'decreto'"
-                    [class.bg-gold/10]="doc.tipo === 'resolucion'" [class.text-gold]="doc.tipo === 'resolucion'"
-                    [class.bg-success/10]="doc.tipo === 'circular'" [class.text-success]="doc.tipo === 'circular'"
-                    [class.bg-danger/10]="doc.tipo === 'pdf'" [class.text-danger]="doc.tipo === 'pdf'"
-                    [class.bg-ink-faint/10]="doc.tipo !== 'ley' && doc.tipo !== 'decreto' && doc.tipo !== 'resolucion' && doc.tipo !== 'circular' && doc.tipo !== 'pdf'"
-                    [class.text-ink-soft]="doc.tipo !== 'ley' && doc.tipo !== 'decreto' && doc.tipo !== 'resolucion' && doc.tipo !== 'circular' && doc.tipo !== 'pdf'"
-                  >{{ doc.tipo }}</span>
-                  <div class="min-w-0 flex-1">
-                    <div class="overflow-hidden text-ellipsis whitespace-nowrap text-[13px] font-medium text-ink">{{ doc.nombre }}</div>
-                    <div class="mt-0.5 flex items-center gap-1.5">
-                      <span class="font-mono text-[11px] text-ink-faint">{{ doc.chunks }} chunks</span>
-                      <span class="text-[10px] text-border">·</span>
-                      <span class="font-mono text-[11px] text-ink-faint">{{ doc.fecha | date:'dd MMM yyyy' }}</span>
-                      @if (doc.size) {
-                        <span class="text-[10px] text-border">·</span>
-                        <span class="font-mono text-[11px] text-ink-faint">{{ doc.size }}</span>
-                      }
-                    </div>
-                  </div>
-                  <div
-                    class="shrink-0 whitespace-nowrap text-[11px] font-semibold"
-                    [class.text-success]="doc.status === 'indexado'"
-                    [class.text-accent]="doc.status === 'procesando'"
-                    [class.text-danger]="doc.status === 'error'"
-                  >
-                    @if (doc.status === 'indexado')   { <fa-icon [icon]="faCircleCheck" /> indexado }
-                    @if (doc.status === 'procesando') { <fa-icon [icon]="faRotate" class="animate-spin" /> procesando }
-                    @if (doc.status === 'error')      { <fa-icon [icon]="faTriangleExclamation" /> error }
-                  </div>
-                </div>
-              }
-            </div>
-          }
+      @if (documents().length === 0) {
+        <div class="px-5 py-14 text-center">
+          <div class="mb-2 text-4xl text-ink-faint"><fa-icon [icon]="faInbox" /></div>
+          <div class="mb-1 font-display text-sm font-bold text-ink">Base de conocimiento vacía</div>
+          <div class="mb-4 text-xs text-ink-faint">Agrega tu primer documento para comenzar.</div>
+          <button
+            class="inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-primary"
+            (click)="openUploadModal()"
+          >
+            <fa-icon [icon]="faPlus" /> Agregar documento
+          </button>
         </div>
+      } @else if (filteredDocs().length === 0) {
+        <div class="px-5 py-14 text-center">
+          <div class="mb-2 text-4xl text-ink-faint"><fa-icon [icon]="faMagnifyingGlass" /></div>
+          <div class="mb-1 font-display text-sm font-bold text-ink">Sin resultados</div>
+          <div class="text-xs text-ink-faint">Ningún documento coincide con "{{ search() }}".</div>
+        </div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-[760px] border-collapse text-left">
+            <thead>
+              <tr class="border-b border-border text-[10px] font-bold uppercase tracking-wider text-ink-faint">
+                <th class="px-5 py-3 font-bold">Tipo</th>
+                <th class="px-3 py-3 font-bold">Documento</th>
+                <th class="px-3 py-3 font-bold">Origen</th>
+                <th class="px-3 py-3 text-right font-bold">Fragmentos</th>
+                <th class="px-3 py-3 font-bold">Tamaño</th>
+                <th class="px-3 py-3 font-bold">Fecha</th>
+                <th class="px-5 py-3 font-bold">Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (doc of docsPagina(); track doc.id) {
+                <tr class="border-b border-border/70 transition-colors last:border-b-0 hover:bg-accent/[.03]" [class.opacity-65]="doc.status === 'procesando'">
+                  <!-- Tipo -->
+                  <td class="px-5 py-3 align-middle">
+                    <span
+                      class="inline-block rounded px-1.5 py-1 text-center text-[10px] font-bold uppercase tracking-wide whitespace-nowrap"
+                      [class.bg-accent/10]="doc.tipo === 'ley'" [class.text-accent]="doc.tipo === 'ley'"
+                      [class.bg-purple/10]="doc.tipo === 'decreto'" [class.text-purple]="doc.tipo === 'decreto'"
+                      [class.bg-gold/10]="doc.tipo === 'resolucion'" [class.text-gold]="doc.tipo === 'resolucion'"
+                      [class.bg-success/10]="doc.tipo === 'circular'" [class.text-success]="doc.tipo === 'circular'"
+                      [class.bg-danger/10]="doc.tipo === 'pdf'" [class.text-danger]="doc.tipo === 'pdf'"
+                      [class.bg-ink-faint/10]="doc.tipo !== 'ley' && doc.tipo !== 'decreto' && doc.tipo !== 'resolucion' && doc.tipo !== 'circular' && doc.tipo !== 'pdf'"
+                      [class.text-ink-soft]="doc.tipo !== 'ley' && doc.tipo !== 'decreto' && doc.tipo !== 'resolucion' && doc.tipo !== 'circular' && doc.tipo !== 'pdf'"
+                    >{{ doc.tipo }}</span>
+                  </td>
+                  <!-- Documento -->
+                  <td class="max-w-[280px] px-3 py-3 align-middle">
+                    <span class="block truncate text-[13px] font-medium text-ink" [title]="doc.nombre">{{ doc.nombre }}</span>
+                  </td>
+                  <!-- Origen -->
+                  <td class="px-3 py-3 align-middle">
+                    <span
+                      class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                      [class.bg-gold-soft]="origenEsIndexer(doc.tipo)" [class.text-gold]="origenEsIndexer(doc.tipo)"
+                      [class.bg-accent-soft]="!origenEsIndexer(doc.tipo)" [class.text-accent]="!origenEsIndexer(doc.tipo)"
+                    >
+                      <fa-icon [icon]="origenEsIndexer(doc.tipo) ? faBolt : faFolderOpen" class="text-[10px]" />
+                      {{ origenLabel(doc.tipo) }}
+                    </span>
+                  </td>
+                  <!-- Fragmentos -->
+                  <td class="px-3 py-3 text-right align-middle">
+                    <span class="font-mono text-[12px] text-ink-soft tabular">{{ doc.chunks }}</span>
+                  </td>
+                  <!-- Tamaño -->
+                  <td class="px-3 py-3 align-middle">
+                    <span class="whitespace-nowrap font-mono text-[11px] text-ink-faint">{{ doc.size ?? '—' }}</span>
+                  </td>
+                  <!-- Fecha -->
+                  <td class="px-3 py-3 align-middle">
+                    <span class="whitespace-nowrap font-mono text-[11px] text-ink-faint">{{ doc.fecha | date:'dd MMM yyyy' }}</span>
+                  </td>
+                  <!-- Estado -->
+                  <td class="px-5 py-3 align-middle">
+                    <span
+                      class="inline-flex items-center gap-1.5 whitespace-nowrap text-[11px] font-semibold"
+                      [class.text-success]="doc.status === 'indexado'"
+                      [class.text-accent]="doc.status === 'procesando'"
+                      [class.text-danger]="doc.status === 'error'"
+                    >
+                      @if (doc.status === 'indexado')   { <fa-icon [icon]="faCircleCheck" /> indexado }
+                      @if (doc.status === 'procesando') { <fa-icon [icon]="faRotate" class="animate-spin" /> procesando }
+                      @if (doc.status === 'error')      { <fa-icon [icon]="faTriangleExclamation" /> error }
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
 
-        <!-- Usage tip -->
-        <div class="flex gap-3 rounded-xl border border-gold/25 bg-gold-soft p-3.5">
-          <div class="mt-px shrink-0 text-lg text-gold"><fa-icon [icon]="faLightbulb" /></div>
+      <app-paginator [total]="filteredDocs().length" [page]="page()" [pageSize]="pageSize" (pageChange)="page.set($event)" />
+    </div>
+
+    <!-- ── Estado del servicio + ayuda ── -->
+    <div class="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+
+      <!-- Service health -->
+      <div class="overflow-hidden rounded-xl border border-border bg-surface shadow-card">
+        <div class="flex items-center gap-2.5 border-b border-border px-4 py-3">
+          <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-success-soft text-success">
+            <fa-icon [icon]="faLink" />
+          </div>
           <div>
-            <div class="mb-1 text-[13px] font-semibold text-ink">¿Cómo usar la base de conocimiento?</div>
-            <div class="text-xs leading-relaxed text-ink-soft">
-              Los documentos indexados aquí son la fuente que consulta el agente en
-              <strong class="text-ink">Búsqueda RAG</strong> y el orquestador de análisis de planes.
-              Sube leyes, decretos o normativas para enriquecer las respuestas.
+            <div class="font-display text-sm font-bold text-ink">Servicios RAG</div>
+            <div class="mt-px text-xs text-ink-soft">Estado de conexión</div>
+          </div>
+          <div
+            class="ml-auto h-2.5 w-2.5 shrink-0 rounded-full"
+            [class.bg-success]="apiStatus() === 'online'"
+            [class.animate-pulse]="apiStatus() === 'online' || apiStatus() === 'checking'"
+            [class.bg-danger]="apiStatus() === 'offline'"
+            [class.bg-gold]="apiStatus() === 'checking'"
+          ></div>
+        </div>
+        <div class="p-4">
+          <div class="mb-3 flex flex-col gap-2">
+            <div class="flex items-center gap-2 text-xs">
+              <span class="min-w-[72px] font-semibold text-ink">API FastAPI</span>
+              <code class="flex-1 font-mono text-[11px] text-ink-faint">:8000</code>
+              <span class="whitespace-nowrap text-[11px] font-semibold" [class.text-success]="apiStatus() === 'online'" [class.text-danger]="apiStatus() === 'offline'" [class.text-gold]="apiStatus() === 'checking'">{{ apiStatusLabel(apiStatus()) }}</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs">
+              <span class="min-w-[72px] font-semibold text-ink">Qdrant</span>
+              <code class="flex-1 font-mono text-[11px] text-ink-faint">Vector DB</code>
+              <span class="whitespace-nowrap text-[11px] font-semibold" [class.text-success]="qdrantStatus() === 'online'" [class.text-danger]="qdrantStatus() === 'offline'" [class.text-gold]="qdrantStatus() === 'checking'">{{ apiStatusLabel(qdrantStatus()) }}</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs">
+              <span class="min-w-[72px] font-semibold text-ink">Ollama</span>
+              <code class="flex-1 font-mono text-[11px] text-ink-faint">LLM local</code>
+              <span class="whitespace-nowrap text-[11px] font-semibold" [class.text-success]="ollamaStatus() === 'online'" [class.text-danger]="ollamaStatus() === 'offline'" [class.text-gold]="ollamaStatus() === 'checking'">{{ apiStatusLabel(ollamaStatus()) }}</span>
             </div>
           </div>
+          <button class="w-full rounded-lg border-[1.5px] border-border bg-transparent py-1.5 text-xs font-semibold text-accent transition-colors hover:border-accent hover:bg-accent/5" (click)="checkApiHealth()">
+            <fa-icon [icon]="faMagnifyingGlass" class="mr-1" /> Verificar conexión
+          </button>
         </div>
       </div>
 
+      <!-- Usage tip -->
+      <div class="flex gap-3 rounded-xl border border-gold/25 bg-gold-soft p-4">
+        <div class="mt-px shrink-0 text-lg text-gold"><fa-icon [icon]="faLightbulb" /></div>
+        <div>
+          <div class="mb-1 text-[13px] font-semibold text-ink">¿Cómo usar la base de conocimiento?</div>
+          <div class="text-xs leading-relaxed text-ink-soft">
+            Los documentos de aquí son la fuente que consulta el agente en
+            <strong class="text-ink">Búsqueda RAG</strong> y el orquestador de análisis de planes.
+            El origen <strong class="text-gold">Indexer de normas</strong> corresponde a leyes/decretos ingeridos automáticamente;
+            <strong class="text-accent">Documento</strong> son archivos que subes manualmente.
+          </div>
+        </div>
+      </div>
     </div>
   </main>
-
 </div>
+
+<!-- ═══ Modal: Agregar documento ═══════════════════════════════════════ -->
+@if (uploadModalOpen()) {
+  <div class="fixed inset-0 z-[80] flex items-start justify-center overflow-y-auto p-4 sm:items-center">
+    <div class="absolute inset-0 animate-fade-in bg-black/40" (click)="closeUploadModal()"></div>
+
+    <div class="relative z-[1] w-full max-w-[460px] animate-fade-in-up overflow-hidden rounded-2xl border border-border bg-surface shadow-pop">
+      <div class="flex items-center gap-2.5 border-b border-border px-5 py-4">
+        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent">
+          <fa-icon [icon]="faBolt" />
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="font-display text-sm font-bold text-ink">Agregar documento</div>
+          <div class="mt-px text-xs text-ink-soft">Vectoriza y añade a la base RAG</div>
+        </div>
+        <button class="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-ink-faint transition-colors hover:bg-surface3 hover:text-ink" (click)="closeUploadModal()" aria-label="Cerrar">
+          <fa-icon [icon]="faXmark" />
+        </button>
+      </div>
+
+      <div class="p-5">
+        <!-- Tabs -->
+        <div class="mb-4 flex gap-0.5 rounded-[10px] bg-surface2 p-1">
+          <button
+            class="flex-1 rounded-[7px] px-3 py-1.5 text-xs font-medium text-ink-soft transition-all"
+            [class.bg-surface]="activeTab() === 'file'" [class.text-ink]="activeTab() === 'file'" [class.shadow-sm]="activeTab() === 'file'"
+            (click)="setTab('file')"
+          ><fa-icon [icon]="faFolderOpen" class="mr-1" /> Subir archivo</button>
+          <button
+            class="flex-1 rounded-[7px] px-3 py-1.5 text-xs font-medium text-ink-soft transition-all"
+            [class.bg-surface]="activeTab() === 'text'" [class.text-ink]="activeTab() === 'text'" [class.shadow-sm]="activeTab() === 'text'"
+            (click)="setTab('text')"
+          ><fa-icon [icon]="faPenNib" class="mr-1" /> Ingresar texto</button>
+        </div>
+
+        <!-- FILE TAB -->
+        @if (activeTab() === 'file') {
+          <div
+            class="group relative overflow-hidden rounded-2xl border-2 border-dashed border-border bg-bg px-5 py-8 text-center transition-all hover:border-accent hover:bg-accent/[.03]"
+            [class.!border-solid]="isDragging() || uploadSuccess() !== null"
+            [class.!border-accent]="isDragging()"
+            [class.!bg-accent/[.07]]="isDragging()"
+            [class.!border-success]="uploadSuccess() !== null"
+            [class.!bg-success/5]="uploadSuccess() !== null"
+            [class.cursor-wait]="isUploading()"
+            (dragover)="onDragOver($event)"
+            (dragleave)="onDragLeave()"
+            (drop)="onDrop($event)"
+          >
+            @if (!isUploading()) {
+              <div class="relative z-[1] flex flex-col items-center gap-1.5">
+                <div class="mb-0.5 text-4xl text-accent">
+                  @if (uploadSuccess()) { <fa-icon [icon]="faCircleCheck" class="text-success" /> }
+                  @else if (isDragging()) { <fa-icon [icon]="faDownload" class="text-accent" /> }
+                  @else { <fa-icon [icon]="faFolderOpen" /> }
+                </div>
+                <div class="font-display text-sm font-bold text-ink">
+                  @if (isDragging())      { Suelta para indexar }
+                  @else if (uploadSuccess()) { Documento indexado }
+                  @else { Arrastra un archivo aquí }
+                </div>
+                <div class="text-xs text-ink-faint">PDF, TXT, Markdown</div>
+
+                @if (uploadSuccess()) {
+                  <div class="mt-0.5 text-xs text-success">{{ uploadSuccess() }}</div>
+                  <button class="mt-3 inline-flex items-center gap-1.5 rounded-lg border-[1.5px] border-accent bg-transparent px-4 py-2 text-[13px] font-semibold text-accent transition hover:bg-accent-soft" (click)="resetUpload()">Subir otro</button>
+                } @else {
+                  <label class="mt-3 inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-primary">
+                    Seleccionar archivo
+                    <input type="file" accept=".pdf,.txt,.md" (change)="onFileChange($event)" hidden />
+                  </label>
+                }
+              </div>
+            } @else {
+              <div class="relative z-[1] flex flex-col items-center gap-1.5">
+                <div class="mb-1 animate-spin text-3xl text-accent"><fa-icon [icon]="faRotate" /></div>
+                <div class="font-display text-sm font-bold text-ink">Indexando…</div>
+                <div class="mt-1.5 h-[5px] w-full overflow-hidden rounded-full bg-border">
+                  <div class="h-full rounded-full bg-gradient-to-r from-accent to-success transition-[width] duration-300 ease-out" [style.width.%]="uploadProgress()"></div>
+                </div>
+                <div class="text-xs text-ink-faint">{{ uploadProgress() | number:'1.0-0' }}% completado</div>
+              </div>
+            }
+          </div>
+
+          @if (uploadError()) {
+            <div class="mt-2.5 rounded-lg border border-danger/25 bg-danger-soft px-3 py-2 text-xs leading-relaxed text-danger">
+              <fa-icon [icon]="faTriangleExclamation" class="mr-1" />{{ uploadError() }}
+            </div>
+          }
+        }
+
+        <!-- TEXT TAB -->
+        @if (activeTab() === 'text') {
+          <div class="flex flex-col gap-3">
+            <div class="flex flex-col gap-1.5">
+              <label class="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">Título</label>
+              <input class="w-full rounded-lg border-[1.5px] border-border bg-bg px-3 py-2 text-[13px] text-ink transition-colors focus:border-accent focus:outline-none" type="text" placeholder="Ej: Ley 115 de 1994 — Educación" [(ngModel)]="textTitle" />
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label class="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">Tipo de norma</label>
+              <select class="w-full rounded-lg border-[1.5px] border-border bg-bg px-3 py-2 text-[13px] text-ink transition-colors focus:border-accent focus:outline-none" [(ngModel)]="textDocType">
+                <option value="ley">Ley</option>
+                <option value="decreto">Decreto</option>
+                <option value="resolucion">Resolución</option>
+                <option value="circular">Circular</option>
+                <option value="otro">Otro</option>
+              </select>
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label class="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">Contenido del documento</label>
+              <textarea class="w-full resize-y rounded-lg border-[1.5px] border-border bg-bg px-3 py-2 font-mono text-xs leading-relaxed text-ink transition-colors focus:border-accent focus:outline-none" rows="8" placeholder="Pega o escribe el texto completo de la norma…" [(ngModel)]="textContent"></textarea>
+              <span class="text-xs text-ink-faint" [class.text-danger]="textContent.length > maxCharsTexto">{{ textContent.length }} / {{ maxCharsTexto }} caracteres</span>
+            </div>
+
+            @if (textError())   { <div class="rounded-lg border border-danger/25 bg-danger-soft px-3 py-2 text-xs leading-relaxed text-danger"><fa-icon [icon]="faTriangleExclamation" class="mr-1" />{{ textError() }}</div> }
+            @if (textSuccess()) { <div class="rounded-lg border border-success/25 bg-success-soft px-3 py-2 text-xs leading-relaxed text-success"><fa-icon [icon]="faCircleCheck" class="mr-1" />{{ textSuccess() }}</div> }
+
+            <button
+              class="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-primary disabled:cursor-not-allowed disabled:opacity-45"
+              [disabled]="isSubmittingText() || !textContent.trim() || textContent.length > maxCharsTexto"
+              (click)="onSubmitText()"
+            >
+              @if (isSubmittingText()) { <fa-icon [icon]="faRotate" class="animate-spin" /> Indexando… }
+              @else { <fa-icon [icon]="faBolt" /> Vectorizar e indexar }
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+}

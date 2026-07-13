@@ -1,8 +1,43 @@
 import { Injectable, inject, signal, computed, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export type EstadoTarea = 'idle' | 'running' | 'completed' | 'cancelled' | 'error';
+
+export interface NormaBase {
+  codigo: string;
+  prioridad: number;
+}
+
+export interface NormaTerritorial {
+  id: string;
+  codigo: string;
+  territorio: string | null;
+  prioridad: number;
+  descripcion: string | null;
+  activo: boolean;
+  creado_en: string | null;
+}
+
+export interface NormaTerritorialCreate {
+  codigo: string;
+  territorio?: string | null;
+  prioridad?: number;
+  descripcion?: string | null;
+}
+
+export interface DescubrirNormasRequest {
+  municipio?: string | null;
+  departamento?: string | null;
+  tema?: string | null;
+}
+
+export interface DescubrirNormasResponse {
+  descubiertas: string[];
+  agregadas: string[];
+  ya_presentes: string[];
+}
 
 export interface BackgroundScraperEstado {
   estado: EstadoTarea;
@@ -83,7 +118,7 @@ export class BackgroundScraperService implements OnDestroy {
   iniciar(duracionMin?: number): void {
     this.http.post<BackgroundScraperEstado>(`${this.base}/iniciar`, {
       duracion_min: duracionMin ?? null,
-      prioridad_max: 2,
+      prioridad_max: 3,
       pais: 'COLOMBIA',
       solo_faltantes: true,
     }).subscribe({
@@ -103,6 +138,27 @@ export class BackgroundScraperService implements OnDestroy {
       },
       error: () => {},
     });
+  }
+
+  // ── Catálogo de normas (nacionales base + territoriales) ──────────────────
+  listarNormasBase(): Observable<NormaBase[]> {
+    return this.http.get<NormaBase[]>(`${this.base}/normas-base?prioridad_max=3`);
+  }
+
+  listarNormasTerritoriales(): Observable<NormaTerritorial[]> {
+    return this.http.get<NormaTerritorial[]>(`${this.base}/normas-territoriales`);
+  }
+
+  crearNormaTerritorial(payload: NormaTerritorialCreate): Observable<NormaTerritorial> {
+    return this.http.post<NormaTerritorial>(`${this.base}/normas-territoriales`, payload);
+  }
+
+  eliminarNormaTerritorial(id: string): Observable<{ detail: string }> {
+    return this.http.delete<{ detail: string }>(`${this.base}/normas-territoriales/${id}`);
+  }
+
+  descubrirNormas(payload: DescubrirNormasRequest): Observable<DescubrirNormasResponse> {
+    return this.http.post<DescubrirNormasResponse>(`${this.base}/descubrir-normas`, payload);
   }
 
   private startPolling(): void {

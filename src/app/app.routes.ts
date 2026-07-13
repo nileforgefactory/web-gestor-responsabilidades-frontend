@@ -50,8 +50,28 @@ export const routes: Routes = [
         component: AdminUsuariosComponent,
         canActivate: [adminGuard],
       },
+      {
+        path: 'admin/sgr-matriz',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/admin-sgr-matriz/admin-sgr-matriz.component')
+            .then(m => m.AdminSgrMatrizComponent),
+      },
+      {
+        path: 'admin/normas',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/admin-normas/admin-normas.component')
+            .then(m => m.AdminNormasComponent),
+      },
 
       // ── SGR — Caja de Herramientas ─────────────────────────────────────
+      {
+        path: 'sgr/mis-proyectos',
+        loadComponent: () =>
+          import('./features/sgr/mis-proyectos/mis-proyectos.component')
+            .then(m => m.MisProyectosSgrComponent),
+      },
       {
         path: 'sgr/oportunidades/:planId',
         loadComponent: () =>

@@ -1,0 +1,86 @@
+<div class="mx-auto max-w-[1100px] px-4 py-6 sm:px-6 sm:py-8">
+
+  <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
+    <p class="max-w-xl text-sm text-ink-soft">Proyectos SGR guardados explícitamente, con acceso directo a su Ficha MGA.</p>
+    <a
+      routerLink="/sgr/evaluar-proyecto"
+      class="flex shrink-0 items-center gap-2 rounded-full bg-accent px-4 py-2 text-[13px] font-semibold text-white shadow-sm transition-colors hover:bg-primary"
+    >
+      <fa-icon [icon]="faPlus" /> Nueva propuesta
+    </a>
+  </div>
+
+  <div class="relative mb-5">
+    <span class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-base"><fa-icon [icon]="faMagnifyingGlass" /></span>
+    <input
+      class="box-border w-full rounded-[10px] border border-border bg-surface py-2.5 pl-[42px] pr-10 text-sm text-ink transition-all focus:border-accent focus:shadow-[0_0_0_3px_rgba(59,130,246,.12)] focus:outline-none placeholder:text-ink-faint"
+      type="text"
+      placeholder="Buscar por nombre, sector o plan…"
+      [value]="search()"
+      (input)="search.set($any($event.target).value)"
+    />
+    @if (search()) {
+      <button class="absolute right-3 top-1/2 -translate-y-1/2 rounded px-1.5 py-0.5 text-[13px] text-ink-faint transition-colors hover:bg-surface2 hover:text-ink" (click)="search.set('')">
+        <fa-icon [icon]="faXmark" />
+      </button>
+    }
+  </div>
+
+  @if (errorMsg()) {
+    <div class="mb-5 rounded-lg border border-danger/40 bg-danger-soft px-4 py-3.5 text-sm text-danger">{{ errorMsg() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="px-8 py-16 text-center text-ink-soft">
+      <div class="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-border border-t-primary"></div>
+      Cargando tus proyectos…
+    </div>
+  } @else if (filteredProyectos().length) {
+    <div class="flex flex-col gap-3">
+      @for (p of filteredProyectos(); track p.id) {
+        <button
+          type="button"
+          class="group relative flex w-full items-center justify-between gap-4 overflow-hidden rounded-2xl border border-border bg-surface px-5 py-4 text-left shadow-card transition-all hover:-translate-y-px hover:border-accent/50 hover:shadow-card-md"
+          (click)="abrirFicha(p)"
+        >
+          <!-- Hilo de regalías: acento dorado en proyectos elegibles a financiación -->
+          @if (p.elegible) {
+            <span class="absolute inset-y-0 left-0 w-1 bg-gold" aria-hidden="true"></span>
+          }
+          <div class="min-w-0 flex-1">
+            <div class="mb-1 flex flex-wrap items-center gap-2">
+              <span class="truncate text-[15px] font-semibold text-ink">{{ p.nombre }}</span>
+              @if (p.elegible) {
+                <span class="flex shrink-0 items-center gap-1 rounded-full bg-success-soft px-2 py-0.5 text-[11px] font-semibold text-success"><fa-icon [icon]="faCircleCheck" /> Elegible</span>
+              }
+              @if (p.tiene_ficha_mga) {
+                <span class="flex shrink-0 items-center gap-1 rounded-full bg-purple-soft px-2 py-0.5 text-[11px] font-semibold text-purple"><fa-icon [icon]="faFileLines" /> Ficha MGA</span>
+              }
+            </div>
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-soft">
+              <span>{{ p.sector_sgr }}</span>
+              <span class="text-ink-faint">·</span>
+              <span>{{ p.plan_nombre_corto ?? p.plan_titulo }}</span>
+              <span class="text-ink-faint">·</span>
+              <span>Guardado: <span class="tabular">{{ formatDate(p.guardado_en!) }}</span></span>
+            </div>
+          </div>
+          <fa-icon [icon]="faArrowRight" class="shrink-0 text-ink-faint" />
+        </button>
+      }
+    </div>
+  } @else {
+    <div class="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border bg-surface px-6 py-16">
+      <div class="mb-3 text-5xl text-ink-faint opacity-20"><fa-icon [icon]="faFolderOpen" /></div>
+      <div class="font-display text-lg font-bold text-ink-soft">Sin proyectos guardados</div>
+      <div class="max-w-sm text-center text-sm text-ink-faint">Evalúa una idea de proyecto y guárdala para construir su Ficha MGA. Aparecerá aquí lista para radicar.</div>
+      <a
+        routerLink="/sgr/evaluar-proyecto"
+        class="mt-4 flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-[13px] font-semibold text-white shadow-sm transition-colors hover:bg-primary"
+      >
+        <fa-icon [icon]="faPlus" /> Evaluar un proyecto
+      </a>
+    </div>
+  }
+
+</div>
