@@ -1,15 +1,15 @@
 <div class="overflow-hidden rounded-xl border border-border bg-surface shadow-card">
-  <div class="flex items-center gap-3 border-b border-border px-5 py-4">
+  <div class="flex items-center gap-2.5 border-b border-border px-[18px] py-4">
     <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-purple-soft text-lg text-purple"><fa-icon [icon]="faBrain" /></div>
     <div>
-      <div class="font-display text-sm font-bold text-ink">Orquestador IA</div>
+      <div class="text-sm font-semibold text-ink">Orquestador IA</div>
       <div class="mt-px text-xs text-ink-soft">Configura los parámetros del análisis</div>
     </div>
   </div>
 
   <!-- ── Estado: sin archivo ── -->
   @if (!hasFile()) {
-    <div class="flex flex-col items-center gap-2 px-6 py-10 text-center text-ink-faint">
+    <div class="flex flex-col items-center gap-2 px-5 py-7 text-center text-ink-faint">
       <div class="text-3xl"><app-icon emoji="📂" /></div>
       <div class="text-[13px] font-semibold text-ink-soft">Sube un documento para comenzar</div>
       <div class="max-w-[28ch] text-xs leading-relaxed">Configura el nivel territorial, entidad y sectores antes de ejecutar.</div>
@@ -18,141 +18,110 @@
 
   <!-- ── Estado: params listos ── -->
   @else if (params()) {
-    <div class="p-5">
+    <div class="flex flex-col gap-3.5 px-[18px] py-4">
 
-      <div class="grid gap-x-8 gap-y-6 md:grid-cols-2">
-
-        <!-- ═══ Columna: Contexto del plan ═══ -->
-        <section class="flex flex-col gap-4">
-          <div class="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-ink-faint">
-            <span class="grid h-5 w-5 place-items-center rounded-md bg-accent-soft text-[10px] text-accent">1</span>
-            Contexto del plan
-          </div>
-
-          <div class="flex flex-col gap-1.5">
-            <span class="text-[11px] font-semibold uppercase tracking-wide text-ink-soft">Nivel territorial</span>
-            <select class="w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-sm font-semibold text-ink outline-none transition-colors focus:border-accent focus:shadow-[0_0_0_3px_rgba(47,111,237,0.12)]" [disabled]="disabled()">
-              <option>Municipal</option>
-              <option>Departamental</option>
-              <option>Nacional</option>
-            </select>
-          </div>
-
-          <div class="flex flex-col gap-1.5">
-            <span class="text-[11px] font-semibold uppercase tracking-wide text-ink-soft">Entidad</span>
-            <input
-              class="w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-ink outline-none transition-colors focus:border-accent focus:shadow-[0_0_0_3px_rgba(47,111,237,0.12)]"
-              [value]="params()!.entidad"
-              [disabled]="disabled()"
-            />
-          </div>
-
-          <div class="flex flex-col gap-1.5">
-            <span class="text-[11px] font-semibold uppercase tracking-wide text-ink-soft">Periodo del plan</span>
-            <input
-              class="w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-ink outline-none transition-colors focus:border-accent focus:shadow-[0_0_0_3px_rgba(47,111,237,0.12)]"
-              [value]="params()!.periodo"
-              [disabled]="disabled()"
-              placeholder="Ej: 2024-2027"
-            />
-          </div>
-        </section>
-
-        <!-- ═══ Columna: Alcance y profundidad ═══ -->
-        <section class="flex flex-col gap-5 md:border-l md:border-dashed md:border-border md:pl-8">
-          <div class="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-ink-faint">
-            <span class="grid h-5 w-5 place-items-center rounded-md bg-accent-soft text-[10px] text-accent">2</span>
-            Alcance y profundidad
-          </div>
-
-          <!-- Sectores -->
-          <div class="flex flex-col gap-2">
-            <div class="flex items-baseline justify-between gap-2">
-              <span class="text-[11px] font-semibold uppercase tracking-wide text-ink-soft">Sectores</span>
-              <span class="text-[11px] text-ink-faint">Elige los relevantes</span>
-            </div>
-            <div class="flex flex-wrap gap-1.5">
-              @for (sector of allSectors; track sector) {
-                <button
-                  type="button"
-                  class="inline-flex select-none items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-semibold transition-all"
-                  [class.bg-success-soft]="isSectorOn(sector, params()!)"
-                  [class.text-success]="isSectorOn(sector, params()!)"
-                  [class.border-success/40]="isSectorOn(sector, params()!)"
-                  [class.bg-surface]="!isSectorOn(sector, params()!)"
-                  [class.text-ink-soft]="!isSectorOn(sector, params()!)"
-                  [class.border-border]="!isSectorOn(sector, params()!)"
-                  [disabled]="disabled()"
-                  (click)="toggleSector(sector, params()!)"
-                >
-                  @if (isSectorOn(sector, params()!)) { <fa-icon [icon]="faCircleCheck" class="text-[11px]" /> } @else { <fa-icon [icon]="faCircle" class="text-[7px] opacity-50" /> } {{ sector }}
-                </button>
-              }
-            </div>
-          </div>
-
-          <!-- Profundidad -->
-          <div class="flex flex-col gap-2">
-            <span class="text-[11px] font-semibold uppercase tracking-wide text-ink-soft">Profundidad del análisis</span>
-            <div class="flex flex-col gap-2">
-              @for (d of depths; track d.key) {
-                <button
-                  type="button"
-                  class="flex items-center gap-3 rounded-lg border-2 bg-surface px-3 py-2.5 text-left transition-all disabled:opacity-60 enabled:hover:border-accent enabled:hover:bg-accent-soft"
-                  [class.border-accent]="selectedDepth() === d.key"
-                  [class.bg-accent-soft]="selectedDepth() === d.key"
-                  [class.border-border]="selectedDepth() !== d.key"
-                  [disabled]="disabled()"
-                  (click)="selectedDepth.set(d.key)"
-                >
-                  <span class="grid h-4 w-4 shrink-0 place-items-center rounded-full border-2" [class.border-accent]="selectedDepth() === d.key" [class.border-border]="selectedDepth() !== d.key">
-                    @if (selectedDepth() === d.key) { <span class="h-2 w-2 rounded-full bg-accent"></span> }
-                  </span>
-                  <span class="min-w-0">
-                    <span class="block text-[13px] font-bold" [class.text-accent]="selectedDepth() === d.key" [class.text-ink]="selectedDepth() !== d.key">{{ d.label }}</span>
-                    <span class="block text-[11px] leading-tight text-ink-soft">{{ d.desc }}</span>
-                  </span>
-                </button>
-              }
-            </div>
-          </div>
-
-          <!-- Iteraciones máximas -->
-          <div class="flex flex-col gap-2">
-            <span class="text-[11px] font-semibold uppercase tracking-wide text-ink-soft">Iteraciones máximas del coordinador</span>
-            <div class="flex flex-wrap gap-1.5">
-              @for (n of maxIterOptions; track n) {
-                <button
-                  type="button"
-                  class="min-w-[48px] flex-1 rounded-lg border-2 bg-surface px-2 py-2 text-[12px] font-bold tabular transition-all disabled:opacity-50 enabled:hover:border-accent enabled:hover:bg-accent-soft"
-                  [class.border-accent]="selectedMaxIter() === n"
-                  [class.bg-accent-soft]="selectedMaxIter() === n"
-                  [class.text-accent]="selectedMaxIter() === n"
-                  [class.border-border]="selectedMaxIter() !== n"
-                  [class.text-ink]="selectedMaxIter() !== n"
-                  [disabled]="disabled() || selectedDepth() === 'basico'"
-                  (click)="selectedMaxIter.set(n)"
-                >
-                  {{ n === 0 ? 'Sin coord.' : n }}
-                </button>
-              }
-            </div>
-            @if (selectedDepth() === 'basico') {
-              <span class="text-xs text-ink-faint">No disponible en modo básico</span>
-            }
-          </div>
-        </section>
+      <!-- Nivel territorial -->
+      <div class="flex flex-col gap-1.5">
+        <span class="text-[11px] font-bold uppercase tracking-wide text-ink-soft">Nivel territorial</span>
+        <select class="w-full rounded-lg border border-border px-3 py-2.5 text-[13px] font-semibold outline-none transition-colors focus:border-accent" [disabled]="disabled()">
+          <option>Municipal</option>
+          <option>Departamental</option>
+          <option>Nacional</option>
+        </select>
       </div>
 
-      <!-- CTA (ancho completo) -->
+      <!-- Entidad -->
+      <div class="flex flex-col gap-1.5">
+        <span class="text-[11px] font-bold uppercase tracking-wide text-ink-soft">Entidad</span>
+        <input
+          class="w-full rounded-lg border border-border px-3 py-2.5 text-[13px] font-semibold outline-none transition-colors focus:border-accent"
+          [value]="params()!.entidad"
+          [disabled]="disabled()"
+        />
+      </div>
+
+      <!-- Periodo -->
+      <div class="flex flex-col gap-1.5">
+        <span class="text-[11px] font-bold uppercase tracking-wide text-ink-soft">Periodo del plan</span>
+        <input
+          class="w-full rounded-lg border border-border px-3 py-2.5 text-[13px] font-semibold outline-none transition-colors focus:border-accent"
+          [value]="params()!.periodo"
+          [disabled]="disabled()"
+          placeholder="Ej: 2024-2027"
+        />
+      </div>
+
+      <!-- Sectores -->
+      <div class="flex flex-col gap-1.5">
+        <span class="text-[11px] font-bold uppercase tracking-wide text-ink-soft">Sectores</span>
+        <div class="flex flex-wrap gap-1.5">
+          @for (sector of allSectors; track sector) {
+            <span
+              class="cursor-pointer select-none rounded-full px-2.5 py-1 text-[11px] font-semibold transition-all"
+              [class.bg-success-soft]="isSectorOn(sector, params()!)"
+              [class.text-success]="isSectorOn(sector, params()!)"
+              [class.border]="true"
+              [class.border-success/40]="isSectorOn(sector, params()!)"
+              [class.bg-surface2]="!isSectorOn(sector, params()!)"
+              [class.text-ink-soft]="!isSectorOn(sector, params()!)"
+              [class.border-border]="!isSectorOn(sector, params()!)"
+              (click)="!disabled() && toggleSector(sector, params()!)"
+            >
+              @if (isSectorOn(sector, params()!)) { <fa-icon [icon]="faCircleCheck" /> } @else { <fa-icon [icon]="faCircle" class="text-[8px]" /> } {{ sector }}
+            </span>
+          }
+        </div>
+      </div>
+
+      <!-- Profundidad -->
+      <div class="flex flex-col gap-1.5">
+        <span class="text-[11px] font-bold uppercase tracking-wide text-ink-soft">Profundidad del análisis</span>
+        <div class="flex gap-1.5">
+          @for (d of depths; track d.key) {
+            <button
+              class="flex flex-1 flex-col items-center rounded-lg border-2 border-border bg-surface px-1.5 py-2.5 transition-all hover:enabled:border-accent hover:enabled:bg-accent-soft"
+              [class.border-accent]="selectedDepth() === d.key"
+              [class.bg-accent-soft]="selectedDepth() === d.key"
+              [class.text-accent]="selectedDepth() === d.key"
+              [disabled]="disabled()"
+              (click)="selectedDepth.set(d.key)"
+            >
+              <span class="text-[11px] font-bold">{{ d.label }}</span>
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Iteraciones máximas -->
+      <div class="flex flex-col gap-1.5">
+        <span class="text-[11px] font-bold uppercase tracking-wide text-ink-soft">Iteraciones máximas del coordinador</span>
+        <div class="flex gap-1.5">
+          @for (n of maxIterOptions; track n) {
+            <button
+              class="flex flex-1 flex-col items-center rounded-lg border-2 border-border bg-surface px-1.5 py-2.5 transition-all hover:enabled:border-accent hover:enabled:bg-accent-soft"
+              [class.border-accent]="selectedMaxIter() === n"
+              [class.bg-accent-soft]="selectedMaxIter() === n"
+              [class.text-accent]="selectedMaxIter() === n"
+              [disabled]="disabled() || selectedDepth() === 'basico'"
+              (click)="selectedMaxIter.set(n)"
+            >
+              <span class="text-[11px] font-bold">{{ n === 0 ? 'Sin coordinador' : n }}</span>
+            </button>
+          }
+        </div>
+        @if (selectedDepth() === 'basico') {
+          <span class="text-xs text-ink-faint">No disponible en modo básico</span>
+        }
+      </div>
+
+      <!-- CTA -->
       <button
-        type="button"
-        class="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-bold text-white transition-colors enabled:hover:bg-primary-light disabled:opacity-60"
+        class="flex w-full items-center justify-center gap-2 rounded-[10px] bg-primary py-3 text-[13px] font-bold text-white transition-colors hover:enabled:bg-primary-light disabled:opacity-60"
         [disabled]="disabled()"
         (click)="onExecute()"
       >
         @if (disabled()) {
-          <span class="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"></span> Procesando…
+          <span class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white"></span> Procesando…
         } @else {
           <fa-icon [icon]="faRocket" /> Ejecutar orquestador
         }

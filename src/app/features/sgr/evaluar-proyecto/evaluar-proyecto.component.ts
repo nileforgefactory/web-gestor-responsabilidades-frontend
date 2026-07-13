@@ -1,8 +1,9 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faFileLines, faTriangleExclamation, faCircleCheck, faScroll, faPaperclip, faXmark, faFloppyDisk, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import { faFileLines, faTriangleExclamation, faCircleCheck, faScroll, faPaperclip, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { SgrApiService } from '../../../core/services/sgr-api.service';
 import { EvaluarProyectoResponse, DiagnosticoDimension } from '../../../core/models/sgr.model';
 import { PlanContextService } from '../../../core/services/plan-context.service';
@@ -18,6 +19,7 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
 export class EvaluarProyectoComponent {
   private sgr      = inject(SgrApiService);
   private fb       = inject(FormBuilder);
+  private route    = inject(ActivatedRoute);
   private location = inject(Location);
   readonly planContext = inject(PlanContextService);
 
@@ -27,25 +29,22 @@ export class EvaluarProyectoComponent {
   readonly faScroll = faScroll;
   readonly faPaperclip = faPaperclip;
   readonly faXmark = faXmark;
-  readonly faFloppyDisk = faFloppyDisk;
-  readonly faArrowLeft = faArrowLeft;
 
   loading   = signal(false);
   errorMsg  = signal<string | null>(null);
   resultado = signal<EvaluarProyectoResponse | null>(null);
   tabActiva = signal<'resumen' | 'dimensiones' | 'plan' | 'concejo'>('resumen');
 
-  guardando = signal(false);
-  guardado  = signal(false);
+  /** El formulario de texto libre queda oculto hasta que el usuario decide crear un proyecto,
+   * salvo que llegue con la intención ya explícita (?crear=1) desde el botón de Oportunidades. */
+  mostrarFormulario = signal(this.route.snapshot.queryParamMap.get('crear') === '1');
 
   // Archivo adjunto (opcional) — su texto extraído se agrega al mensaje
   archivoNombre  = signal<string | null>(null);
   extrayendoArchivo = signal(false);
 
-  readonly maxChars = 8000;
-
   form = this.fb.group({
-    texto_proyecto: ['', [Validators.required, Validators.minLength(50), Validators.maxLength(this.maxChars)]],
+    texto_proyecto: ['', [Validators.required, Validators.minLength(50)]],
   });
 
   constructor() {
@@ -58,11 +57,14 @@ export class EvaluarProyectoComponent {
     this.location.back();
   }
 
-  /** Limpia el formulario para empezar de nuevo. */
+  crearProyecto(): void {
+    this.mostrarFormulario.set(true);
+  }
+
   cancelarCreacion(): void {
+    this.mostrarFormulario.set(false);
     this.form.reset();
     this.archivoNombre.set(null);
-    this.errorMsg.set(null);
   }
 
   onArchivoSeleccionado(event: Event): void {
@@ -112,27 +114,10 @@ export class EvaluarProyectoComponent {
         this.resultado.set(res);
         this.loading.set(false);
         this.tabActiva.set('resumen');
-        this.guardado.set(false);
       },
       error: err => {
         this.errorMsg.set(err.error?.detail ?? 'Error al evaluar el proyecto');
         this.loading.set(false);
-      },
-    });
-  }
-
-  guardarProyecto(): void {
-    const proyectoId = this.resultado()?.proyecto_id;
-    if (!proyectoId || this.guardando() || this.guardado()) return;
-    this.guardando.set(true);
-    this.sgr.guardarProyecto(proyectoId).subscribe({
-      next: () => {
-        this.guardado.set(true);
-        this.guardando.set(false);
-      },
-      error: err => {
-        this.errorMsg.set(err.error?.detail ?? 'Error al guardar el proyecto');
-        this.guardando.set(false);
       },
     });
   }

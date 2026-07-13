@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal, computed, input } from '@angular/cor
 import { CommonModule, Location } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faClipboardList, faRocket, faTriangleExclamation, faArrowLeft, faCircleCheck, faFileLines } from '@fortawesome/free-solid-svg-icons';
+import { faClipboardList, faRocket, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { SgrApiService } from '../../../core/services/sgr-api.service';
 import { EvaluarPlanResponse, ProyectoCandidato } from '../../../core/models/sgr.model';
 
@@ -21,9 +21,6 @@ export class OportunidadesComponent implements OnInit {
   readonly faClipboardList = faClipboardList;
   readonly faRocket = faRocket;
   readonly faTriangleExclamation = faTriangleExclamation;
-  readonly faArrowLeft = faArrowLeft;
-  readonly faCircleCheck = faCircleCheck;
-  readonly faFileLines = faFileLines;
 
   planId = input.required<string>();
 

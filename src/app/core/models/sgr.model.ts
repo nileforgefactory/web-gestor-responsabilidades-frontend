@@ -52,8 +52,6 @@ export interface ProyectoCandidato {
   semaforo_label: string;
   estado: EstadoProyecto;
   modo: ModeSGR;
-  guardado: boolean;
-  tiene_ficha_mga: boolean;
 }
 
 export interface EvaluarPlanResponse {
@@ -87,15 +85,8 @@ export interface ProyectoSGROut {
   modo: ModeSGR;
   creado_en: string;
   actualizado_en: string;
-  guardado_en: string | null;
   resultado_duplicidad: Record<string, unknown> | null;
   diagnostico_mga: Record<string, unknown> | null;
-}
-
-export interface ProyectoGuardadoOut extends ProyectoSGROut {
-  plan_titulo: string;
-  plan_nombre_corto: string | null;
-  tiene_ficha_mga: boolean;
 }
 
 // ── Ficha MGA ─────────────────────────────────────────────────────────────────
@@ -111,12 +102,7 @@ export interface FichaMGAOut {
   modelo_usado: string | null;
   generado_en: string;
   actualizado_en: string;
-  /** Mensajes de la sesión (hilo) activa. */
   chat_historial: ChatMensaje[];
-  /** Metadatos de todas las sesiones (hilos) de chat. */
-  chat_sesiones: SesionChatMeta[];
-  /** Id de la sesión activa. */
-  sesion_activa: string | null;
 }
 
 export interface GenerarFichaMGARequest {
@@ -130,25 +116,6 @@ export interface ChatMensaje {
   timestamp: string;
 }
 
-export interface SesionChatMeta {
-  id: string;
-  titulo: string;
-  creada_en: string;
-  total_mensajes: number;
-}
-
-export interface SesionChatOut {
-  id: string;
-  titulo: string;
-  creada_en: string;
-  mensajes: ChatMensaje[];
-}
-
-export interface ChatSesionesResponse {
-  sesiones: SesionChatOut[];
-  activa: string | null;
-}
-
 export interface ActualizarFichaMGARequest {
   identificacion?: string;
   preparacion?: string;
@@ -158,7 +125,6 @@ export interface ActualizarFichaMGARequest {
 
 export interface ChatFichaMGARequest {
   mensaje: string;
-  sesion_id?: string;
 }
 
 export interface ChatFichaMGAResponse {

@@ -18,53 +18,9 @@
     </div>
 
     @if (!chatColapsado()) {
-      <!-- Selector de sesiones (hilos de conversación) -->
-      <div class="relative flex items-center gap-2 border-b border-border px-3 py-2">
-        <button
-          type="button"
-          class="flex min-w-0 flex-1 items-center gap-1.5 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-surface2"
-          (click)="toggleMenuSesiones()"
-          [attr.aria-expanded]="menuSesiones()"
-        >
-          <fa-icon [icon]="faComment" class="shrink-0 text-[11px] text-ink-faint" />
-          <span class="min-w-0 flex-1 truncate text-[13px] font-semibold text-ink">{{ sesionActiva()?.titulo ?? 'Conversación' }}</span>
-          <fa-icon [icon]="faChevronDown" class="shrink-0 text-[10px] text-ink-faint" />
-        </button>
-        <button
-          type="button"
-          class="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-border text-ink-soft transition-colors hover:border-accent/40 hover:bg-accent-soft hover:text-accent"
-          (click)="nuevaSesion()"
-          title="Nueva conversación"
-          aria-label="Nueva conversación"
-        >
-          <fa-icon [icon]="faPlus" />
-        </button>
-
-        @if (menuSesiones()) {
-          <div class="fixed inset-0 z-10" (click)="menuSesiones.set(false)"></div>
-          <div class="absolute left-3 right-3 top-full z-20 mt-1 max-h-[300px] overflow-y-auto rounded-xl border border-border bg-surface p-1 shadow-pop scrollbar-thin">
-            @for (s of sesiones(); track s.id) {
-              <button
-                type="button"
-                class="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-surface2"
-                [class.bg-accent-soft]="s.id === sesionActivaId()"
-                (click)="seleccionarSesion(s.id)"
-              >
-                <fa-icon [icon]="faComment" class="shrink-0 text-[11px] text-ink-faint" />
-                <span class="min-w-0 flex-1">
-                  <span class="block truncate text-[13px] font-medium text-ink">{{ s.titulo }}</span>
-                  <span class="block text-[10px] text-ink-faint">{{ formatoFechaSesion(s.creada_en) }} · {{ s.mensajes.length }} mensajes</span>
-                </span>
-                @if (s.id === sesionActivaId()) { <fa-icon [icon]="faCheck" class="shrink-0 text-[11px] text-accent" /> }
-              </button>
-            }
-          </div>
-        }
-      </div>
-
       <div class="flex max-h-[340px] flex-1 flex-col gap-3 overflow-y-auto p-4 scrollbar-thin lg:max-h-none">
-        @if (mensajesActivos().length > 0) {
-          @for (m of mensajesActivos(); track $index) {
+        @if (ficha()?.chat_historial && ficha()!.chat_historial.length > 0) {
+          @for (m of ficha()!.chat_historial; track $index) {
             <div
               class="max-w-[85%] rounded-xl px-3.5 py-2.5 text-sm leading-relaxed"
               [class.self-end]="m.role === 'usuario'" [class.bg-primary]="m.role === 'usuario'" [class.text-white]="m.role === 'usuario'" [class.rounded-br-sm]="m.role === 'usuario'"
@@ -102,7 +58,7 @@
   <main class="flex-1 overflow-y-auto bg-surface2 lg:h-full">
     <div class="mx-auto max-w-[820px] px-6 py-8">
 
-      <button class="mb-4 inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3.5 py-1.5 text-xs font-semibold text-ink-soft transition-colors hover:border-accent/40 hover:bg-accent-soft hover:text-accent" (click)="volver()"><fa-icon [icon]="faArrowLeft" /> Volver</button>
+      <button class="mb-4 inline-flex items-center gap-1.5 rounded-lg border border-purple/20 bg-purple-soft px-3.5 py-1.5 text-xs font-semibold text-purple transition-colors hover:bg-purple/15" (click)="volver()">← Volver</button>
 
       @if (errorMsg()) {
         <div class="mb-5 rounded-lg border border-danger/40 bg-danger-soft px-4 py-3.5 text-sm text-danger">{{ errorMsg() }}</div>
@@ -116,22 +72,15 @@
         </div>
       }
 
-      @if (loading() && ficha()) {
-        <div class="mb-4 flex items-center gap-2.5 rounded-lg border border-accent/30 bg-accent-soft px-4 py-3 text-sm text-accent">
-          <span class="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-accent/30 border-t-accent"></span>
-          Regenerando la Ficha MGA con IA… puede tardar uno o varios minutos.
-        </div>
-      }
-
       @if (ficha(); as f) {
-        <div class="overflow-hidden rounded-xl bg-surface shadow-card-md" [class.opacity-60]="loading()" [class.pointer-events-none]="loading()">
+        <div class="overflow-hidden rounded-xl bg-surface shadow-card-md">
 
           <!-- Header tipo portada de documento -->
           <div class="border-b border-border bg-primary px-8 py-6 text-white">
             <div class="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p class="m-0 text-[0.7rem] font-semibold uppercase tracking-widest text-white/60">Propuesta MGA · Borrador preliminar</p>
-                <h2 class="font-display m-0 mt-1 text-xl font-bold">{{ proyectoNombre() ?? 'Proyecto ' + proyectoId() }}</h2>
+                <p class="m-0 text-[0.7rem] font-semibold uppercase tracking-widest text-white/60">Ficha MGA Web · DNP</p>
+                <h2 class="m-0 mt-1 text-xl font-bold">{{ proyectoNombre() ?? 'Proyecto ' + proyectoId() }}</h2>
               </div>
               <div
                 class="rounded-full px-3.5 py-1.5 text-[0.8rem] font-bold"
@@ -139,7 +88,7 @@
                 [class.bg-gold-soft]="completadoClass() === 'parcial'" [class.text-gold]="completadoClass() === 'parcial'"
                 [class.bg-danger-soft]="completadoClass() === 'minimo'" [class.text-danger]="completadoClass() === 'minimo'"
               >
-                <span class="tabular">{{ f.campos_completos }}/4</span> secciones
+                {{ f.campos_completos }}/4 secciones
               </div>
             </div>
 
@@ -147,20 +96,9 @@
               <button class="rounded-lg border border-success/40 bg-success-soft px-4 py-2 text-[0.825rem] font-semibold text-success transition-colors hover:bg-success/20 disabled:cursor-not-allowed disabled:opacity-50" (click)="descargarDocx()" [disabled]="exportandoDocx()">
                 @if (exportandoDocx()) { Descargando… } @else { <fa-icon [icon]="faDownload" /> Descargar Word }
               </button>
-              <button class="flex items-center gap-1.5 rounded-lg border border-white/30 px-4 py-2 text-[0.825rem] font-semibold text-white/90 transition-colors hover:bg-white/10 disabled:cursor-wait disabled:opacity-80" (click)="cargarFicha(true)" [disabled]="loading()">
-                @if (loading()) {
-                  <span class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white"></span> Regenerando…
-                } @else {
-                  <fa-icon [icon]="faRotate" /> Regenerar con IA
-                }
+              <button class="rounded-lg border border-white/30 px-4 py-2 text-[0.825rem] font-semibold text-white/90 transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50" (click)="cargarFicha(true)" [disabled]="loading()">
+                <fa-icon [icon]="faRotate" /> Regenerar con IA
               </button>
-              @if (proyectoGuardado()) {
-                <span class="flex items-center gap-1.5 rounded-lg border border-success/40 bg-success-soft px-4 py-2 text-[0.825rem] font-semibold text-success"><fa-icon [icon]="faCheck" /> Guardado</span>
-              } @else {
-                <button class="rounded-lg border border-white/30 px-4 py-2 text-[0.825rem] font-semibold text-white/90 transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50" (click)="guardarProyecto()" [disabled]="guardandoProyecto()">
-                  @if (guardandoProyecto()) { Guardando… } @else { <fa-icon [icon]="faFloppyDisk" /> Guardar proyecto }
-                </button>
-              }
               <span class="ml-auto text-[0.7rem] text-white/50">
                 Generado: {{ f.generado_en | date:'dd/MM/yyyy HH:mm' }} · Modelo: {{ f.modelo_usado ?? 'N/D' }}
               </span>

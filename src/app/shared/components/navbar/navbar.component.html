@@ -1,0 +1,143 @@
+<nav class="fixed inset-x-0 top-0 z-[999] flex h-nav items-center gap-1 bg-primary px-5 shadow-[0_2px_8px_rgba(0,0,0,.3)]">
+  <div class="mr-1 flex shrink-0 items-center gap-2">
+    <fa-icon [icon]="faScaleBalanced" class="text-white/90 text-base leading-none" />
+    <span class="hidden whitespace-nowrap text-sm font-bold tracking-tight text-white sm:inline">{{ appName() }}</span>
+  </div>
+
+  @if (items().length) {
+    <div class="mx-2 h-5 w-px shrink-0 bg-white/20"></div>
+
+    <div class="flex min-w-0 shrink items-center gap-1 overflow-x-auto scrollbar-thin">
+      @for (item of items(); track item.route) {
+        <a
+          class="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-transparent px-3 py-1.5 text-xs font-medium text-white/70 transition-all hover:bg-white/10 hover:text-white"
+          [class.bg-success/20]="item.highlighted"
+          [class.text-white/90]="item.highlighted"
+          [class.border-success/40]="item.highlighted"
+          [routerLink]="item.route"
+          routerLinkActive="!bg-white/20 !text-white"
+          [routerLinkActiveOptions]="{ exact: false }"
+        >
+          @if (item.icon) {<span class="text-[13px] leading-none">{{ item.icon }}</span>}
+          <span class="hidden lg:inline">{{ item.label }}</span>
+        </a>
+      }
+    </div>
+  }
+
+  <!-- Grupo derecho: scraper, plan activo, usuario -->
+  <div class="ml-auto flex shrink-0 items-center gap-2 pl-2">
+
+    <!-- Indicador y control del proceso automático de normativa -->
+    <div class="relative shrink-0">
+      @if (scraper.isRunning()) {
+        <button
+          class="flex items-center gap-1.5 rounded-md border border-gold/40 bg-gold/15 px-2.5 py-1.5 text-gold transition-all hover:bg-gold/25"
+          (click)="toggleScraperMenu()"
+          title="Indexando normativa"
+        >
+          <span class="h-2 w-2 shrink-0 animate-pulse-ring rounded-full bg-gold"></span>
+          <span class="text-[11px] font-bold">{{ scraper.progresoPct() }}%</span>
+          <fa-icon [icon]="faChevronDown" class="text-[10px]" />
+        </button>
+      } @else {
+        <button
+          class="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-white/20 px-2.5 py-1.5 text-xs font-medium text-white/70 transition-all hover:border-white/35 hover:bg-white/10 hover:text-white"
+          (click)="toggleScraper()"
+          [title]="'Iniciar ingesta automática de normativa (' + scraper.estado().duracion_max_min + ' min)'"
+        >
+          <fa-icon [icon]="faBolt" class="text-[13px]" />
+          <span class="hidden md:inline">Indexar normas</span>
+        </button>
+      }
+
+      @if (scraperMenuOpen()) {
+        <div class="absolute right-0 top-full z-[1000] mt-2 w-[280px] rounded-lg border border-border bg-surface p-3.5 text-left shadow-card-md">
+          <div class="flex items-center gap-2">
+            <span class="h-2 w-2 shrink-0 animate-pulse-ring rounded-full bg-gold"></span>
+            <span class="text-[11px] font-semibold uppercase tracking-wide text-gold">Indexando normativa</span>
+          </div>
+          <div class="mt-2 flex items-center gap-1.5">
+            <div class="h-1 flex-1 overflow-hidden rounded-full bg-border">
+              <div class="h-full rounded-full bg-gold transition-[width] duration-400 ease-out" [style.width.%]="scraper.progresoPct()"></div>
+            </div>
+            <span class="whitespace-nowrap text-[10px] font-semibold text-gold">{{ scraper.progresoPct() }}%</span>
+          </div>
+          @if (scraper.minutosRestantes() !== null) {
+            <span class="mt-1 block text-[10px] text-ink-soft">~{{ scraper.minutosRestantes() }} min restantes</span>
+          }
+          @if (scraper.estado().norma_actual) {
+            <span class="mt-0.5 block overflow-hidden text-ellipsis whitespace-nowrap text-[10px] text-ink-faint" [title]="scraper.estado().norma_actual!">
+              {{ scraper.estado().norma_actual }}
+            </span>
+          }
+          <button class="mt-3 flex w-full items-center justify-center gap-1.5 rounded-md border border-danger/40 bg-danger-soft px-3 py-1.5 text-xs font-semibold text-danger transition-colors hover:bg-danger/20" (click)="toggleScraper()" title="Detener proceso">
+            <fa-icon [icon]="faStop" /> Detener proceso
+          </button>
+        </div>
+      }
+    </div>
+
+    <!-- Plan activo (solo lectura — se cambia desde Biblioteca) -->
+    <div class="hidden shrink-0 sm:block">
+      @if (planContext.planActivo(); as pa) {
+        <span class="flex max-w-[180px] items-center gap-1.5 overflow-hidden rounded-md border border-white/20 bg-white/10 px-2.5 py-1.5 text-xs font-semibold text-white" title="Plan activo: {{ pa.shortName }}">
+          <fa-icon [icon]="faFileLines" class="shrink-0 text-[11px]" />
+          <span class="overflow-hidden text-ellipsis whitespace-nowrap">{{ pa.shortName }}</span>
+        </span>
+      } @else {
+        <span class="rounded-md border border-white/20 bg-white/10 px-2.5 py-1.5 text-xs font-semibold text-white/60" title="Selecciona un plan activo desde Biblioteca">
+          Sin plan activo
+        </span>
+      }
+    </div>
+
+    <!-- Usuario -->
+    @if (user()) {
+      <div class="relative shrink-0 border-l border-white/15 pl-2.5">
+        <button class="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-xs font-bold tracking-wide text-white transition-colors hover:bg-white/30" (click)="toggleUserMenu()" [title]="user()!.nombre">
+          {{ initials(user()!.nombre) }}
+        </button>
+
+        @if (userMenuOpen()) {
+          <div class="absolute right-0 top-full z-[1000] mt-2 w-[220px] rounded-lg border border-border bg-surface p-3.5 text-left shadow-card-md">
+            <div class="overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold text-ink">{{ user()!.nombre }}</div>
+            <span
+              class="mt-1 inline-block w-fit whitespace-nowrap rounded-full px-1.5 py-px text-[10px] font-bold"
+              [style.background]="rolColor(user()!.rol) + '22'"
+              [style.color]="rolColor(user()!.rol)"
+            >{{ rolLabel(user()!.rol) }}</span>
+            <button class="mt-3 flex w-full items-center justify-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:border-danger/50 hover:bg-danger-soft hover:text-danger" (click)="onLogout()">
+              <fa-icon [icon]="faRightFromBracket" /> Cerrar sesión
+            </button>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</nav>
+
+<!-- Overlay para cerrar menus al hacer click afuera -->
+@if (scraperMenuOpen() || userMenuOpen()) {
+  <div class="fixed inset-0 z-[998]" (click)="closeMenus()"></div>
+}
+
+<!-- Spacer so page content clears the fixed bar -->
+<div class="h-nav shrink-0"></div>
+
+<!-- Alert de finalización -->
+@if (showCompletedAlert()) {
+  <div class="fixed bottom-6 right-6 z-[1100] flex min-w-[280px] max-w-[360px] animate-slide-in items-start gap-3 rounded-lg border border-success/50 border-l-4 border-l-success bg-[#1a1a2e] p-3.5 shadow-card-md">
+    <fa-icon [icon]="faCircleCheck" class="mt-px shrink-0 text-xl leading-none text-success" />
+    <div class="flex flex-1 flex-col gap-0.5">
+      <strong class="text-sm font-semibold text-success">Ingesta completada</strong>
+      <span class="text-xs text-white/65">
+        {{ scraper.estado().normas_indexadas }} norma(s) indexadas de
+        {{ scraper.estado().normas_total }} procesadas.
+      </span>
+    </div>
+    <button class="shrink-0 text-sm leading-none text-white/40 transition-colors hover:text-white/80" (click)="dismissAlert()">
+      <fa-icon [icon]="faXmark" />
+    </button>
+  </div>
+}

@@ -2,17 +2,12 @@
   <div class="pointer-events-none fixed -right-32 -top-32 h-[500px] w-[500px] rounded-full bg-accent/10"></div>
   <div class="pointer-events-none fixed -bottom-24 -left-24 h-[400px] w-[400px] rounded-full bg-white/5"></div>
 
-  <div class="relative z-10 w-full max-w-[420px] animate-fade-in-up overflow-hidden rounded-[20px] bg-surface p-9 shadow-card-md">
-    <!-- Hilo de regalías: acento dorado en la portada -->
-    <div class="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gold"></div>
+  <div class="relative z-10 w-full max-w-[420px] animate-fade-in-up rounded-[20px] bg-surface p-9 shadow-card-md">
 
-    <div class="mb-7">
-      <div class="mb-4 flex h-11 w-11 items-center justify-center rounded-[13px] bg-primary text-white">
-        <fa-icon [icon]="faScaleBalanced" class="text-lg leading-none" />
-      </div>
-      <p class="text-[11px] font-bold uppercase tracking-widest text-gold">Propuestas SGR</p>
-      <h2 class="font-display mt-0.5 text-2xl font-extrabold text-primary">Formula proyectos financiables con regalías</h2>
-      <p class="mt-1.5 text-xs text-ink-soft">Ingresa con tu cuenta institucional para empezar.</p>
+    <div class="mb-7 text-center">
+      <fa-icon [icon]="faScaleBalanced" class="mb-2 block text-3xl leading-none text-primary" />
+      <h2 class="text-xl font-extrabold text-primary">Iniciar sesión</h2>
+      <p class="mt-1 text-xs text-ink-soft">Ingresa con tu cuenta institucional</p>
     </div>
 
     <form [formGroup]="form" (ngSubmit)="submit()">

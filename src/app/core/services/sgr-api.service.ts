@@ -5,7 +5,6 @@ import { environment } from '../../../environments/environment';
 import {
   ActualizarFichaMGARequest,
   ChatFichaMGAResponse,
-  ChatSesionesResponse,
   EvaluarPlanResponse,
   EvaluarProyectoRequest,
   EvaluarProyectoResponse,
@@ -13,7 +12,6 @@ import {
   GenerarFichaMGARequest,
   OnboardingStatus,
   ChangePasswordRequest,
-  ProyectoGuardadoOut,
   ProyectoSGROut,
   VerificarDuplicidadResponse,
 } from '../models/sgr.model';
@@ -57,14 +55,6 @@ export class SgrApiService {
     return this.http.get<ProyectoSGROut>(`${this.base}/sgr/proyecto/${proyectoId}`);
   }
 
-  guardarProyecto(proyectoId: string): Observable<ProyectoSGROut> {
-    return this.http.post<ProyectoSGROut>(`${this.base}/sgr/proyecto/${proyectoId}/guardar`, {});
-  }
-
-  listarProyectosGuardados(): Observable<ProyectoGuardadoOut[]> {
-    return this.http.get<ProyectoGuardadoOut[]>(`${this.base}/sgr/proyectos-guardados`);
-  }
-
   // ── M4: Ficha MGA ────────────────────────────────────────────────────────────
 
   generarFichaMGA(proyectoId: string, req: GenerarFichaMGARequest = {}): Observable<FichaMGAOut> {
@@ -75,20 +65,8 @@ export class SgrApiService {
     return this.http.patch<FichaMGAOut>(`${this.base}/sgr/ficha-mga/${proyectoId}`, payload);
   }
 
-  chatFichaMGA(proyectoId: string, mensaje: string, sesionId?: string): Observable<ChatFichaMGAResponse> {
-    const body: { mensaje: string; sesion_id?: string } = { mensaje };
-    if (sesionId) body.sesion_id = sesionId;
-    return this.http.post<ChatFichaMGAResponse>(`${this.base}/sgr/ficha-mga/${proyectoId}/chat`, body);
-  }
-
-  /** Lista las sesiones (hilos) de chat de la Ficha MGA, con sus mensajes. */
-  listarChatSesiones(proyectoId: string): Observable<ChatSesionesResponse> {
-    return this.http.get<ChatSesionesResponse>(`${this.base}/sgr/ficha-mga/${proyectoId}/chat-sesiones`);
-  }
-
-  /** Crea una nueva sesión (hilo) de chat y la deja activa. */
-  crearChatSesion(proyectoId: string): Observable<ChatSesionesResponse> {
-    return this.http.post<ChatSesionesResponse>(`${this.base}/sgr/ficha-mga/${proyectoId}/chat-sesiones`, {});
+  chatFichaMGA(proyectoId: string, mensaje: string): Observable<ChatFichaMGAResponse> {
+    return this.http.post<ChatFichaMGAResponse>(`${this.base}/sgr/ficha-mga/${proyectoId}/chat`, { mensaje });
   }
 
   exportarFichaMGADocx(proyectoId: string): Observable<Blob> {

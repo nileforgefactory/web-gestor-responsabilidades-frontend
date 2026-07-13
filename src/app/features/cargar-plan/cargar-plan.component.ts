@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faStop, faCheck, faRotate } from '@fortawesome/free-solid-svg-icons';
+import { faStop, faCheck } from '@fortawesome/free-solid-svg-icons';
 import { AgentLogComponent, LogLine } from '../../shared/components/agent-log/agent-log.component';
 import { SidebarComponent, SidebarItem, SidebarSection, SidebarUser } from '../../shared/components/sidebar/sidebar.component';
 import { UploadZoneComponent } from '../../shared/components/upload-zone/upload-zone.component';
@@ -25,7 +25,6 @@ type PageState = 'idle' | 'file-loaded' | 'processing' | 'done';
 export class CargarPlanComponent {
   readonly faStop = faStop;
   readonly faCheck = faCheck;
-  readonly faRotate = faRotate;
 
   private planService = inject(PlanService);
   private auth        = inject(AuthService);
@@ -96,30 +95,8 @@ export class CargarPlanComponent {
     ];
   });
 
-  /** Pasos del proceso, para el stepper horizontal siempre visible. */
-  readonly procesoItems = computed(() => this.sidebarSections()[0]?.items ?? []);
-
-  /** "Análisis previos" como sección para el overlay (solo si hay recientes). */
-  readonly analisisPreviosSections = computed<SidebarSection[]>(() => {
-    const sec = this.sidebarSections()[1];
-    return sec && sec.items.length ? [sec] : [];
-  });
-
   onSidebarItemClick(item: SidebarItem): void {
     if (item.id) this.router.navigate(['/plan', item.id]);
-  }
-
-  /** Vuelve al paso 1 para elegir otro documento (sin perder la sesión completa). */
-  cambiarArchivo(): void {
-    this.state.set('idle');
-    this.selectedFile.set(null);
-    this.orchestratorParams.set(undefined);
-  }
-
-  /** Tamaño legible del archivo cargado (MB). */
-  fileSizeMb(file: File | null): string {
-    if (!file) return '';
-    return (file.size / 1024 / 1024).toFixed(1);
   }
 
   // ── File selected → solo registra archivo, el análisis lo indexa ────

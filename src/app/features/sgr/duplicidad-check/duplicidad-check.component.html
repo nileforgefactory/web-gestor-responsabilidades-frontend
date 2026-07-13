@@ -1,9 +1,10 @@
-<div class="mx-auto max-w-[760px] p-4 sm:p-6">
+<div class="mx-auto max-w-[760px] p-6">
 
-  <button class="mb-5 inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3.5 py-1.5 text-xs font-semibold text-ink-soft transition-colors hover:border-accent/40 hover:bg-accent-soft hover:text-accent" (click)="volver()"><fa-icon [icon]="faArrowLeft" /> Volver</button>
+  <button class="mb-4 inline-flex items-center gap-1.5 rounded-lg border border-purple/20 bg-purple-soft px-3.5 py-1.5 text-xs font-semibold text-purple transition-colors hover:bg-purple/15" (click)="volver()"><fa-icon [icon]="faArrowLeft" /> Volver</button>
 
   <div class="mb-6">
-    <p class="m-0 max-w-xl text-sm text-ink-soft">Compara el proyecto contra el Mapa de Inversiones SGR (datos.gov.co + base local).</p>
+    <h2 class="m-0 mb-1 text-[1.4rem] font-bold text-ink">Verificación de Duplicidad</h2>
+    <p class="m-0 text-sm text-ink-soft">Compara el proyecto contra el Mapa de Inversiones SGR (datos.gov.co + base local)</p>
   </div>
 
   @if (errorMsg()) {
@@ -30,7 +31,7 @@
       <div class="flex items-center gap-4">
         <span class="text-3xl">{{ nivelIcon(r.nivel) }}</span>
         <div>
-          <div class="font-display text-[1.1rem] font-extrabold text-ink">Duplicidad {{ r.nivel }}</div>
+          <div class="text-[1.1rem] font-extrabold text-ink">Duplicidad {{ r.nivel }}</div>
           @if (r.bloqueado) {
             <div class="mt-1 text-[0.82rem] font-bold text-danger"><fa-icon [icon]="faBan" /> BLOQUEADO — No puede avanzar en la formulación</div>
           } @else if (r.puede_continuar) {
@@ -46,7 +47,7 @@
         [class.border-gold]="r.nivel === 'MEDIO'" [class.text-gold]="r.nivel === 'MEDIO'"
         [class.border-danger]="r.nivel === 'ALTO'" [class.text-danger]="r.nivel === 'ALTO'"
       >
-        <span class="font-display text-[1.2rem] font-extrabold leading-none tabular">{{ (r.score_similitud * 100) | number:'1.0-0' }}%</span>
+        <span class="text-[1.2rem] font-extrabold leading-none">{{ (r.score_similitud * 100) | number:'1.0-0' }}%</span>
         <small class="text-[0.65rem] text-ink-soft">similitud</small>
       </div>
     </div>

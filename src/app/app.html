@@ -1,22 +1,10 @@
-@if (showShell()) {
-  <div class="flex min-h-dvh">
-    <app-rail-sidebar
-      appName="Propuestas SGR"
-      [createRoute]="createRoute()"
-      [groups]="railGroups()"
-      [user]="auth.user()"
-      (logoutClick)="logout()"
-    />
-    <div class="flex min-w-0 flex-1 flex-col">
-      <app-topbar [eyebrow]="pageMeta().eyebrow" [title]="pageMeta().title" />
-      <main class="min-w-0 flex-1"><router-outlet /></main>
-    </div>
-
-    <!-- Backdrop del drawer de navegación (solo móvil) -->
-    @if (layout.mobileNavOpen()) {
-      <div class="fixed inset-0 z-[39] bg-black/40 lg:hidden" (click)="layout.closeMobileNav()"></div>
-    }
-  </div>
-} @else {
-  <router-outlet />
+@if (showNavbar()) {
+  <app-navbar
+    appName="Gestor de Leyes"
+    appIcon="⚖️"
+    [items]="navItems()"
+    [user]="auth.user()"
+    (logoutClick)="logout()"
+  />
 }
+<router-outlet />

@@ -2,14 +2,10 @@
 
 @theme {
   --font-sans: "Inter", system-ui, sans-serif;
-  --font-display: "Bricolage Grotesque", "Inter", system-ui, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
 
-  /* Superficies en capas (estilo llmchat, derivadas de nuestra paleta) */
   --color-bg: #F4F6FA;
   --color-surface: #FFFFFF;
   --color-surface2: #F0F3F9;
-  --color-surface3: #E7ECF4;
 
   --color-primary: #173568;
   --color-primary-light: #2D5BA8;
@@ -33,33 +29,18 @@
   --color-ink: #111827;
   --color-ink-soft: #6B7280;
   --color-ink-faint: #9CA3AF;
-  /* alias semántico estilo llmchat */
-  --color-muted-foreground: #6B7280;
 
   --color-border: #E5E7EB;
-  --color-border-soft: #EEF1F6;
-  --color-border-strong: #D6DBE4;
 
-  --spacing-nav: 52px;
-  --spacing-rail: 248px;
-  --spacing-rail-collapsed: 60px;
-
-  --radius-xs: 6px;
-  --radius-sm: 8px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
+  --spacing-nav: 56px;
 
   --shadow-card: 0 1px 3px rgba(15,23,42,.08), 0 1px 2px rgba(15,23,42,.04);
   --shadow-card-md: 0 8px 24px rgba(15,23,42,.10);
-  --shadow-rail: 1px 0 0 rgba(15,23,42,.04);
-  --shadow-pop: 0 12px 32px -8px rgba(15,23,42,.18), 0 0 0 1px rgba(15,23,42,.04);
 
   --animate-pulse-ring: pulse-ring 1.4s ease-out infinite;
   --animate-fade-in-up: fade-in-up .3s ease both;
   --animate-fade-in: fade-in .2s ease both;
   --animate-slide-in: slide-in .25s ease both;
-  --animate-thread-grow: thread-grow .5s ease both;
 
   @keyframes pulse-ring {
     0% { box-shadow: 0 0 0 0 rgba(47,111,237,.4); }
@@ -77,10 +58,6 @@
     from { opacity: 0; }
     to { opacity: 1; }
   }
-  @keyframes thread-grow {
-    from { transform: scaleY(0); }
-    to { transform: scaleY(1); }
-  }
 }
 
 html, body { height: 100%; }
@@ -91,40 +68,9 @@ body {
   color: var(--color-ink);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Evita scroll horizontal por elementos decorativos/al borde en móvil.
-     `clip` (no `hidden`) no crea contenedor de scroll → no rompe position: sticky. */
-  overflow-x: clip;
 }
-
-/* Display face — títulos con carácter, usada con moderación */
-.font-display { font-family: var(--font-display); letter-spacing: -0.015em; }
-/* Mono — cifras COP, códigos BPIN, montos de regalías */
-.font-mono, .tabular { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
-
-/* Divisor punteado (lenguaje llmchat) */
-.divider-dashed { border-top: 1px dashed var(--color-border); }
-.divider-dashed-l { border-left: 1px dashed var(--color-border); }
-
-::selection { background: color-mix(in srgb, var(--color-accent) 22%, transparent); }
 
 /* thin scrollbar utility usada en sidebar/paneles */
 .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
 .scrollbar-thin::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 999px; }
 .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
-
-/* Accesibilidad: foco visible por teclado, no en click */
-:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
-/* Respetar reduced-motion en toda la app */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: .001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: .001ms !important;
-    scroll-behavior: auto !important;
-  }
-}
