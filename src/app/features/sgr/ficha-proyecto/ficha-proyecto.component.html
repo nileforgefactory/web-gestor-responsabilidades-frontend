@@ -161,6 +161,13 @@
                   @if (guardandoProyecto()) { Guardando… } @else { <fa-icon [icon]="faFloppyDisk" /> Guardar proyecto }
                 </button>
               }
+              <button
+                class="flex items-center gap-1.5 rounded-lg border border-danger/40 px-4 py-2 text-[0.825rem] font-semibold text-danger/90 transition-colors hover:bg-danger-soft disabled:cursor-not-allowed disabled:opacity-50"
+                (click)="eliminarProyecto()"
+                [disabled]="eliminandoProyecto()"
+              >
+                @if (eliminandoProyecto()) { Eliminando… } @else { <fa-icon [icon]="faTrashCan" /> Eliminar }
+              </button>
               <span class="ml-auto text-[0.7rem] text-white/50">
                 Generado: {{ f.generado_en | date:'dd/MM/yyyy HH:mm' }} · Modelo: {{ f.modelo_usado ?? 'N/D' }}
               </span>

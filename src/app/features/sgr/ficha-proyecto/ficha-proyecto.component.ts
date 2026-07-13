@@ -1,8 +1,9 @@
 import { Component, OnInit, computed, inject, signal, input, effect } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
+import { Router } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faDownload, faCheck, faComment, faRotate, faXmark, faBars, faPenToSquare, faFloppyDisk, faArrowLeft, faPlus, faChevronDown } from '@fortawesome/free-solid-svg-icons';
+import { faDownload, faCheck, faComment, faRotate, faXmark, faBars, faPenToSquare, faFloppyDisk, faArrowLeft, faPlus, faChevronDown, faTrashCan } from '@fortawesome/free-solid-svg-icons';
 import { SgrApiService } from '../../../core/services/sgr-api.service';
 import { FichaMGAOut, SesionChatOut } from '../../../core/models/sgr.model';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
@@ -19,6 +20,7 @@ type SeccionKey = 'identificacion' | 'preparacion' | 'evaluacion' | 'programacio
 export class FichaProyectoComponent implements OnInit {
   private sgr      = inject(SgrApiService);
   private location = inject(Location);
+  private router    = inject(Router);
   private fb        = inject(FormBuilder);
 
   readonly faDownload = faDownload;
@@ -32,6 +34,7 @@ export class FichaProyectoComponent implements OnInit {
   readonly faFloppyDisk = faFloppyDisk;
   readonly faPlus = faPlus;
   readonly faChevronDown = faChevronDown;
+  readonly faTrashCan = faTrashCan;
 
   proyectoId = input.required<string>();
 
@@ -42,6 +45,7 @@ export class FichaProyectoComponent implements OnInit {
   proyectoNombre = signal<string | null>(null);
   proyectoGuardado = signal(false);
   guardandoProyecto = signal(false);
+  eliminandoProyecto = signal(false);
 
   // --- UI-only state (rediseño visual, sin lógica de negocio) ---
   modoEdicion   = signal<SeccionKey | null>(null);
@@ -154,6 +158,21 @@ export class FichaProyectoComponent implements OnInit {
 
   volver(): void {
     this.location.back();
+  }
+
+  eliminarProyecto(): void {
+    if (this.eliminandoProyecto()) return;
+    const nombre = this.proyectoNombre() ?? 'este proyecto';
+    if (!confirm(`¿Eliminar "${nombre}"? Esta acción no se puede deshacer.`)) return;
+
+    this.eliminandoProyecto.set(true);
+    this.sgr.eliminarProyecto(this.proyectoId()).subscribe({
+      next: () => this.router.navigate(['/sgr/mis-proyectos']),
+      error: err => {
+        this.errorMsg.set(err.error?.detail ?? 'No se pudo eliminar el proyecto');
+        this.eliminandoProyecto.set(false);
+      },
+    });
   }
 
   cargarFicha(forzar: boolean): void {
