@@ -12,6 +12,7 @@ import {
   faSpinner,
   faStop,
   faTriangleExclamation,
+  faXmark,
 } from '@fortawesome/free-solid-svg-icons';
 import { AuthService } from '../../core/services/auth.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
@@ -62,8 +63,10 @@ export class AdminSgrMatrizComponent {
   readonly faSpinner = faSpinner;
   readonly faStop = faStop;
   readonly faTriangleExclamation = faTriangleExclamation;
+  readonly faXmark = faXmark;
 
   archivoSeleccionado = signal<File | null>(null);
+  uploadModalOpen = signal(false);
 
   // ── Tabla de proyectos indexados ────────────────────────────────────────────
   proyectos = signal<ProyectoMatrizSGROut[]>([]);
@@ -125,6 +128,14 @@ export class AdminSgrMatrizComponent {
   onSidebarClick(item: SidebarItem): void {
     if (item.id === 'volver') this.router.navigate(['/cargar-plan']);
     if (item.id === 'usuarios') this.router.navigate(['/admin/usuarios']);
+  }
+
+  openUploadModal(): void {
+    this.uploadModalOpen.set(true);
+  }
+
+  closeUploadModal(): void {
+    this.uploadModalOpen.set(false);
   }
 
   onArchivoSeleccionado(event: Event): void {
