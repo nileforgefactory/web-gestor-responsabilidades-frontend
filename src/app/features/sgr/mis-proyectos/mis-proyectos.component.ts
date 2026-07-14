@@ -13,6 +13,7 @@ import {
   faXmark,
 } from '@fortawesome/free-solid-svg-icons';
 import { SgrApiService } from '../../../core/services/sgr-api.service';
+import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { ProyectoGuardadoOut } from '../../../core/models/sgr.model';
 
 @Component({
@@ -23,8 +24,9 @@ import { ProyectoGuardadoOut } from '../../../core/models/sgr.model';
   styleUrl: './mis-proyectos.component.css',
 })
 export class MisProyectosSgrComponent implements OnInit {
-  private sgr    = inject(SgrApiService);
-  private router = inject(Router);
+  private sgr            = inject(SgrApiService);
+  private router         = inject(Router);
+  private confirmDialog  = inject(ConfirmDialogService);
 
   readonly faArrowRight = faArrowRight;
   readonly faCircleCheck = faCircleCheck;
@@ -69,9 +71,13 @@ export class MisProyectosSgrComponent implements OnInit {
     this.router.navigate(['/sgr/ficha-mga', p.id]);
   }
 
-  eliminarProyecto(p: ProyectoGuardadoOut, event: Event): void {
+  async eliminarProyecto(p: ProyectoGuardadoOut, event: Event): Promise<void> {
     event.stopPropagation();
-    if (!confirm(`¿Eliminar "${p.nombre}"? Esta acción no se puede deshacer.`)) return;
+    const ok = await this.confirmDialog.confirm({
+      title: 'Eliminar proyecto',
+      message: `¿Eliminar "${p.nombre}"? Esta acción no se puede deshacer.`,
+    });
+    if (!ok) return;
 
     this.eliminando.set(p.id);
     this.sgr.eliminarProyecto(p.id).subscribe({
