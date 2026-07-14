@@ -15,12 +15,25 @@
     @if (plan(); as p) {
 
       <!-- Back row -->
-      <div class="mb-5 flex items-center gap-3">
+      <div class="mb-5 flex flex-wrap items-center gap-3">
         <button
           class="inline-flex items-center gap-1.5 rounded-lg border border-primary/[.18] bg-primary/10 px-3.5 py-[7px] text-xs font-semibold text-primary transition-colors hover:bg-primary/[.18]"
           (click)="back()"
         >← Volver</button>
         <span class="text-xs text-ink-faint">Biblioteca de Planes → {{ p.shortName }}</span>
+
+        <button
+          type="button"
+          class="ml-auto flex shrink-0 items-center gap-1.5 rounded-lg bg-accent px-3.5 py-[7px] text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary disabled:cursor-not-allowed disabled:opacity-60"
+          (click)="exportPdf()"
+          [disabled]="exportingPdf()"
+        >
+          @if (exportingPdf()) {
+            <span class="h-3 w-3 shrink-0 animate-spin rounded-full border-2 border-white/40 border-t-white"></span> Generando PDF… puede tardar unos minutos
+          } @else {
+            <fa-icon [icon]="faDownload" /> Exportar PDF
+          }
+        </button>
       </div>
 
       <!-- ── Hero ── -->
