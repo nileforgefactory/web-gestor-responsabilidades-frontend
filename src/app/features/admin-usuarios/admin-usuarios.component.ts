@@ -20,13 +20,13 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { AuthService } from '../../core/services/auth.service';
 import { UsersApiService } from '../../core/services/users-api.service';
-import { RolAsignable, RolCodigo, UserSummary } from '../../core/models/auth.model';
+import { DepartamentoDivipola, MunicipioDivipola, MunicipioResult, RolAsignable, RolCodigo, UserSummary } from '../../core/models/auth.model';
 import {
-  SidebarComponent,
   SidebarItem,
   SidebarSection,
   SidebarUser,
 } from '../../shared/components/sidebar/sidebar.component';
+import { PaginatorComponent } from '../../shared/components/paginator/paginator.component';
 import { BadgeComponent, BadgeVariant } from '../../shared/components/badge/badge.component';
 
 const ROL_LABEL: Record<RolCodigo, string> = {
@@ -44,7 +44,7 @@ const ROL_BADGE: Record<RolCodigo, BadgeVariant> = {
 @Component({
   selector: 'app-admin-usuarios',
   standalone: true,
-  imports: [SidebarComponent, BadgeComponent, ReactiveFormsModule, FaIconComponent],
+  imports: [BadgeComponent, ReactiveFormsModule, FaIconComponent, PaginatorComponent],
   templateUrl: './admin-usuarios.component.html',
   styleUrl:    './admin-usuarios.component.css',
 })
@@ -94,9 +94,18 @@ export class AdminUsuariosComponent implements OnInit {
     email:         ['', [Validators.required, Validators.email]],
     password:      ['', [Validators.required, Validators.minLength(6)]],
     pais:          ['COLOMBIA', Validators.required],
-    departamento:  [''],
-    municipio:     [''],
   });
+
+  // ── Selectores dependientes Departamento -> Municipio (DIVIPOLA) ──────────
+  departamentos      = signal<DepartamentoDivipola[]>([]);
+  cargandoDepts      = signal(false);
+  deptSel            = signal<string>('');
+  municipioSeleccion = signal<MunicipioResult | null>(null);
+
+  /** Municipios del departamento seleccionado. */
+  municipiosDelDept = computed<MunicipioDivipola[]>(() =>
+    this.departamentos().find(d => d.departamento === this.deptSel())?.municipios ?? [],
+  );
 
   // ── Computed ───────────────────────────────────────────────────────────────
   isSuperAdmin = computed(() => this.auth.rol() === 'superadmin');
@@ -110,6 +119,19 @@ export class AdminUsuariosComponent implements OnInit {
       u.territorio.coleccion_id.toLowerCase().includes(q),
     );
   });
+
+  // Paginación
+  page = signal(1);
+  readonly pageSize = 10;
+  usersPagina = computed(() => {
+    const inicio = (this.page() - 1) * this.pageSize;
+    return this.filteredUsers().slice(inicio, inicio + this.pageSize);
+  });
+
+  onSearch(v: string): void {
+    this.search.set(v);
+    this.page.set(1);
+  }
 
   totalCount = computed(() => this.users().length);
   adminCount = computed(() => this.users().filter(u => u.rol === 'administrador').length);
@@ -125,6 +147,11 @@ export class AdminUsuariosComponent implements OnInit {
           label:  'Usuarios y roles',
           status: 'active',
           badge:  this.totalCount(),
+        },
+        {
+          id:    'sgr-matriz',
+          icon:  '📊',
+          label: 'Matriz SGR',
         },
       ],
     },
@@ -163,6 +190,7 @@ export class AdminUsuariosComponent implements OnInit {
   // ── Sidebar ────────────────────────────────────────────────────────────────
   onSidebarClick(item: SidebarItem): void {
     if (item.id === 'volver') this.router.navigate(['/cargar-plan']);
+    if (item.id === 'sgr-matriz') this.router.navigate(['/admin/sgr-matriz']);
   }
 
   // ── Create modal ───────────────────────────────────────────────────────────
@@ -170,6 +198,9 @@ export class AdminUsuariosComponent implements OnInit {
     this.createForm.reset({ pais: 'COLOMBIA' });
     this.createRole.set('usuario');
     this.createError.set(null);
+    this.deptSel.set('');
+    this.municipioSeleccion.set(null);
+    this.cargarDepartamentos();
     this.showCreate.set(true);
   }
 
@@ -177,14 +208,46 @@ export class AdminUsuariosComponent implements OnInit {
 
   setCreateRole(rol: RolAsignable): void { this.createRole.set(rol); }
 
+  // ── Selectores Departamento -> Municipio ────────────────────────────────────
+  /** Carga (una vez) los departamentos con sus municipios desde DIVIPOLA. */
+  cargarDepartamentos(): void {
+    if (this.departamentos().length || this.cargandoDepts()) return;
+    this.cargandoDepts.set(true);
+    this.api.listarDepartamentos().subscribe({
+      next: deps => { this.departamentos.set(deps); this.cargandoDepts.set(false); },
+      error: () => { this.cargandoDepts.set(false); },
+    });
+  }
+
+  onDeptChange(departamento: string): void {
+    this.deptSel.set(departamento);
+    this.municipioSeleccion.set(null);
+  }
+
+  onMunicipioChange(nombre: string): void {
+    const mun = this.municipiosDelDept().find(m => m.municipio === nombre);
+    if (!nombre || !mun) {
+      this.municipioSeleccion.set(null);
+      return;
+    }
+    const cat = mun.categoria === '5' || mun.categoria === '6' ? mun.categoria : null;
+    this.municipioSeleccion.set({
+      departamento: this.deptSel(),
+      municipio: mun.municipio,
+      divipola: mun.divipola,
+      categoria: cat,
+    });
+  }
+
   submitCreate(): void {
     if (this.createForm.invalid || this.creating()) return;
     const v = this.createForm.value;
+    const m = this.municipioSeleccion();
 
     const territorio: (string | null)[] = [
       v.pais ?? 'COLOMBIA',
-      v.departamento?.trim() || null,
-      v.municipio?.trim()    || null,
+      m?.departamento ?? null,
+      m?.municipio ?? null,
     ];
 
     this.creating.set(true);
@@ -196,6 +259,8 @@ export class AdminUsuariosComponent implements OnInit {
       password:  v.password!,
       rol:       this.createRole(),
       territorio,
+      divipola: m?.divipola ?? null,
+      categoria_municipio: m?.categoria ?? null,
     }).subscribe({
       next: user => {
         this.users.update(list => [...list, user]);

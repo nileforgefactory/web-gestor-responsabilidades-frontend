@@ -1,0 +1,228 @@
+<div class="min-h-[calc(100vh-var(--h-nav))]">
+  <main class="min-w-0 overflow-y-auto p-7 max-[900px]:p-4">
+
+    <!-- Header -->
+    <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
+      <div>
+        <div class="mb-1 text-xs text-ink-faint">Admin / Normas del indexer</div>
+        <h2 class="font-display text-[22px] font-bold text-ink">Catálogo de normas del indexer</h2>
+        <p class="mt-1 max-w-[70ch] text-sm text-ink-soft">
+          El indexer trae e indexa estas normas al RAG. Las <strong>nacionales</strong> son la semilla base;
+          agrega las <strong>territoriales</strong> propias (acuerdos, ordenanzas, decretos locales) manualmente o con descubrimiento IA.
+        </p>
+      </div>
+      <div class="flex flex-col items-center rounded-[10px] border border-accent/35 bg-accent/5 px-4 py-2">
+        <span class="font-display text-lg font-bold text-ink tabular">{{ totalCatalogo() }}</span>
+        <span class="text-[10px] uppercase tracking-wide text-ink-faint">en catálogo</span>
+      </div>
+    </div>
+
+    @if (errorMsg()) {
+      <div class="mb-4 rounded-lg border border-danger/40 bg-danger-soft px-4 py-3 text-sm text-danger"><fa-icon [icon]="faTriangleExclamation" /> {{ errorMsg() }}</div>
+    }
+    @if (okMsg()) {
+      <div class="mb-4 rounded-lg border border-success/40 bg-success-soft px-4 py-3 text-sm text-success"><fa-icon [icon]="faCircleCheck" /> {{ okMsg() }}</div>
+    }
+
+    <!-- Toolbar: búsqueda + acciones -->
+    <div class="mb-4 flex flex-wrap items-center gap-2">
+      <div class="relative min-w-[220px] flex-1">
+        <span class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-faint"><fa-icon [icon]="faMagnifyingGlass" /></span>
+        <input
+          class="w-full rounded-full border border-border bg-surface py-2.5 pl-10 pr-4 text-sm text-ink outline-none transition-colors focus:border-accent focus:shadow-[0_0_0_3px_rgba(47,111,237,0.12)] placeholder:text-ink-faint"
+          type="text"
+          placeholder="Buscar por código, tipo, origen o territorio…"
+          [value]="search()"
+          (input)="onSearch($any($event.target).value)"
+        />
+      </div>
+      <button
+        class="flex shrink-0 items-center gap-2 rounded-full bg-purple px-4 py-2.5 text-[13px] font-semibold text-white transition-opacity hover:opacity-90"
+        (click)="openDiscover()"
+      >
+        <fa-icon [icon]="faWandMagicSparkles" /> Descubrir con IA
+      </button>
+      <button
+        class="flex shrink-0 items-center gap-2 rounded-full bg-accent px-4 py-2.5 text-[13px] font-semibold text-white shadow-sm transition-colors hover:bg-primary"
+        (click)="openManual()"
+      >
+        <fa-icon [icon]="faPlus" /> Agregar norma
+      </button>
+    </div>
+
+    <!-- Tabla unificada -->
+    <div class="overflow-hidden rounded-xl border border-border bg-surface shadow-card">
+      <div class="flex items-center gap-2.5 border-b border-border px-5 py-4">
+        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-white"><fa-icon [icon]="faScaleBalanced" /></div>
+        <div class="min-w-0">
+          <div class="font-display text-sm font-bold text-ink">Normas del catálogo</div>
+          <div class="mt-px text-xs text-ink-soft">{{ filas().length }} normas · lista que el indexer trae e indexa al RAG</div>
+        </div>
+      </div>
+
+      @if (loading()) {
+        <div class="px-5 py-14 text-center text-ink-soft">
+          <div class="mx-auto mb-3 h-9 w-9 animate-spin rounded-full border-4 border-border border-t-primary"></div>
+          Cargando catálogo…
+        </div>
+      } @else if (filas().length === 0) {
+        <div class="px-5 py-14 text-center">
+          <div class="mb-2 text-4xl text-ink-faint"><fa-icon [icon]="faBolt" /></div>
+          <div class="mb-1 font-display text-sm font-bold text-ink">Sin resultados</div>
+          <div class="text-xs text-ink-faint">Ajusta la búsqueda o agrega una norma territorial.</div>
+        </div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-[720px] border-collapse text-left">
+            <thead>
+              <tr class="border-b border-border text-[10px] font-bold uppercase tracking-wider text-ink-faint">
+                <th class="px-5 py-3">Tipo</th>
+                <th class="px-3 py-3">Código</th>
+                <th class="px-3 py-3">Origen</th>
+                <th class="px-3 py-3">Prioridad</th>
+                <th class="px-5 py-3 text-right">Opciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (f of filasPagina(); track f.origen + f.codigo) {
+                <tr class="border-b border-border/70 transition-colors last:border-b-0 hover:bg-accent/[.03]">
+                  <td class="px-5 py-3 align-middle">
+                    <span
+                      class="inline-block rounded px-1.5 py-1 text-[10px] font-bold uppercase tracking-wide whitespace-nowrap"
+                      [class.bg-accent/10]="f.tipo === 'LEY'" [class.text-accent]="f.tipo === 'LEY'"
+                      [class.bg-purple/10]="f.tipo === 'DECRETO'" [class.text-purple]="f.tipo === 'DECRETO'"
+                      [class.bg-gold/10]="f.tipo === 'RESOLUCIÓN' || f.tipo === 'CONPES'" [class.text-gold]="f.tipo === 'RESOLUCIÓN' || f.tipo === 'CONPES'"
+                      [class.bg-success/10]="f.tipo === 'ACUERDO' || f.tipo === 'ORDENANZA'" [class.text-success]="f.tipo === 'ACUERDO' || f.tipo === 'ORDENANZA'"
+                      [class.bg-ink-faint/10]="f.tipo === 'CIRCULAR' || f.tipo === 'DIRECTIVA' || f.tipo === 'NORMA'" [class.text-ink-soft]="f.tipo === 'CIRCULAR' || f.tipo === 'DIRECTIVA' || f.tipo === 'NORMA'"
+                    >{{ f.tipo }}</span>
+                  </td>
+                  <td class="max-w-[320px] px-3 py-3 align-middle">
+                    <span class="block truncate text-[13px] font-medium text-ink" [title]="f.codigo">{{ f.codigo }}</span>
+                    @if (f.territorio) { <span class="block text-[11px] text-ink-faint">{{ f.territorio }}</span> }
+                  </td>
+                  <td class="px-3 py-3 align-middle">
+                    <span
+                      class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                      [class.bg-surface2]="f.origen === 'Nacional'" [class.text-ink-soft]="f.origen === 'Nacional'"
+                      [class.bg-accent-soft]="f.origen === 'Territorial'" [class.text-accent]="f.origen === 'Territorial'"
+                      [class.bg-purple-soft]="f.origen === 'Descubierta por IA'" [class.text-purple]="f.origen === 'Descubierta por IA'"
+                    >
+                      <fa-icon [icon]="f.origen === 'Nacional' ? faScaleBalanced : (f.origen === 'Descubierta por IA' ? faWandMagicSparkles : faLandmark)" class="text-[10px]" />
+                      {{ f.origen }}
+                    </span>
+                  </td>
+                  <td class="px-3 py-3 align-middle">
+                    <span class="inline-flex items-center gap-1.5 text-[12px] text-ink-soft">
+                      <span class="h-2 w-2 shrink-0 rounded-full" [class.bg-danger]="f.prioridad === 1" [class.bg-gold]="f.prioridad === 2" [class.bg-ink-faint]="f.prioridad === 3"></span>
+                      {{ prioridadLabel(f.prioridad) }}
+                    </span>
+                  </td>
+                  <td class="px-5 py-3 text-right align-middle">
+                    @if (f.esTerritorial) {
+                      <button class="inline-grid h-8 w-8 place-items-center rounded-lg text-ink-faint transition-colors hover:bg-danger-soft hover:text-danger" (click)="eliminar(f)" title="Eliminar" aria-label="Eliminar">
+                        <fa-icon [icon]="faTrash" class="text-[13px]" />
+                      </button>
+                    } @else {
+                      <span class="text-[11px] text-ink-faint">base</span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      <app-paginator [total]="filas().length" [page]="page()" [pageSize]="pageSize" (pageChange)="page.set($event)" />
+    </div>
+  </main>
+</div>
+
+<!-- ═══ Modal: Agregar norma manual ═══════════════════════════════════════ -->
+@if (showManual()) {
+  <div class="fixed inset-0 z-[80] flex items-start justify-center overflow-y-auto p-4 sm:items-center">
+    <div class="absolute inset-0 animate-fade-in bg-black/40" (click)="closeManual()"></div>
+    <div class="relative z-[1] w-full max-w-[480px] animate-fade-in-up overflow-hidden rounded-2xl border border-border bg-surface shadow-pop">
+      <div class="flex items-center gap-2.5 border-b border-border px-5 py-4">
+        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent"><fa-icon [icon]="faLandmark" /></div>
+        <div class="min-w-0 flex-1">
+          <div class="font-display text-sm font-bold text-ink">Agregar norma territorial</div>
+          <div class="mt-px text-xs text-ink-soft">Propia del municipio o departamento</div>
+        </div>
+        <button class="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-ink-faint transition-colors hover:bg-surface3 hover:text-ink" (click)="closeManual()" aria-label="Cerrar"><fa-icon [icon]="faXmark" /></button>
+      </div>
+      <div class="flex flex-col gap-3 p-5">
+        <div class="flex flex-col gap-1.5">
+          <label class="text-[11px] font-semibold uppercase tracking-wide text-ink-soft">Código de la norma</label>
+          <input class="w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-ink outline-none transition-colors focus:border-accent focus:shadow-[0_0_0_3px_rgba(47,111,237,0.12)]" [(ngModel)]="fCodigo" placeholder="Ej: Acuerdo 05 de 2024" (keydown.enter)="crear()" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-[11px] font-semibold uppercase tracking-wide text-ink-soft">Territorio (ref.)</label>
+            <input class="w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-ink outline-none transition-colors focus:border-accent focus:shadow-[0_0_0_3px_rgba(47,111,237,0.12)]" [(ngModel)]="fTerritorio" placeholder="HUILA / NEIVA" />
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-[11px] font-semibold uppercase tracking-wide text-ink-soft">Prioridad</label>
+            <select class="w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-sm font-semibold text-ink outline-none transition-colors focus:border-accent" [(ngModel)]="fPrioridad">
+              <option [ngValue]="1">Crítica</option>
+              <option [ngValue]="2">Importante</option>
+              <option [ngValue]="3">Complementaria</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label class="text-[11px] font-semibold uppercase tracking-wide text-ink-soft">Descripción (opcional)</label>
+          <input class="w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-ink outline-none transition-colors focus:border-accent focus:shadow-[0_0_0_3px_rgba(47,111,237,0.12)]" [(ngModel)]="fDescripcion" placeholder="Ej: Acuerdo de adopción del Plan de Desarrollo" />
+        </div>
+        <button
+          class="mt-1 flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-primary disabled:cursor-not-allowed disabled:opacity-60"
+          [disabled]="!fCodigo.trim() || guardando()"
+          (click)="crear()"
+        >
+          <fa-icon [icon]="faPlus" /> {{ guardando() ? 'Agregando…' : 'Agregar al indexer' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ═══ Modal: Descubrir con IA ═══════════════════════════════════════════ -->
+@if (showDiscover()) {
+  <div class="fixed inset-0 z-[80] flex items-start justify-center overflow-y-auto p-4 sm:items-center">
+    <div class="absolute inset-0 animate-fade-in bg-black/40" (click)="closeDiscover()"></div>
+    <div class="relative z-[1] w-full max-w-[480px] animate-fade-in-up overflow-hidden rounded-2xl border border-border bg-surface shadow-pop">
+      <div class="flex items-center gap-2.5 border-b border-border px-5 py-4">
+        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-purple text-white"><fa-icon [icon]="faWandMagicSparkles" /></div>
+        <div class="min-w-0 flex-1">
+          <div class="font-display text-sm font-bold text-ink">Descubrir normas con IA</div>
+          <div class="mt-px text-xs text-ink-soft">La IA + internet proponen las normas relevantes y las agregan</div>
+        </div>
+        <button class="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-ink-faint transition-colors hover:bg-surface3 hover:text-ink" (click)="closeDiscover()" aria-label="Cerrar"><fa-icon [icon]="faXmark" /></button>
+      </div>
+      <div class="flex flex-col gap-3 p-5">
+        <div class="grid grid-cols-2 gap-3">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-[11px] font-semibold uppercase tracking-wide text-ink-soft">Municipio (opcional)</label>
+            <input class="w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-ink outline-none transition-colors focus:border-purple focus:shadow-[0_0_0_3px_rgba(130,80,223,0.12)]" [(ngModel)]="dMunicipio" placeholder="Tello" />
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-[11px] font-semibold uppercase tracking-wide text-ink-soft">Departamento (opcional)</label>
+            <input class="w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-ink outline-none transition-colors focus:border-purple focus:shadow-[0_0_0_3px_rgba(130,80,223,0.12)]" [(ngModel)]="dDepartamento" placeholder="Huila" />
+          </div>
+        </div>
+        <p class="text-[11px] leading-relaxed text-ink-faint">
+          Busca leyes, decretos, resoluciones, circulares, CONPES, ordenanzas y acuerdos (y sus derogaciones) del marco SGR/plan.
+          La IA sugiere; el indexer valida cada norma al traerla.
+        </p>
+        <button
+          class="mt-1 flex items-center justify-center gap-2 rounded-lg bg-purple px-4 py-2.5 text-[13px] font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+          [disabled]="descubriendo()"
+          (click)="descubrir()"
+        >
+          @if (descubriendo()) { <span class="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"></span> Descubriendo… }
+          @else { <fa-icon [icon]="faWandMagicSparkles" /> Descubrir y agregar }
+        </button>
+      </div>
+    </div>
+  </div>
+}
