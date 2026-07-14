@@ -1,5 +1,6 @@
 import { Injectable, inject, signal, computed, OnDestroy } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export type EstadoSeedTarea = 'idle' | 'running' | 'completed' | 'cancelled' | 'error';
@@ -15,6 +16,24 @@ export interface DuplicidadSeedEstado {
   proyectos_indexados: number;
   proyectos_fallidos: number;
   error: string | null;
+}
+
+export interface ProyectoMatrizSGROut {
+  id: string;
+  bpin: string | null;
+  nombre: string;
+  municipio: string | null;
+  departamento: string | null;
+  sector: string | null;
+  estado: string | null;
+  valor_sgr: string | null;
+  fecha_aprobacion: string | null;
+  creado_en: string;
+}
+
+export interface ProyectoMatrizSGRListResponse {
+  items: ProyectoMatrizSGROut[];
+  total: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -94,5 +113,17 @@ export class SgrDuplicidadSeedService implements OnDestroy {
       clearInterval(this.pollInterval);
       this.pollInterval = null;
     }
+  }
+
+  listarProyectos(params: { search?: string; skip?: number; limit?: number }): Observable<ProyectoMatrizSGRListResponse> {
+    let httpParams = new HttpParams()
+      .set('skip', String(params.skip ?? 0))
+      .set('limit', String(params.limit ?? 50));
+    if (params.search) httpParams = httpParams.set('search', params.search);
+    return this.http.get<ProyectoMatrizSGRListResponse>(`${this.base}/proyectos`, { params: httpParams });
+  }
+
+  backfillDesdeQdrant(): Observable<{ proyectos_recuperados: number }> {
+    return this.http.post<{ proyectos_recuperados: number }>(`${this.base}/backfill`, {});
   }
 }
