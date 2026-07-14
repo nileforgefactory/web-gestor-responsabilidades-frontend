@@ -74,13 +74,11 @@
         title="Marcar como plan activo"
       ><fa-icon [icon]="faCheckCircle" /> Marcar activo</button>
     }
-    @if (puedeEliminar()) {
-      <button
-        class="rounded-lg border border-danger/40 bg-danger-soft px-2.5 py-1.5 text-[13px] leading-none text-danger transition-colors duration-150 hover:bg-danger/20"
-        (click)="deletePlan.emit(plan()); $event.stopPropagation()"
-        title="Eliminar plan"
-      ><fa-icon [icon]="faTrash" /></button>
-    }
+    <button
+      class="rounded-lg border border-danger/40 bg-danger-soft px-2.5 py-1.5 text-[13px] leading-none text-danger transition-colors duration-150 hover:bg-danger/20"
+      (click)="deletePlan.emit(plan()); $event.stopPropagation()"
+      title="Eliminar plan"
+    ><fa-icon [icon]="faTrash" /></button>
     <button
       class="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-accent bg-accent-soft px-3.5 py-1.5 text-xs font-bold text-accent transition-colors duration-150 hover:bg-accent hover:text-white"
       (click)="viewDetail.emit(plan()); $event.stopPropagation()"

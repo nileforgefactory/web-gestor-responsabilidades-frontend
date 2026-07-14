@@ -4,7 +4,6 @@ import { faArrowRight, faCalendarDays, faTrash, faCheckCircle } from '@fortaweso
 import { Plan } from '../../../core/models/plan.model';
 import { BadgeComponent } from '../badge/badge.component';
 import { IconComponent } from '../icon/icon.component';
-import { AuthService } from '../../../core/services/auth.service';
 import { PlanContextService } from '../../../core/services/plan-context.service';
 
 @Component({
@@ -15,7 +14,6 @@ import { PlanContextService } from '../../../core/services/plan-context.service'
   styleUrl: './plan-card.component.css',
 })
 export class PlanCardComponent {
-  private auth = inject(AuthService);
   readonly planContext = inject(PlanContextService);
 
   readonly faArrowRight = faArrowRight;
@@ -26,8 +24,6 @@ export class PlanCardComponent {
   plan       = input.required<Plan>();
   viewDetail = output<Plan>();
   deletePlan = output<Plan>();
-
-  readonly puedeEliminar = this.auth.isAdmin;
 
   readonly esActivo = computed(() => this.planContext.planActivoId() === this.plan().id);
 
