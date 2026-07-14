@@ -3,9 +3,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCalendarDays, faRobot, faChartLine, faChartSimple, faSackDollar, faDownload, faRotate, faFolderOpen, faHourglassHalf, faArrowLeft, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
+import { faCalendarDays, faRobot, faChartLine, faChartSimple, faSackDollar, faDownload, faRotate, faFolderOpen, faHourglassHalf, faArrowLeft, faCheckCircle, faBell, faTriangleExclamation, faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import { PlanService } from '../../core/services/plan.service';
-import { PlanApiService } from '../../core/services/plan-api.service';
+import { PlanApiService, ApiAlertaNormativaOut } from '../../core/services/plan-api.service';
 import { PlanContextService } from '../../core/services/plan-context.service';
 import { SidebarComponent, SidebarItem, SidebarSection } from '../../shared/components/sidebar/sidebar.component';
 import { ResultTabsComponent } from '../../shared/components/result-tabs/result-tabs.component';
@@ -35,8 +35,17 @@ export class PlanDetailPageComponent {
   readonly faHourglassHalf = faHourglassHalf;
   readonly faArrowLeft = faArrowLeft;
   readonly faCheckCircle = faCheckCircle;
+  readonly faBell = faBell;
+  readonly faTriangleExclamation = faTriangleExclamation;
+  readonly faCheckDouble = faCheckDouble;
 
   exportingPdf = signal<boolean>(false);
+
+  alertas = signal<ApiAlertaNormativaOut[]>([]);
+  verificandoAlertas = signal<boolean>(false);
+  marcandoLeidaIds = signal<Set<number>>(new Set());
+
+  readonly alertasNoLeidas = computed(() => this.alertas().filter(a => !a.leida).length);
 
   private planId = toSignal(this.route.paramMap.pipe(map(p => p.get('id') ?? '')));
 
@@ -59,6 +68,7 @@ export class PlanDetailPageComponent {
     effect(() => {
       const id = this.planId();
       if (id) this.planService.loadPlanDetail(id);
+      if (id) this.cargarAlertas(id);
     });
     // Auto-activa 'matriz' cuando el plan carga y tiene esa tab
     effect(() => {
@@ -137,6 +147,56 @@ export class PlanDetailPageComponent {
     });
   }
 
+  cargarAlertas(planId: string): void {
+    this.planApiService.listarAlertas(planId).subscribe({
+      next: (alertas) => this.alertas.set(alertas),
+      error: () => this.alertas.set([]),
+    });
+  }
+
+  verificarAlertas(): void {
+    const id = this.planId();
+    if (!id || this.verificandoAlertas()) return;
+    this.verificandoAlertas.set(true);
+    this.planApiService.verificarAlertas(id).subscribe({
+      next: () => {
+        this.cargarAlertas(id);
+        this.verificandoAlertas.set(false);
+      },
+      error: (err) => {
+        alert(`Error al verificar alertas: ${err.message}`);
+        this.verificandoAlertas.set(false);
+      },
+    });
+  }
+
+  marcarAlertaLeida(alerta: ApiAlertaNormativaOut): void {
+    const id = this.planId();
+    if (!id || alerta.leida || this.marcandoLeidaIds().has(alerta.id)) return;
+    this.marcandoLeidaIds.update(s => new Set(s).add(alerta.id));
+    this.planApiService.marcarAlertasLeidas(id, [alerta.id]).subscribe({
+      next: () => {
+        this.alertas.update(list => list.map(a => a.id === alerta.id ? { ...a, leida: true } : a));
+        this.marcandoLeidaIds.update(s => { const n = new Set(s); n.delete(alerta.id); return n; });
+      },
+      error: () => {
+        this.marcandoLeidaIds.update(s => { const n = new Set(s); n.delete(alerta.id); return n; });
+      },
+    });
+  }
+
+  marcarTodasLeidas(): void {
+    const id = this.planId();
+    const pendientes = this.alertas().filter(a => !a.leida).map(a => a.id);
+    if (!id || pendientes.length === 0) return;
+    this.planApiService.marcarAlertasLeidas(id, pendientes).subscribe({
+      next: () => {
+        this.alertas.update(list => list.map(a => pendientes.includes(a.id) ? { ...a, leida: true } : a));
+      },
+      error: (err) => alert(`Error al marcar alertas como leídas: ${err.message}`),
+    });
+  }
+
   onTabChange(tabId: string): void {
     this.activeTab.set(tabId);
   }
@@ -176,5 +236,24 @@ export class PlanDetailPageComponent {
 
   formatDate(date: Date): string {
     return date.toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  formatDateTime(iso: string): string {
+    return new Date(iso).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  severidadLabel(severidad: ApiAlertaNormativaOut['severidad']): string {
+    const map: Record<ApiAlertaNormativaOut['severidad'], string> = {
+      alta: 'Alta', media: 'Media', baja: 'Baja',
+    };
+    return map[severidad];
+  }
+
+  tipoLabel(tipo: ApiAlertaNormativaOut['tipo']): string {
+    const map: Record<ApiAlertaNormativaOut['tipo'], string> = {
+      modificacion: 'Modificación', derogacion: 'Derogación',
+      nueva_norma: 'Nueva norma', jurisprudencia: 'Jurisprudencia',
+    };
+    return map[tipo];
   }
 }
