@@ -100,6 +100,15 @@ export interface ProyectoGuardadoOut extends ProyectoSGROut {
 
 // ── Ficha MGA ─────────────────────────────────────────────────────────────────
 
+export type EstadoCoberturaPregunta = 'respondida' | 'parcial' | 'no_respondida';
+
+export interface CoberturaPregunta {
+  numero: number;
+  modulo: number;
+  pregunta: string;
+  estado: EstadoCoberturaPregunta;
+}
+
 export interface FichaMGAOut {
   id: number;
   proyecto_id: string;
@@ -117,6 +126,32 @@ export interface FichaMGAOut {
   chat_sesiones: SesionChatMeta[];
   /** Id de la sesión activa. */
   sesion_activa: string | null;
+  /** Cobertura autoreportada del instrumento DNP de 50 preguntas. */
+  cobertura_preguntas: CoberturaPregunta[];
+}
+
+// ── Instrumento MGA (guía de 50 preguntas + checklist final) ───────────────────
+
+export interface PreguntaMGAOut {
+  numero: number;
+  modulo: number;
+  seccion: string;
+  pregunta: string;
+  que_busca: string;
+  como_responder: string;
+  alerta_cat56: string;
+}
+
+export interface ItemVerificacionOut {
+  modulo: string;
+  item: string;
+  como_verificarlo: string;
+  alerta_sgr: string;
+}
+
+export interface InstrumentoMGAResponse {
+  preguntas: PreguntaMGAOut[];
+  checklist: ItemVerificacionOut[];
 }
 
 export interface GenerarFichaMGARequest {
