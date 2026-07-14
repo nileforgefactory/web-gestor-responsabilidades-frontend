@@ -26,7 +26,7 @@ const PAGE_META: Array<{ prefix: string; meta: PageMeta }> = [
   { prefix: '/busqueda-raag',        meta: { eyebrow: 'Conocimiento', title: 'Búsqueda RAG' } },
   { prefix: '/base-conocimiento',    meta: { eyebrow: 'Conocimiento', title: 'Base de conocimiento' } },
   { prefix: '/admin/usuarios',       meta: { eyebrow: 'Administración', title: 'Usuarios' } },
-  { prefix: '/admin/sgr-matriz',     meta: { eyebrow: 'Administración', title: 'Matriz SGR' } },
+  { prefix: '/admin/sgr-matriz',     meta: { eyebrow: 'Administración', title: 'Matriz de proyectos' } },
   { prefix: '/admin/normas',         meta: { eyebrow: 'Administración', title: 'Normas del indexer' } },
 ];
 
@@ -119,7 +119,7 @@ export class App {
         label: 'Administración',
         items: [
           { label: 'Usuarios',        route: '/admin/usuarios',   icon: '👥' },
-          { label: 'Matriz SGR',      route: '/admin/sgr-matriz', icon: '📊' },
+          { label: 'Matriz de proyectos', route: '/admin/sgr-matriz', icon: '📊' },
           { label: 'Normas del indexer', route: '/admin/normas',  icon: '⚡' },
         ],
       });

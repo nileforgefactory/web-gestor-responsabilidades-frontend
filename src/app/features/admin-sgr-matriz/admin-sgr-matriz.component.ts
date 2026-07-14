@@ -60,7 +60,7 @@ export class AdminSgrMatrizComponent {
       label: 'Administración',
       items: [
         { id: 'usuarios', icon: '👥', label: 'Usuarios y roles' },
-        { id: 'sgr-matriz', icon: '📊', label: 'Matriz SGR', status: 'active' },
+        { id: 'sgr-matriz', icon: '📊', label: 'Matriz de proyectos', status: 'active' },
       ],
     },
     {
