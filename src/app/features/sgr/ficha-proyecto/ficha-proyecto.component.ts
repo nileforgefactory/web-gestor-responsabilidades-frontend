@@ -5,7 +5,7 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faDownload, faCheck, faComment, faRotate, faXmark, faBars, faPenToSquare, faFloppyDisk, faArrowLeft, faPlus, faChevronDown, faTrashCan, faTriangleExclamation, faListCheck } from '@fortawesome/free-solid-svg-icons';
 import { SgrApiService } from '../../../core/services/sgr-api.service';
-import { FichaMGAOut, SesionChatOut, CoberturaPregunta, ItemVerificacionOut } from '../../../core/models/sgr.model';
+import { FichaMGAOut, SesionChatOut, CoberturaPregunta, ItemVerificacionOut, ChecklistItemResultado } from '../../../core/models/sgr.model';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 
 type SeccionKey = 'identificacion' | 'preparacion' | 'evaluacion' | 'programacion';
@@ -29,6 +29,16 @@ interface GrupoCobertura {
   modulo: number;
   label: string;
   preguntas: CoberturaPregunta[];
+}
+
+interface ChecklistItemVista extends ItemVerificacionOut {
+  resultado: ChecklistItemResultado | null;
+}
+
+interface GrupoChecklist {
+  modulo: string;
+  label: string;
+  items: ChecklistItemVista[];
 }
 
 @Component({
@@ -116,28 +126,43 @@ export class FichaProyectoComponent implements OnInit {
   readonly coberturaTieneBrechas = computed(() =>
     this.coberturaResumen().parciales > 0 || this.coberturaResumen().sinResponder > 0,
   );
+  /** Las 46 preguntas guía completas (todas, no solo las pendientes), agrupadas por módulo. */
   readonly coberturaGrupos = computed<GrupoCobertura[]>(() => {
-    const pendientes = this.coberturaPreguntas().filter(p => p.estado !== 'respondida');
+    const todas = this.coberturaPreguntas();
     const porModulo = new Map<number, CoberturaPregunta[]>();
-    for (const p of pendientes) {
+    for (const p of todas) {
       if (!porModulo.has(p.modulo)) porModulo.set(p.modulo, []);
       porModulo.get(p.modulo)!.push(p);
     }
     return [...porModulo.entries()]
       .sort(([a], [b]) => a - b)
-      .map(([modulo, preguntas]) => ({ modulo, label: MODULO_LABEL[modulo] ?? `Módulo ${modulo}`, preguntas }));
+      .map(([modulo, preguntas]) => ({
+        modulo,
+        label: MODULO_LABEL[modulo] ?? `Módulo ${modulo}`,
+        preguntas: [...preguntas].sort((a, b) => a.numero - b.numero),
+      }));
   });
 
-  // Checklist final de verificación (instrumento MGA)
+  // Checklist final de verificación (instrumento MGA) — evaluación automática vs. la ficha
   checklistAbierto = signal(false);
   checklistCargando = signal(false);
   checklistError = signal<string | null>(null);
   checklistItems = signal<ItemVerificacionOut[] | null>(null);
+  // Ítems no evaluables por IA (soportes físicos, revisión por un par) se marcan manualmente.
   checklistRevisados = signal<Set<string>>(new Set());
-  readonly checklistGrupos = computed(() => {
+
+  readonly checklistResultadoPorNumero = computed(() => {
+    const mapa = new Map<number, ChecklistItemResultado>();
+    for (const r of this.ficha()?.checklist_verificacion ?? []) mapa.set(r.numero, r);
+    return mapa;
+  });
+
+  readonly checklistGrupos = computed<GrupoChecklist[]>(() => {
     const items = this.checklistItems() ?? [];
-    const porModulo = new Map<string, ItemVerificacionOut[]>();
-    for (const it of items) {
+    const resultados = this.checklistResultadoPorNumero();
+    const vista: ChecklistItemVista[] = items.map(it => ({ ...it, resultado: resultados.get(it.numero) ?? null }));
+    const porModulo = new Map<string, ChecklistItemVista[]>();
+    for (const it of vista) {
       if (!porModulo.has(it.modulo)) porModulo.set(it.modulo, []);
       porModulo.get(it.modulo)!.push(it);
     }
@@ -147,10 +172,12 @@ export class FichaProyectoComponent implements OnInit {
       items,
     }));
   });
+
   readonly checklistProgreso = computed(() => {
-    const total = this.checklistItems()?.length ?? 0;
-    const revisados = this.checklistRevisados().size;
-    return { total, revisados };
+    const items = this.checklistItems() ?? [];
+    const resultados = this.checklistResultadoPorNumero();
+    const cumplidos = items.filter(it => resultados.get(it.numero)?.cumple === true || this.checklistRevisados().has(it.item)).length;
+    return { total: items.length, cumplidos };
   });
 
   constructor() {

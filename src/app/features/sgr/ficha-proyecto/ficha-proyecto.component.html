@@ -192,21 +192,20 @@
                   />
                   <div>
                     <p class="m-0 text-[0.85rem] font-bold" [class.text-danger]="coberturaTieneBrechas()" [class.text-success]="!coberturaTieneBrechas()">
-                      Cobertura del instrumento MGA (50 preguntas DNP)
+                      Cobertura del instrumento MGA (46 preguntas DNP)
                     </p>
                     <p class="m-0 text-[0.75rem] text-ink-soft">
                       <span class="tabular font-semibold">{{ coberturaResumen().respondidas }}/{{ coberturaResumen().total }}</span> respondidas
                       @if (coberturaResumen().parciales > 0) { · <span class="tabular font-semibold text-gold">{{ coberturaResumen().parciales }}</span> parciales }
                       @if (coberturaResumen().sinResponder > 0) { · <span class="tabular font-semibold text-danger">{{ coberturaResumen().sinResponder }}</span> sin responder }
+                      · <span class="underline">{{ coberturaAbierta() ? 'ocultar' : 'ver' }} las 46 preguntas</span>
                     </p>
                   </div>
                 </div>
-                @if (coberturaTieneBrechas()) {
-                  <fa-icon [icon]="faChevronDown" class="shrink-0 text-ink-faint transition-transform" [class.rotate-180]="coberturaAbierta()" />
-                }
+                <fa-icon [icon]="faChevronDown" class="shrink-0 text-ink-faint transition-transform" [class.rotate-180]="coberturaAbierta()" />
               </button>
 
-              @if (coberturaAbierta() && coberturaTieneBrechas()) {
+              @if (coberturaAbierta()) {
                 <div class="mt-3.5 flex flex-col gap-3.5 border-t border-border/60 pt-3.5">
                   @for (grupo of coberturaGrupos(); track grupo.modulo) {
                     <div>
@@ -216,10 +215,11 @@
                           <li class="flex items-start gap-2 text-[0.82rem] text-ink/90">
                             <span
                               class="mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[0.65rem] font-bold"
+                              [class.bg-success-soft]="p.estado === 'respondida'" [class.text-success]="p.estado === 'respondida'"
                               [class.bg-gold-soft]="p.estado === 'parcial'" [class.text-gold]="p.estado === 'parcial'"
                               [class.bg-danger-soft]="p.estado === 'no_respondida'" [class.text-danger]="p.estado === 'no_respondida'"
                             >
-                              {{ p.estado === 'parcial' ? 'Parcial' : 'Sin responder' }}
+                              {{ p.estado === 'respondida' ? 'Respondida' : p.estado === 'parcial' ? 'Parcial' : 'Sin responder' }}
                             </span>
                             <span>{{ p.numero }}. {{ p.pregunta }}</span>
                           </li>
@@ -324,7 +324,7 @@
             <p class="m-0 text-[0.75rem] text-ink-soft">
               22 ítems del instrumento oficial MGA (DNP)
               @if (checklistItems()) {
-                · {{ checklistProgreso().revisados }}/{{ checklistProgreso().total }} revisados
+                · {{ checklistProgreso().cumplidos }}/{{ checklistProgreso().total }} cumplidos
               }
             </p>
           </div>
@@ -343,31 +343,49 @@
             <div class="rounded-lg border border-danger/40 bg-danger-soft px-4 py-3.5 text-sm text-danger">{{ checklistError() }}</div>
           } @else {
             <p class="m-0 mb-4 rounded-lg bg-surface2 px-3.5 py-3 text-[0.78rem] text-ink-soft">
-              Esta es una guía general de revisión manual, no un chequeo automático: no todos los ítems
-              aplican a todo tipo de proyecto. Revisa cada uno contra tu ficha y marca los que ya verificaste
-              (quedan guardados en este navegador).
+              20 de los 22 ítems se evalúan automáticamente contra el texto de tu ficha
+              (cumple / no cumple, con motivo). Los 2 restantes son acciones fuera del texto
+              (soportes adjuntos, revisión por un par) — márcalos manualmente cuando los completes.
             </p>
             <div class="flex flex-col gap-5">
               @for (grupo of checklistGrupos(); track grupo.modulo) {
                 <div>
                   <p class="m-0 mb-2 text-[0.7rem] font-bold uppercase tracking-wide text-ink-faint">{{ grupo.label }}</p>
                   <ul class="m-0 flex flex-col gap-3 pl-0">
-                    @for (it of grupo.items; track it.item) {
+                    @for (it of grupo.items; track it.numero) {
                       <li
                         class="flex items-start gap-3 rounded-lg border px-3.5 py-3 transition-colors"
-                        [class.border-border]="!checklistRevisados().has(it.item)"
-                        [class.border-success/40]="checklistRevisados().has(it.item)"
-                        [class.bg-success-soft]="checklistRevisados().has(it.item)"
+                        [class.border-border]="!it.resultado && !checklistRevisados().has(it.item)"
+                        [class.border-success/40]="it.resultado?.cumple === true || (!it.evaluable_ia && checklistRevisados().has(it.item))"
+                        [class.bg-success-soft]="it.resultado?.cumple === true || (!it.evaluable_ia && checklistRevisados().has(it.item))"
+                        [class.border-danger/40]="it.resultado?.cumple === false"
+                        [class.bg-danger-soft]="it.resultado?.cumple === false"
                       >
-                        <input
-                          type="checkbox"
-                          class="mt-1 h-4 w-4 shrink-0 cursor-pointer accent-success"
-                          [checked]="checklistRevisados().has(it.item)"
-                          (change)="toggleChecklistItem(it.item)"
-                        />
+                        @if (it.evaluable_ia) {
+                          @if (it.resultado) {
+                            <span
+                              class="mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[0.65rem] font-bold text-white"
+                              [class.bg-success]="it.resultado.cumple"
+                              [class.bg-danger]="!it.resultado.cumple"
+                            >{{ it.resultado.cumple ? 'Cumple' : 'No cumple' }}</span>
+                          } @else {
+                            <span class="mt-0.5 shrink-0 rounded-full bg-surface2 px-2 py-0.5 text-[0.65rem] font-bold text-ink-faint">Sin evaluar</span>
+                          }
+                        } @else {
+                          <input
+                            type="checkbox"
+                            class="mt-1 h-4 w-4 shrink-0 cursor-pointer accent-success"
+                            [checked]="checklistRevisados().has(it.item)"
+                            (change)="toggleChecklistItem(it.item)"
+                          />
+                        }
                         <div>
                           <p class="m-0 text-[0.85rem] font-semibold text-ink">{{ it.item }}</p>
-                          <p class="m-0 mt-1 text-[0.78rem] text-ink-soft">{{ it.como_verificarlo }}</p>
+                          @if (it.resultado?.motivo) {
+                            <p class="m-0 mt-1 text-[0.78rem] font-medium" [class.text-danger]="!it.resultado!.cumple" [class.text-success]="it.resultado!.cumple">{{ it.resultado!.motivo }}</p>
+                          } @else {
+                            <p class="m-0 mt-1 text-[0.78rem] text-ink-soft">{{ it.como_verificarlo }}</p>
+                          }
                         </div>
                       </li>
                     }
