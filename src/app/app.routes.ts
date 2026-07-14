@@ -52,7 +52,6 @@ export const routes: Routes = [
       },
       {
         path: 'admin/sgr-matriz',
-        canActivate: [adminGuard],
         loadComponent: () =>
           import('./features/admin-sgr-matriz/admin-sgr-matriz.component')
             .then(m => m.AdminSgrMatrizComponent),

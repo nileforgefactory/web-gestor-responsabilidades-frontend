@@ -111,6 +111,7 @@ export class App {
         items: [
           { label: 'Búsqueda RAG',         route: '/busqueda-raag',     icon: '🔍' },
           { label: 'Base de conocimiento', route: '/base-conocimiento', icon: '⚡' },
+          { label: 'Matriz de proyectos',  route: '/admin/sgr-matriz',  icon: '📊' },
         ],
       },
     ];
@@ -120,7 +121,6 @@ export class App {
         label: 'Administración',
         items: [
           { label: 'Usuarios',        route: '/admin/usuarios',   icon: '👥' },
-          { label: 'Matriz de proyectos', route: '/admin/sgr-matriz', icon: '📊' },
           { label: 'Normas del indexer', route: '/admin/normas',  icon: '⚡' },
         ],
       });
