@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faMagnifyingGlass, faXmark, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { PlanService } from '../../core/services/plan.service';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { Plan, NivelTerritorial, PlanStatus } from '../../core/models/plan.model';
 import { SidebarComponent, SidebarItem, SidebarSection } from '../../shared/components/sidebar/sidebar.component';
 import { PlanCardComponent } from '../../shared/components/plan-card/plan-card.component';
@@ -19,8 +20,9 @@ export class BibliotecaPlanes implements OnInit {
   readonly faXmark = faXmark;
   readonly faFolderOpen = faFolderOpen;
 
-  private planService = inject(PlanService);
-  private router      = inject(Router);
+  private planService   = inject(PlanService);
+  private router        = inject(Router);
+  private confirmDialog = inject(ConfirmDialogService);
 
   nivelFilter  = signal<NivelTerritorial | 'all'>('all');
   statusFilter = signal<PlanStatus | 'all'>('all');
@@ -96,7 +98,11 @@ export class BibliotecaPlanes implements OnInit {
   }
 
   async onDeletePlan(plan: Plan): Promise<void> {
-    if (!confirm(`¿Eliminar "${plan.shortName}"? Esta acción no se puede deshacer.`)) return;
+    const ok = await this.confirmDialog.confirm({
+      title: 'Eliminar plan',
+      message: `¿Eliminar "${plan.shortName}"? Esta acción no se puede deshacer.`,
+    });
+    if (!ok) return;
     try {
       await this.planService.deletePlan(plan.id);
     } catch {

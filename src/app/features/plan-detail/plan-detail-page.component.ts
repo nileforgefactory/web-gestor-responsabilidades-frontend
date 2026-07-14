@@ -7,6 +7,7 @@ import { faCalendarDays, faRobot, faChartLine, faChartSimple, faSackDollar, faDo
 import { PlanService } from '../../core/services/plan.service';
 import { PlanApiService, ApiAlertaNormativaOut } from '../../core/services/plan-api.service';
 import { PlanContextService } from '../../core/services/plan-context.service';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { SidebarComponent, SidebarItem, SidebarSection } from '../../shared/components/sidebar/sidebar.component';
 import { ResultTabsComponent } from '../../shared/components/result-tabs/result-tabs.component';
 
@@ -22,6 +23,7 @@ export class PlanDetailPageComponent {
   private planApiService = inject(PlanApiService);
   private route          = inject(ActivatedRoute);
   private router         = inject(Router);
+  private confirmDialog  = inject(ConfirmDialogService);
   readonly planContext    = inject(PlanContextService);
 
   readonly faCalendarDays = faCalendarDays;
@@ -204,7 +206,11 @@ export class PlanDetailPageComponent {
   async deletePlan(): Promise<void> {
     const id = this.planId();
     if (!id || this.deleting()) return;
-    if (!confirm('¿Eliminar este plan y todos sus datos? Esta acción no se puede deshacer.')) return;
+    const ok = await this.confirmDialog.confirm({
+      title: 'Eliminar plan',
+      message: '¿Eliminar este plan y todos sus datos? Esta acción no se puede deshacer.',
+    });
+    if (!ok) return;
     this.deleting.set(true);
     try {
       await this.planService.deletePlan(id);

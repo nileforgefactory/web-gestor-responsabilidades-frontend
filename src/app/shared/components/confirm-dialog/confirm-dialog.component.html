@@ -1,0 +1,24 @@
+@if (dialog.config(); as cfg) {
+  <div class="fixed inset-0 z-[100] flex items-center justify-center bg-ink/40 px-4" (click)="cancelar()">
+    <div class="w-full max-w-[420px] rounded-xl bg-surface shadow-pop" (click)="$event.stopPropagation()">
+      <div class="px-6 pt-6 pb-5">
+        <h3 class="m-0 text-[0.95rem] font-bold text-ink">{{ cfg.title }}</h3>
+        <p class="m-0 mt-2 text-[0.85rem] text-ink-soft">{{ cfg.message }}</p>
+      </div>
+      <div class="flex justify-end gap-2.5 border-t border-border px-6 py-4">
+        <button
+          type="button"
+          class="rounded-lg border border-border px-4 py-2 text-[0.82rem] font-semibold text-ink-soft transition-colors hover:bg-surface2"
+          (click)="cancelar()"
+        >{{ cfg.cancelLabel ?? 'Cancelar' }}</button>
+        <button
+          type="button"
+          [class]="cfg.danger === false
+            ? 'rounded-lg bg-primary px-4 py-2 text-[0.82rem] font-semibold text-white transition-colors hover:bg-primary-light'
+            : 'rounded-lg border border-danger bg-danger px-4 py-2 text-[0.82rem] font-semibold text-white transition-colors hover:bg-[#DC2626]'"
+          (click)="confirmar()"
+        >{{ cfg.confirmLabel ?? 'Eliminar' }}</button>
+      </div>
+    </div>
+  </div>
+}
