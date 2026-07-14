@@ -11,83 +11,6 @@
       </p>
     </div>
 
-    @if (auth.isAdmin()) {
-      <div class="mb-6 max-w-[640px] overflow-hidden rounded-xl border border-border bg-surface shadow-card">
-        <div class="flex items-center gap-3 border-b border-border px-5 py-4">
-          <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-lg text-accent">
-            <fa-icon [icon]="faFileExcel" />
-          </div>
-          <div>
-            <h3 class="text-[15px] font-semibold text-ink">Actualizar matriz</h3>
-            <div class="mt-0.5 text-xs text-ink-soft">Archivo .xlsx del DNP (GESPROY)</div>
-          </div>
-        </div>
-
-        <div class="p-5">
-          @if (seed.subiendo()) {
-            <div class="flex items-center gap-2 text-sm font-semibold text-accent">
-              <fa-icon [icon]="faSpinner" class="animate-spin" />
-              Subiendo archivo… puede tardar unos segundos.
-            </div>
-          } @else if (!seed.isRunning()) {
-            <div class="flex flex-col gap-3">
-              <label class="flex cursor-pointer items-center gap-2 rounded-lg border-[1.5px] border-dashed border-border bg-surface2 px-4 py-6 text-center text-sm text-ink-soft transition-colors hover:border-accent hover:text-accent">
-                <fa-icon [icon]="faArrowUpFromBracket" />
-                @if (archivoSeleccionado()) {
-                  <span class="font-semibold text-ink">{{ archivoSeleccionado()!.name }}</span>
-                } @else {
-                  <span>Selecciona el archivo .xlsx</span>
-                }
-                <input type="file" class="hidden" accept=".xlsx" (change)="onArchivoSeleccionado($event)" />
-              </label>
-
-              <button
-                type="button"
-                class="flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-light disabled:cursor-not-allowed disabled:opacity-60"
-                [disabled]="!archivoSeleccionado()"
-                (click)="subir()"
-              >
-                <fa-icon [icon]="faArrowUpFromBracket" /> Subir y procesar
-              </button>
-            </div>
-          } @else {
-            <div class="flex flex-col gap-3">
-              <div class="flex items-center gap-2 text-sm font-semibold text-accent">
-                <fa-icon [icon]="faSpinner" class="animate-spin" />
-                {{ faseLabel() }}
-              </div>
-              <div class="grid grid-cols-2 gap-3 text-[13px] text-ink-soft">
-                <div>Filas leídas: <span class="font-semibold text-ink">{{ seed.estado().filas_leidas }}</span></div>
-                <div>Filas filtradas (cat. 5/6): <span class="font-semibold text-ink">{{ seed.estado().filas_filtradas }}</span></div>
-                <div>Indexados: <span class="font-semibold text-success">{{ seed.estado().proyectos_indexados }}</span></div>
-                <div>Fallidos: <span class="font-semibold text-danger">{{ seed.estado().proyectos_fallidos }}</span></div>
-              </div>
-              <button
-                type="button"
-                class="flex items-center justify-center gap-2 rounded-lg border border-danger/40 bg-danger-soft px-4 py-2 text-sm font-semibold text-danger transition-colors hover:bg-danger/20"
-                (click)="cancelar()"
-              >
-                <fa-icon [icon]="faStop" /> Cancelar
-              </button>
-            </div>
-          }
-
-          @if (seed.estado().estado === 'completed') {
-            <div class="mt-4 flex items-center gap-2 rounded-lg border border-success/30 bg-success-soft px-4 py-3 text-sm text-success">
-              <fa-icon [icon]="faCircleCheck" />
-              Carga completada: {{ seed.estado().proyectos_indexados }} proyectos indexados de {{ seed.estado().filas_filtradas }} filtrados.
-            </div>
-          }
-          @if (seed.estado().estado === 'error') {
-            <div class="mt-4 flex items-center gap-2 rounded-lg border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger">
-              <fa-icon [icon]="faTriangleExclamation" />
-              {{ seed.estado().error ?? 'Error al procesar el archivo.' }}
-            </div>
-          }
-        </div>
-      </div>
-    }
-
     <!-- ── Tabla de proyectos indexados ── -->
     <div class="overflow-hidden rounded-xl border border-border bg-surface shadow-card">
       <div class="flex flex-wrap items-center gap-2.5 border-b border-border px-5 py-4">
@@ -101,6 +24,13 @@
 
         <div class="ml-auto flex items-center gap-2">
           @if (auth.isAdmin()) {
+            <button
+              type="button"
+              class="flex shrink-0 items-center gap-1.5 rounded-full bg-accent px-3.5 py-1.5 text-[12px] font-semibold text-white shadow-sm transition-colors hover:bg-primary"
+              (click)="openUploadModal()"
+            >
+              <fa-icon [icon]="faFileExcel" /> Actualizar matriz
+            </button>
             <button
               type="button"
               class="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-[12px] font-semibold text-ink-soft transition-colors hover:border-accent/40 hover:bg-accent-soft hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
@@ -201,3 +131,88 @@
 
   </main>
 </div>
+
+<!-- ═══ Modal: Actualizar matriz ═══════════════════════════════════════ -->
+@if (uploadModalOpen()) {
+  <div class="fixed inset-0 z-[80] flex items-start justify-center overflow-y-auto p-4 sm:items-center">
+    <div class="absolute inset-0 animate-fade-in bg-black/40" (click)="closeUploadModal()"></div>
+
+    <div class="relative z-[1] w-full max-w-[460px] animate-fade-in-up overflow-hidden rounded-2xl border border-border bg-surface shadow-pop">
+      <div class="flex items-center gap-2.5 border-b border-border px-5 py-4">
+        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent">
+          <fa-icon [icon]="faFileExcel" />
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="font-display text-sm font-bold text-ink">Actualizar matriz</div>
+          <div class="mt-px text-xs text-ink-soft">Archivo .xlsx del DNP (GESPROY)</div>
+        </div>
+        <button class="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-ink-faint transition-colors hover:bg-surface3 hover:text-ink" (click)="closeUploadModal()" aria-label="Cerrar">
+          <fa-icon [icon]="faXmark" />
+        </button>
+      </div>
+
+      <div class="p-5">
+        @if (seed.subiendo()) {
+          <div class="flex items-center gap-2 text-sm font-semibold text-accent">
+            <fa-icon [icon]="faSpinner" class="animate-spin" />
+            Subiendo archivo… puede tardar unos segundos.
+          </div>
+        } @else if (!seed.isRunning()) {
+          <div class="flex flex-col gap-3">
+            <label class="flex cursor-pointer items-center gap-2 rounded-lg border-[1.5px] border-dashed border-border bg-surface2 px-4 py-6 text-center text-sm text-ink-soft transition-colors hover:border-accent hover:text-accent">
+              <fa-icon [icon]="faArrowUpFromBracket" />
+              @if (archivoSeleccionado()) {
+                <span class="font-semibold text-ink">{{ archivoSeleccionado()!.name }}</span>
+              } @else {
+                <span>Selecciona el archivo .xlsx</span>
+              }
+              <input type="file" class="hidden" accept=".xlsx" (change)="onArchivoSeleccionado($event)" />
+            </label>
+
+            <button
+              type="button"
+              class="flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-light disabled:cursor-not-allowed disabled:opacity-60"
+              [disabled]="!archivoSeleccionado()"
+              (click)="subir()"
+            >
+              <fa-icon [icon]="faArrowUpFromBracket" /> Subir y procesar
+            </button>
+          </div>
+        } @else {
+          <div class="flex flex-col gap-3">
+            <div class="flex items-center gap-2 text-sm font-semibold text-accent">
+              <fa-icon [icon]="faSpinner" class="animate-spin" />
+              {{ faseLabel() }}
+            </div>
+            <div class="grid grid-cols-2 gap-3 text-[13px] text-ink-soft">
+              <div>Filas leídas: <span class="font-semibold text-ink">{{ seed.estado().filas_leidas }}</span></div>
+              <div>Filas filtradas (cat. 5/6): <span class="font-semibold text-ink">{{ seed.estado().filas_filtradas }}</span></div>
+              <div>Indexados: <span class="font-semibold text-success">{{ seed.estado().proyectos_indexados }}</span></div>
+              <div>Fallidos: <span class="font-semibold text-danger">{{ seed.estado().proyectos_fallidos }}</span></div>
+            </div>
+            <button
+              type="button"
+              class="flex items-center justify-center gap-2 rounded-lg border border-danger/40 bg-danger-soft px-4 py-2 text-sm font-semibold text-danger transition-colors hover:bg-danger/20"
+              (click)="cancelar()"
+            >
+              <fa-icon [icon]="faStop" /> Cancelar
+            </button>
+          </div>
+        }
+
+        @if (seed.estado().estado === 'completed') {
+          <div class="mt-4 flex items-center gap-2 rounded-lg border border-success/30 bg-success-soft px-4 py-3 text-sm text-success">
+            <fa-icon [icon]="faCircleCheck" />
+            Carga completada: {{ seed.estado().proyectos_indexados }} proyectos indexados de {{ seed.estado().filas_filtradas }} filtrados.
+          </div>
+        }
+        @if (seed.estado().estado === 'error') {
+          <div class="mt-4 flex items-center gap-2 rounded-lg border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger">
+            <fa-icon [icon]="faTriangleExclamation" />
+            {{ seed.estado().error ?? 'Error al procesar el archivo.' }}
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+}
