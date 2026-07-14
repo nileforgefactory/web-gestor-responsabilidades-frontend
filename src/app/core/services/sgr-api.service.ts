@@ -11,6 +11,7 @@ import {
   EvaluarProyectoResponse,
   FichaMGAOut,
   GenerarFichaMGARequest,
+  InstrumentoMGAResponse,
   OnboardingStatus,
   ChangePasswordRequest,
   ProyectoGuardadoOut,
@@ -97,6 +98,11 @@ export class SgrApiService {
 
   exportarFichaMGADocx(proyectoId: string): Observable<Blob> {
     return this.http.get(`${this.base}/sgr/ficha-mga/${proyectoId}/export-docx`, { responseType: 'blob' });
+  }
+
+  /** Guía de las 50 preguntas del instrumento MGA y el checklist final de 22 ítems. */
+  getInstrumentoMga(): Observable<InstrumentoMGAResponse> {
+    return this.http.get<InstrumentoMGAResponse>(`${this.base}/sgr/instrumento-mga`);
   }
 
   // ── M3: Duplicidad ───────────────────────────────────────────────────────────

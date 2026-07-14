@@ -151,7 +151,7 @@ export class AdminUsuariosComponent implements OnInit {
         {
           id:    'sgr-matriz',
           icon:  '📊',
-          label: 'Matriz SGR',
+          label: 'Matriz de proyectos',
         },
       ],
     },

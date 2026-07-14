@@ -318,7 +318,10 @@ export class BaseConocimientoComponent implements OnInit {
     this.textError.set(null);
     this.textSuccess.set(null);
 
-    const docId = `${this.textDocType}_${Date.now()}`;
+    // El backend usa document_id como título del documento (y como clave para
+    // detectar duplicados) — se envía el título real escrito por el usuario en
+    // vez de un id sintético, o cae a uno sintético solo si no escribió título.
+    const docId = this.textTitle.trim() || `${this.textDocType}_${Date.now()}`;
     this.ragApi.ingestText({
       collection_id: environment.ragCollection,
       document_id:   docId,

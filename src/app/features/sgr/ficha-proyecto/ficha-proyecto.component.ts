@@ -3,12 +3,25 @@ import { CommonModule, Location } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faDownload, faCheck, faComment, faRotate, faXmark, faBars, faPenToSquare, faFloppyDisk, faArrowLeft, faPlus, faChevronDown, faTrashCan } from '@fortawesome/free-solid-svg-icons';
+import { faDownload, faCheck, faComment, faRotate, faXmark, faBars, faPenToSquare, faFloppyDisk, faArrowLeft, faPlus, faChevronDown, faTrashCan, faTriangleExclamation, faListCheck } from '@fortawesome/free-solid-svg-icons';
 import { SgrApiService } from '../../../core/services/sgr-api.service';
-import { FichaMGAOut, SesionChatOut } from '../../../core/models/sgr.model';
+import { FichaMGAOut, SesionChatOut, CoberturaPregunta, ItemVerificacionOut } from '../../../core/models/sgr.model';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 
 type SeccionKey = 'identificacion' | 'preparacion' | 'evaluacion' | 'programacion';
+
+const MODULO_LABEL: Record<number, string> = {
+  1: 'Identificación',
+  2: 'Preparación',
+  3: 'Evaluación',
+  4: 'Programación',
+};
+
+interface GrupoCobertura {
+  modulo: number;
+  label: string;
+  preguntas: CoberturaPregunta[];
+}
 
 @Component({
   selector: 'app-ficha-proyecto',
@@ -35,6 +48,8 @@ export class FichaProyectoComponent implements OnInit {
   readonly faPlus = faPlus;
   readonly faChevronDown = faChevronDown;
   readonly faTrashCan = faTrashCan;
+  readonly faTriangleExclamation = faTriangleExclamation;
+  readonly faListCheck = faListCheck;
 
   proyectoId = input.required<string>();
 
@@ -76,6 +91,49 @@ export class FichaProyectoComponent implements OnInit {
 
   // Exportar Word
   exportandoDocx = signal(false);
+
+  // Cobertura del instrumento MGA (50 preguntas DNP)
+  coberturaAbierta = signal(false);
+
+  readonly coberturaPreguntas = computed(() => this.ficha()?.cobertura_preguntas ?? []);
+  readonly coberturaResumen = computed(() => {
+    const preguntas = this.coberturaPreguntas();
+    return {
+      total: preguntas.length,
+      respondidas: preguntas.filter(p => p.estado === 'respondida').length,
+      parciales: preguntas.filter(p => p.estado === 'parcial').length,
+      sinResponder: preguntas.filter(p => p.estado === 'no_respondida').length,
+    };
+  });
+  readonly coberturaTieneBrechas = computed(() =>
+    this.coberturaResumen().parciales > 0 || this.coberturaResumen().sinResponder > 0,
+  );
+  readonly coberturaGrupos = computed<GrupoCobertura[]>(() => {
+    const pendientes = this.coberturaPreguntas().filter(p => p.estado !== 'respondida');
+    const porModulo = new Map<number, CoberturaPregunta[]>();
+    for (const p of pendientes) {
+      if (!porModulo.has(p.modulo)) porModulo.set(p.modulo, []);
+      porModulo.get(p.modulo)!.push(p);
+    }
+    return [...porModulo.entries()]
+      .sort(([a], [b]) => a - b)
+      .map(([modulo, preguntas]) => ({ modulo, label: MODULO_LABEL[modulo] ?? `Módulo ${modulo}`, preguntas }));
+  });
+
+  // Checklist final de verificación (instrumento MGA)
+  checklistAbierto = signal(false);
+  checklistCargando = signal(false);
+  checklistError = signal<string | null>(null);
+  checklistItems = signal<ItemVerificacionOut[] | null>(null);
+  readonly checklistGrupos = computed(() => {
+    const items = this.checklistItems() ?? [];
+    const porModulo = new Map<string, ItemVerificacionOut[]>();
+    for (const it of items) {
+      if (!porModulo.has(it.modulo)) porModulo.set(it.modulo, []);
+      porModulo.get(it.modulo)!.push(it);
+    }
+    return [...porModulo.entries()].map(([modulo, items]) => ({ modulo, items }));
+  });
 
   constructor() {
     effect(() => {
@@ -267,6 +325,31 @@ export class FichaProyectoComponent implements OnInit {
         this.chatEnviando.set(false);
       },
     });
+  }
+
+  toggleCobertura(): void {
+    this.coberturaAbierta.update(v => !v);
+  }
+
+  abrirChecklist(): void {
+    this.checklistAbierto.set(true);
+    if (this.checklistItems() || this.checklistCargando()) return;
+    this.checklistCargando.set(true);
+    this.checklistError.set(null);
+    this.sgr.getInstrumentoMga().subscribe({
+      next: res => {
+        this.checklistItems.set(res.checklist);
+        this.checklistCargando.set(false);
+      },
+      error: err => {
+        this.checklistError.set(err.error?.detail ?? 'No se pudo cargar el checklist de verificación');
+        this.checklistCargando.set(false);
+      },
+    });
+  }
+
+  cerrarChecklist(): void {
+    this.checklistAbierto.set(false);
   }
 
   descargarDocx(): void {
