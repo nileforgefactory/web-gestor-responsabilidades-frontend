@@ -181,6 +181,18 @@ export interface ApiPlanCreate {
   }[];
 }
 
+export interface ApiAlertaNormativaOut {
+  id: number;
+  plan_id: string | null;
+  tipo: 'modificacion' | 'derogacion' | 'nueva_norma' | 'jurisprudencia';
+  titulo: string;
+  descripcion: string | null;
+  norma_ref: string | null;
+  severidad: 'alta' | 'media' | 'baja';
+  leida: boolean;
+  creado_en: string;
+}
+
 export interface ApiPlanUpdate {
   titulo?: string;
   nombre_corto?: string;
@@ -282,6 +294,26 @@ export class PlanApiService {
   deletePlan(planId: string): Observable<void> {
     return this.http
       .delete<void>(`${this.base}/api/v1/planes/${encodeURIComponent(planId)}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  listarAlertas(planId: string, soloNoLeidas?: boolean): Observable<ApiAlertaNormativaOut[]> {
+    const qp: Record<string, string> = {};
+    if (soloNoLeidas != null) qp['solo_no_leidas'] = String(soloNoLeidas);
+    return this.http
+      .get<ApiAlertaNormativaOut[]>(`${this.base}/api/v1/planes/${encodeURIComponent(planId)}/alertas`, { params: qp })
+      .pipe(catchError(this.handleError));
+  }
+
+  verificarAlertas(planId: string): Observable<ApiAlertaNormativaOut[]> {
+    return this.http
+      .post<ApiAlertaNormativaOut[]>(`${this.base}/api/v1/planes/${encodeURIComponent(planId)}/alertas/check`, {})
+      .pipe(catchError(this.handleError));
+  }
+
+  marcarAlertasLeidas(planId: string, ids: number[]): Observable<{ actualizadas: number }> {
+    return this.http
+      .patch<{ actualizadas: number }>(`${this.base}/api/v1/planes/${encodeURIComponent(planId)}/alertas/marcar-leidas`, { ids })
       .pipe(catchError(this.handleError));
   }
 
