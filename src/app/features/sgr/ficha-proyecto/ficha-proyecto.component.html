@@ -108,18 +108,38 @@
         <div class="mb-5 rounded-lg border border-danger/40 bg-danger-soft px-4 py-3.5 text-sm text-danger">{{ errorMsg() }}</div>
       }
 
-      @if (loading() && !ficha()) {
-        <div class="px-8 py-12 text-center text-ink-soft">
-          <div class="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-border border-t-primary"></div>
-          <p class="m-0">Generando Ficha MGA con el agente de IA…</p>
-          <p class="m-0 text-[0.8rem] text-ink-faint">Este proceso puede tomar 30–60 segundos.</p>
-        </div>
-      }
-
-      @if (loading() && ficha()) {
-        <div class="mb-4 flex items-center gap-2.5 rounded-lg border border-accent/30 bg-accent-soft px-4 py-3 text-sm text-accent">
-          <span class="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-accent/30 border-t-accent"></span>
-          Regenerando la Ficha MGA con IA… puede tardar uno o varios minutos.
+      @if (loading()) {
+        <div class="mb-4 rounded-xl border border-accent/30 bg-accent-soft px-5 py-4" [class.mt-0]="!ficha()">
+          <div class="flex items-center gap-2.5">
+            <span class="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-accent/30 border-t-accent"></span>
+            <p class="m-0 text-sm font-semibold text-accent">
+              {{ ficha() ? 'Regenerando la Ficha MGA con IA…' : 'Generando la Ficha MGA con el agente de IA…' }}
+            </p>
+          </div>
+          @if (generandoFase()) {
+            <p class="m-0 mb-0 mt-1.5 pl-6 text-[0.78rem] italic text-accent/80">{{ generandoFase() }}</p>
+          }
+          @if (generandoLog().length > 0) {
+            <ul class="m-0 mt-3 flex max-h-40 flex-col gap-1.5 overflow-y-auto border-t border-accent/20 pl-6 pt-3 text-[0.78rem]">
+              @for (l of generandoLog(); track $index) {
+                <li
+                  class="flex items-start gap-1.5"
+                  [class.text-ink-soft]="l.tipo === 'paso'"
+                  [class.text-accent]="l.tipo === 'info'"
+                  [class.text-success]="l.tipo === 'ok'"
+                  [class.text-gold]="l.tipo === 'warn'"
+                >
+                  <span class="shrink-0">
+                    {{ l.tipo === 'ok' ? '✓' : l.tipo === 'warn' ? '⚠' : l.tipo === 'info' ? '⚙' : '·' }}
+                  </span>
+                  <span>{{ l.texto }}</span>
+                </li>
+              }
+            </ul>
+          }
+          @if (!ficha()) {
+            <p class="m-0 mt-3 pl-6 text-[0.75rem] text-ink-faint">Este proceso puede tomar 30–90 segundos.</p>
+          }
         </div>
       }
 
