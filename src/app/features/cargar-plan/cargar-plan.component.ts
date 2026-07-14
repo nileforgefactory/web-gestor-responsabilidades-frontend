@@ -255,12 +255,22 @@ export class CargarPlanComponent {
       Nacional: 'nacional',   Sectorial: 'sectorial',
     };
 
-    const collectionId = this.auth.user()?.territorio.coleccion_id ?? environment.planCollection;
+    const territorio = this.auth.user()?.territorio;
+    const collectionId = territorio?.coleccion_id ?? environment.planCollection;
+    // El indexer/scraper guarda las leyes por territorio (PAIS[_DEPTO[_MUNICIPIO]],
+    // ej. "COLOMBIA"), no en environment.ragCollection (solo documentos subidos a
+    // mano). Se busca en la colección nacional, la del territorio específico del
+    // usuario y la de subida manual, para no dejar normativa real fuera del análisis.
+    const normativaIds = Array.from(new Set([
+      territorio?.pais?.toUpperCase(),
+      collectionId,
+      environment.ragCollection,
+    ].filter((v): v is string => !!v))).join(',');
 
     const form = new FormData();
     form.append('file', file);
     form.append('collection_id', collectionId);
-    form.append('normativa_collection_ids', environment.ragCollection);
+    form.append('normativa_collection_ids', normativaIds);
     form.append('nivel', nivelMap[params.nivel] ?? 'municipal');
     form.append('profundidad', params.depth);
     form.append('entidad', params.entidad);

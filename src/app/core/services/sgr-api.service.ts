@@ -61,6 +61,10 @@ export class SgrApiService {
     return this.http.post<ProyectoSGROut>(`${this.base}/sgr/proyecto/${proyectoId}/guardar`, {});
   }
 
+  eliminarProyecto(proyectoId: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/sgr/proyecto/${proyectoId}`);
+  }
+
   listarProyectosGuardados(): Observable<ProyectoGuardadoOut[]> {
     return this.http.get<ProyectoGuardadoOut[]>(`${this.base}/sgr/proyectos-guardados`);
   }
