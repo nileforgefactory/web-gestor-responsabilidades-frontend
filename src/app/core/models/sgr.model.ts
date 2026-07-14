@@ -109,6 +109,14 @@ export interface CoberturaPregunta {
   estado: EstadoCoberturaPregunta;
 }
 
+export interface ChecklistItemResultado {
+  numero: number;
+  modulo: string;
+  item: string;
+  cumple: boolean;
+  motivo: string | null;
+}
+
 export interface FichaMGAOut {
   id: number;
   proyecto_id: string;
@@ -126,11 +134,13 @@ export interface FichaMGAOut {
   chat_sesiones: SesionChatMeta[];
   /** Id de la sesión activa. */
   sesion_activa: string | null;
-  /** Cobertura autoreportada del instrumento DNP de 50 preguntas. */
+  /** Cobertura autoreportada de las 46 preguntas guía (módulos 1-4) del instrumento DNP. */
   cobertura_preguntas: CoberturaPregunta[];
+  /** Evaluación IA del checklist final de verificación (20 de 22 ítems evaluables). */
+  checklist_verificacion: ChecklistItemResultado[];
 }
 
-// ── Instrumento MGA (guía de 50 preguntas + checklist final) ───────────────────
+// ── Instrumento MGA (guía de 46 preguntas + checklist final) ───────────────────
 
 export interface PreguntaMGAOut {
   numero: number;
@@ -143,10 +153,12 @@ export interface PreguntaMGAOut {
 }
 
 export interface ItemVerificacionOut {
+  numero: number;
   modulo: string;
   item: string;
   como_verificarlo: string;
   alerta_sgr: string;
+  evaluable_ia: boolean;
 }
 
 export interface InstrumentoMGAResponse {
