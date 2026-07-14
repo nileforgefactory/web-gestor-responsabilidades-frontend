@@ -4,6 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map } from 'rxjs';
 import { RailSidebarComponent, RailGroup } from './shared/components/rail-sidebar/rail-sidebar.component';
 import { TopbarComponent } from './shared/components/topbar/topbar.component';
+import { ConfirmDialogComponent } from './shared/components/confirm-dialog/confirm-dialog.component';
 import { AuthService } from './core/services/auth.service';
 import { PlanContextService } from './core/services/plan-context.service';
 import { LayoutService } from './core/services/layout.service';
@@ -33,7 +34,7 @@ const PAGE_META: Array<{ prefix: string; meta: PageMeta }> = [
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RailSidebarComponent, TopbarComponent],
+  imports: [RouterOutlet, RailSidebarComponent, TopbarComponent, ConfirmDialogComponent],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
