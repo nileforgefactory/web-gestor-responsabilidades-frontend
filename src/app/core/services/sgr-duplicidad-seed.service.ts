@@ -35,6 +35,7 @@ export class SgrDuplicidadSeedService implements OnDestroy {
   });
 
   readonly isRunning = computed(() => this.estado().estado === 'running');
+  readonly subiendo = signal(false);
 
   private pollInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -59,12 +60,15 @@ export class SgrDuplicidadSeedService implements OnDestroy {
   iniciar(file: File): void {
     const form = new FormData();
     form.append('file', file);
+    this.subiendo.set(true);
     this.http.post<DuplicidadSeedEstado>(`${this.base}/iniciar`, form).subscribe({
       next: (e) => {
+        this.subiendo.set(false);
         this.estado.set(e);
         this.startPolling();
       },
       error: (err) => {
+        this.subiendo.set(false);
         this.estado.update(prev => ({ ...prev, estado: 'error', error: err.error?.detail ?? 'Error al subir el archivo' }));
       },
     });
