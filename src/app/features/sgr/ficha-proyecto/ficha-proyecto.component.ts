@@ -5,8 +5,10 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faDownload, faCheck, faComment, faRotate, faXmark, faBars, faPenToSquare, faFloppyDisk, faArrowLeft, faPlus, faChevronDown, faTrashCan, faTriangleExclamation, faListCheck } from '@fortawesome/free-solid-svg-icons';
 import { SgrApiService } from '../../../core/services/sgr-api.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { FichaMGAOut, SesionChatOut, CoberturaPregunta, ItemVerificacionOut, ChecklistItemResultado } from '../../../core/models/sgr.model';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
+import { environment } from '../../../../environments/environment';
 
 type SeccionKey = 'identificacion' | 'preparacion' | 'evaluacion' | 'programacion';
 
@@ -50,6 +52,7 @@ interface GrupoChecklist {
 })
 export class FichaProyectoComponent implements OnInit {
   private sgr      = inject(SgrApiService);
+  private auth     = inject(AuthService);
   private location = inject(Location);
   private router    = inject(Router);
   private fb        = inject(FormBuilder);
@@ -79,6 +82,10 @@ export class FichaProyectoComponent implements OnInit {
   proyectoGuardado = signal(false);
   guardandoProyecto = signal(false);
   eliminandoProyecto = signal(false);
+
+  // Progreso en vivo (SSE) mientras se genera/regenera la Ficha MGA
+  generandoLog  = signal<{ tipo: 'paso' | 'ok' | 'warn' | 'info'; texto: string }[]>([]);
+  generandoFase = signal<string | null>(null);
 
   // --- UI-only state (rediseño visual, sin lógica de negocio) ---
   modoEdicion   = signal<SeccionKey | null>(null);
@@ -282,14 +289,95 @@ export class FichaProyectoComponent implements OnInit {
     if (this.loading()) return;
     this.loading.set(true);
     this.errorMsg.set(null);
+    this.generandoLog.set([]);
+    this.generandoFase.set(null);
+    this.streamGenerarFicha(forzar);
+  }
 
-    this.sgr.generarFichaMGA(this.proyectoId(), { forzar_regeneracion: forzar }).subscribe({
-      next: f => { this.ficha.set(f); this.loading.set(false); this.cargarSesiones(); },
-      error: err => {
-        this.errorMsg.set(err.error?.detail ?? 'Error al generar la Ficha MGA');
+  private authHeader(): Record<string, string> {
+    const token = this.auth.getToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }
+
+  private async streamGenerarFicha(forzar: boolean): Promise<void> {
+    const url = `${environment.ragApiUrl}/api/v1/sgr/generar-ficha-mga/${this.proyectoId()}?stream=true`;
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...this.authHeader() },
+        body: JSON.stringify({ forzar_regeneracion: forzar }),
+      });
+    } catch {
+      this.errorMsg.set('No se pudo conectar con el servidor. Verifica que el backend esté activo.');
+      this.loading.set(false);
+      return;
+    }
+
+    if (!response.ok || !response.body) {
+      const err = await response.json().catch(() => ({ detail: response.statusText }));
+      this.errorMsg.set(err.detail ?? 'Error al generar la Ficha MGA');
+      this.loading.set(false);
+      return;
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? '';
+        for (const line of lines) {
+          if (!line.startsWith('data:')) continue;
+          const raw = line.slice(5).trim();
+          if (!raw) continue;
+          try { this.handleFichaSseEvent(JSON.parse(raw)); } catch { /* línea malformada, ignorar */ }
+        }
+      }
+    } catch {
+      if (this.loading()) {
+        this.errorMsg.set('Conexión interrumpida mientras se generaba la ficha.');
         this.loading.set(false);
-      },
-    });
+      }
+    }
+  }
+
+  private handleFichaSseEvent(event: Record<string, any>): void {
+    switch (event['type']) {
+      case 'paso':
+        this.generandoLog.update(l => [...l, { tipo: 'paso', texto: event['msg'] ?? '' }]);
+        break;
+      case 'norma':
+        if (event['fase'] === 'indexando') {
+          this.generandoLog.update(l => [...l, { tipo: 'info', texto: `Norma no indexada: "${event['norma']}" — buscándola e indexándola…` }]);
+        } else if (event['fase'] === 'indexada') {
+          this.generandoLog.update(l => [...l, { tipo: 'ok', texto: `"${event['norma']}" indexada — continuando` }]);
+        } else if (event['fase'] === 'fallida') {
+          this.generandoLog.update(l => [...l, { tipo: 'warn', texto: `No se pudo indexar "${event['norma']}" — se continúa sin ella` }]);
+        }
+        break;
+      case 'generando_fase':
+        this.generandoFase.set(event['fase'] ?? null);
+        break;
+      case 'heartbeat':
+        break;
+      case 'done':
+        this.ficha.set(event['ficha']);
+        this.loading.set(false);
+        this.generandoFase.set(null);
+        this.cargarSesiones();
+        break;
+      case 'error':
+        this.errorMsg.set(event['error'] ?? 'Error al generar la Ficha MGA');
+        this.loading.set(false);
+        this.generandoFase.set(null);
+        break;
+    }
   }
 
   copiarSeccion(texto: string | null): void {
