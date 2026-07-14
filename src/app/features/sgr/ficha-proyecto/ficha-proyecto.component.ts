@@ -17,6 +17,14 @@ const MODULO_LABEL: Record<number, string> = {
   4: 'Programación',
 };
 
+const CHECKLIST_MODULO_LABEL: Record<string, string> = {
+  M1: 'Módulo 1 — Identificación',
+  M2: 'Módulo 2 — Preparación',
+  M3: 'Módulo 3 — Evaluación',
+  M4: 'Módulo 4 — Programación',
+  PR: 'Presentación',
+};
+
 interface GrupoCobertura {
   modulo: number;
   label: string;
@@ -125,6 +133,7 @@ export class FichaProyectoComponent implements OnInit {
   checklistCargando = signal(false);
   checklistError = signal<string | null>(null);
   checklistItems = signal<ItemVerificacionOut[] | null>(null);
+  checklistRevisados = signal<Set<string>>(new Set());
   readonly checklistGrupos = computed(() => {
     const items = this.checklistItems() ?? [];
     const porModulo = new Map<string, ItemVerificacionOut[]>();
@@ -132,7 +141,16 @@ export class FichaProyectoComponent implements OnInit {
       if (!porModulo.has(it.modulo)) porModulo.set(it.modulo, []);
       porModulo.get(it.modulo)!.push(it);
     }
-    return [...porModulo.entries()].map(([modulo, items]) => ({ modulo, items }));
+    return [...porModulo.entries()].map(([modulo, items]) => ({
+      modulo,
+      label: CHECKLIST_MODULO_LABEL[modulo] ?? modulo,
+      items,
+    }));
+  });
+  readonly checklistProgreso = computed(() => {
+    const total = this.checklistItems()?.length ?? 0;
+    const revisados = this.checklistRevisados().size;
+    return { total, revisados };
   });
 
   constructor() {
@@ -331,8 +349,13 @@ export class FichaProyectoComponent implements OnInit {
     this.coberturaAbierta.update(v => !v);
   }
 
+  private get checklistStorageKey(): string {
+    return `sgr_checklist_revisados_${this.proyectoId()}`;
+  }
+
   abrirChecklist(): void {
     this.checklistAbierto.set(true);
+    this.cargarChecklistRevisados();
     if (this.checklistItems() || this.checklistCargando()) return;
     this.checklistCargando.set(true);
     this.checklistError.set(null);
@@ -350,6 +373,30 @@ export class FichaProyectoComponent implements OnInit {
 
   cerrarChecklist(): void {
     this.checklistAbierto.set(false);
+  }
+
+  private cargarChecklistRevisados(): void {
+    try {
+      const raw = localStorage.getItem(this.checklistStorageKey);
+      this.checklistRevisados.set(new Set(raw ? JSON.parse(raw) : []));
+    } catch {
+      this.checklistRevisados.set(new Set());
+    }
+  }
+
+  toggleChecklistItem(item: string): void {
+    const revisados = new Set(this.checklistRevisados());
+    if (revisados.has(item)) {
+      revisados.delete(item);
+    } else {
+      revisados.add(item);
+    }
+    this.checklistRevisados.set(revisados);
+    try {
+      localStorage.setItem(this.checklistStorageKey, JSON.stringify([...revisados]));
+    } catch {
+      // almacenamiento no disponible: el check no persiste, pero la sesión actual funciona igual
+    }
   }
 
   descargarDocx(): void {

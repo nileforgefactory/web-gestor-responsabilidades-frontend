@@ -321,7 +321,12 @@
         <div class="flex items-center justify-between gap-3 border-b border-border px-6 py-4">
           <div>
             <h3 class="m-0 text-[0.95rem] font-bold text-ink">Checklist de verificación final</h3>
-            <p class="m-0 text-[0.75rem] text-ink-soft">22 ítems del instrumento MGA para revisar antes de radicar</p>
+            <p class="m-0 text-[0.75rem] text-ink-soft">
+              22 ítems del instrumento oficial MGA (DNP)
+              @if (checklistItems()) {
+                · {{ checklistProgreso().revisados }}/{{ checklistProgreso().total }} revisados
+              }
+            </p>
           </div>
           <button class="rounded-md p-1.5 text-ink-soft hover:bg-surface2" (click)="cerrarChecklist()" aria-label="Cerrar">
             <fa-icon [icon]="faXmark" />
@@ -337,15 +342,33 @@
           } @else if (checklistError()) {
             <div class="rounded-lg border border-danger/40 bg-danger-soft px-4 py-3.5 text-sm text-danger">{{ checklistError() }}</div>
           } @else {
+            <p class="m-0 mb-4 rounded-lg bg-surface2 px-3.5 py-3 text-[0.78rem] text-ink-soft">
+              Esta es una guía general de revisión manual, no un chequeo automático: no todos los ítems
+              aplican a todo tipo de proyecto. Revisa cada uno contra tu ficha y marca los que ya verificaste
+              (quedan guardados en este navegador).
+            </p>
             <div class="flex flex-col gap-5">
               @for (grupo of checklistGrupos(); track grupo.modulo) {
                 <div>
-                  <p class="m-0 mb-2 text-[0.7rem] font-bold uppercase tracking-wide text-ink-faint">{{ grupo.modulo }}</p>
+                  <p class="m-0 mb-2 text-[0.7rem] font-bold uppercase tracking-wide text-ink-faint">{{ grupo.label }}</p>
                   <ul class="m-0 flex flex-col gap-3 pl-0">
                     @for (it of grupo.items; track it.item) {
-                      <li class="rounded-lg border border-border px-3.5 py-3">
-                        <p class="m-0 text-[0.85rem] font-semibold text-ink">{{ it.item }}</p>
-                        <p class="m-0 mt-1 text-[0.78rem] text-ink-soft">{{ it.como_verificarlo }}</p>
+                      <li
+                        class="flex items-start gap-3 rounded-lg border px-3.5 py-3 transition-colors"
+                        [class.border-border]="!checklistRevisados().has(it.item)"
+                        [class.border-success/40]="checklistRevisados().has(it.item)"
+                        [class.bg-success-soft]="checklistRevisados().has(it.item)"
+                      >
+                        <input
+                          type="checkbox"
+                          class="mt-1 h-4 w-4 shrink-0 cursor-pointer accent-success"
+                          [checked]="checklistRevisados().has(it.item)"
+                          (change)="toggleChecklistItem(it.item)"
+                        />
+                        <div>
+                          <p class="m-0 text-[0.85rem] font-semibold text-ink">{{ it.item }}</p>
+                          <p class="m-0 mt-1 text-[0.78rem] text-ink-soft">{{ it.como_verificarlo }}</p>
+                        </div>
                       </li>
                     }
                   </ul>
